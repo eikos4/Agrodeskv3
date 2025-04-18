@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Químicos en {{ bodega.nombre }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4 text-success">
+    <i class="bi bi-beaker"></i> Químicos en <strong>{{ bodega.nombre }}</strong>
+  </h2>
+
+  {% if quimicos %}
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle shadow-sm">
+      <thead class="table-success text-center">
+        <tr>
+          <th><i class="bi bi-tag-fill"></i> Nombre</th>
+          <th><i class="bi bi-flask"></i> Tipo</th>
+          <th><i class="bi bi-card-text"></i> Descripción</th>
+          <th><i class="bi bi-droplet-half"></i> Cantidad (L)</th>
+          <th><i class="bi bi-calendar-check"></i> Ingreso</th>
+          <th><i class="bi bi-gear"></i> Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in quimicos %}
+        <tr>
+          <td><i class="bi bi-capsule text-primary me-1"></i>{{ q.nombre }}</td>
+          <td>{{ q.tipo or '—' }}</td>
+          <td>{{ q.descripcion or '—' }}</td>
+          <td class="text-end">{{ q.cantidad_litros }}</td>
+          <td class="text-center">{{ q.fecha_ingreso.strftime('%d-%m-%Y') if q.fecha_ingreso else '—' }}</td>
+          <td class="text-center">
+            <a href="{{ url_for('admin.editar_quimico', quimico_id=q.id) }}" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-pencil-square"></i> Editar
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info d-flex align-items-center" role="alert">
+    <i class="bi bi-info-circle-fill me-2"></i> No hay químicos registrados en esta bodega.
+  </div>
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left-circle"></i> Volver al Panel
+    </a>
+  </div>
+</div>
+{% endblock %}

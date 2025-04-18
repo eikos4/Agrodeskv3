@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Principal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Título del panel -->
+  <h2 class="mb-4 text-success">
+    <i class="bi bi-person-circle"></i> Bienvenido, {{ current_user.name }}
+  </h2>
+  <p class="text-muted">Panel principal — Rol: <strong>{{ current_user.role|capitalize }}</strong></p>
+
+  {% if notificaciones %}
+  <div class="alert alert-light border-start border-4 border-success shadow-sm mb-4">
+    <h5><i class="bi bi-bell-fill text-success"></i> Notificaciones</h5>
+    <ul class="mb-0 ps-3">
+      {% for n in notificaciones %}
+        <li><strong>{{ n.titulo }}</strong> — {{ n.mensaje }} <small class="text-muted">({{ n.fecha.strftime('%d-%m-%Y') }})</small></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if current_user.role == 'admin' %}
+
+  <!-- Panel de acciones administrativas -->
+  <div class="row g-3 mb-4">
+    <!-- Crear Técnico -->
+    <div class="col-md-6">
+      <div class="card border-primary shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title"><i class="bi bi-person-plus"></i> Crear Perfil Técnico Agrónomo</h5>
+          <p class="card-text">Registrar nuevos técnicos para supervisión de huertos, bodegas e inventario.</p>
+          <a href="{{ url_for('admin.crear_tecnico') }}" class="btn btn-primary">Ir a formulario</a>
+        </div>
+      </div>
+    </div>
+    <!-- Asignar Recomendación -->
+    <div class="col-md-6">
+      <div class="card border-warning shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title"><i class="bi bi-chat-left-dots"></i> Asignar Recomendación</h5>
+          <p class="card-text">Enviar indicaciones agronómicas personalizadas a cada técnico.</p>
+          <a href="{{ url_for('admin.recomendar') }}" class="btn btn-warning text-white">Asignar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estadísticas rápidas -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card text-white bg-primary mb-3">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-person-lines-fill fs-2 me-3"></i>
+          <div>
+            <h4 class="mb-0">{{ tecnicos|length }}</h4>
+            <small>Técnicos</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-success mb-3">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-tree fs-2 me-3"></i>
+          <div>
+            <h4 class="mb-0">{{ huertos|length }}</h4>
+            <small>Huertos</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-warning mb-3">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-box-seam fs-2 me-3"></i>
+          <div>
+            <h4 class="mb-0">{{ bodegas|length }}</h4>
+            <small>Bodegas</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary mb-3">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-list-check fs-2 me-3"></i>
+          <div>
+            <h4 class="mb-0">{{ ultimas_recomendaciones|length }}</h4>
+            <small>Recomendaciones</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="container py-4">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="text-success"><i class="bi bi-person-circle"></i> {{ current_user.name }}</h2>
+        <small class="text-muted">Rol: {{ current_user.role|capitalize }}</small>
+      </div>
+      {% if notificaciones %}
+        <a class="btn btn-light position-relative" href="#">
+          <i class="bi bi-bell-fill fs-4 text-success"></i>
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {{ notificaciones|length }}
+          </span>
+        </a>
+      {% endif %}
+    </div>
+  
+    {% if current_user.role == 'admin' %}
+    <!-- Estadísticas generales -->
+    <div class="row g-3 mb-4">
+      {% for card in [
+        {'icon':'person-lines-fill','count': tecnicos|length,    'label':'Técnicos','color':'primary'},
+        {'icon':'tree-fill','count': huertos|length,            'label':'Huertos','color':'success'},
+        {'icon':'box-seam','count': bodegas|length,            'label':'Bodegas','color':'warning'},
+        {'icon':'list-check','count': ultimas_recomendaciones|length,'label':'Reco.','color':'secondary'}
+      ] %}
+      <div class="col-md-3">
+        <div class="card text-white bg-{{ card.color }} h-100 shadow">
+          <div class="card-body d-flex align-items-center">
+            <i class="bi bi-{{ card.icon }} fs-1 me-3"></i>
+            <div>
+              <h3 class="mb-0">{{ card.count }}</h3>
+              <small>{{ card.label }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  
+    <!-- Acciones rápidas -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-light">
+        <strong><i class="bi bi-gear-fill"></i> Acciones Rápidas</strong>
+      </div>
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-primary" href="{{ url_for('admin.crear_tecnico') }}"><i class="bi bi-person-plus"></i> Técnico</a>
+          <a class="btn btn-outline-warning" href="{{ url_for('admin.recomendar') }}"><i class="bi bi-chat-left-dots"></i> Recomendación</a>
+          <a class="btn btn-outline-success" href="{{ url_for('admin.crear_huerto') }}"><i class="bi bi-tree-fill"></i> Huerto</a>
+          <a class="btn btn-outline-warning" href="{{ url_for('admin.crear_bodega') }}"><i class="bi bi-plus-circle"></i> Bodega</a>
+          <a class="btn btn-outline-success" href="{{ url_for('admin.listar_bodegas') }}"><i class="bi bi-box-seam"></i> Ver Bodegas</a>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Sección vertical: Técnicos y Recomendaciones -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header bg-light"><strong><i class="bi bi-people"></i> Técnicos</strong></div>
+          <ul class="list-group list-group-flush">
+            {% for t in tecnicos %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ t.name }} <span class="badge bg-success">ID {{ t.id }}</span>
+              </li>
+            {% else %}
+              <li class="list-group-item text-muted">No hay técnicos.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header bg-light"><strong><i class="bi bi-list-check"></i> Recomendaciones</strong></div>
+          <ul class="list-group list-group-flush">
+            {% for r in ultimas_recomendaciones %}
+              <li class="list-group-item">
+                <i class="bi bi-calendar-event me-2"></i> {{ r.fecha.strftime('%d-%m-%Y') }} — {{ r.tecnico.name }}
+                <p class="mb-0">{{ r.contenido[:50] }}...</p>
+              </li>
+            {% else %}
+              <li class="list-group-item text-muted">Sin recomendaciones.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Tablas y tarjetas: Huertos y Bodegas -->
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-light"><strong><i class="bi bi-tree"></i> Huertos Registrados</strong></div>
+          <div class="table-responsive">
+            <table class="table table-striped mb-0">
+              <thead class="table-success">
+                <tr><th>Nombre</th><th>Ubicación</th><th>Superf. (ha)</th><th>Cultivo</th><th>Siembra</th><th>Técnico</th></tr>
+              </thead>
+              <tbody>
+                {% for h in huertos %}
+                <tr>
+                  <td>{{ h.nombre }}</td>
+                  <td>{{ h.ubicacion }}</td>
+                  <td>{{ h.superficie_ha }}</td>
+                  <td>{{ h.tipo_cultivo }}</td>
+                  <td>{{ h.fecha_siembra.strftime('%d-%m-%Y') }}</td>
+                  <td>{{ h.responsable.name }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted">No hay huertos.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+  
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-light"><strong><i class="bi bi-box-seam"></i> Bodegas Registradas</strong></div>
+          <div class="card-body">
+            <div class="row row-cols-1 row-cols-md-1 g-3">
+              {% for b in bodegas %}
+              <div class="col">
+                <div class="card border-success h-100">
+                  <div class="card-body d-flex flex-column justify-content-between">
+                    <div>
+                      <h5><i class="bi bi-house-door-fill me-2"></i> {{ b.nombre }}</h5>
+                      <p class="mb-1"><strong>Huerto:</strong> {{ b.huerto.nombre if b.huerto else '—' }}</p>
+                      <p class="mb-1"><strong>Ubicación:</strong> {{ b.ubicacion or '—' }}</p>
+                      <p class="mb-0"><strong>Resp.:</strong> {{ b.responsable.name if b.responsable else '—' }}</p>
+                    </div>
+                    <a href="{{ url_for('admin.ver_quimicos', bodega_id=b.id) }}" class="btn btn-outline-success mt-3">Ver químicos</a>
+                  </div>
+                </div>
+              </div>
+              {% else %}
+              <div class="col"><div class="alert alert-info text-center mb-0">No hay bodegas.</div></div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  
+  </div>
+  {% endblock %}
+  
+
+     

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Administrativo{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header con usuario y notificaciones -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="text-success"><i class="bi bi-person-circle"></i> {{ current_user.name }}</h2>
+      <small class="text-muted">Rol: {{ current_user.role|capitalize }}</small>
+    </div>
+    {% if notificaciones %}
+    <a href="#" class="btn btn-light position-relative" title="Ver notificaciones">
+      <i class="bi bi-bell-fill fs-4 text-success"></i>
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+        {{ notificaciones|length }}
+      </span>
+    </a>
+    {% endif %}
+  </div>
+
+  {% if current_user.role == 'admin' %}
+
+  <!-- Estadísticas generales -->
+  <div class="row g-3 mb-4">
+    {% set stats = [
+      {'icon':'person-lines-fill','count': tecnicos|length, 'label':'Técnicos','color':'primary'},
+      {'icon':'tree-fill','count': huertos|length,       'label':'Huertos','color':'success'},
+      {'icon':'box-seam','count': bodegas|length,       'label':'Bodegas','color':'warning'},
+      {'icon':'calendar-check','count': ultimas_recomendaciones|length,'label':'Reco.','color':'secondary'}
+    ] %}
+    {% for item in stats %}
+    <div class="col-md-3">
+      <div class="card text-white bg-{{ item.color }} shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-{{ item.icon }} fs-1 me-3"></i>
+          <div>
+            <h3 class="mb-0">{{ item.count }}</h3>
+            <small>{{ item.label }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Acciones rápidas -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light"><strong><i class="bi bi-gear-fill"></i> Acciones Rápidas</strong></div>
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-primary" href="{{ url_for('admin.crear_tecnico') }}"><i class="bi bi-person-plus"></i> Nuevo Técnico</a>
+        <a class="btn btn-outline-warning" href="{{ url_for('admin.recomendar') }}"><i class="bi bi-chat-left-dots"></i> Nueva Recomendación</a>
+        <a class="btn btn-outline-success" href="{{ url_for('admin.crear_huerto') }}"><i class="bi bi-tree-fill"></i> Nuevo Huerto</a>
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin.crear_bodega') }}"><i class="bi bi-plus-circle"></i> Nueva Bodega</a>
+        <a class="btn btn-outline-success" href="{{ url_for('admin.listar_bodegas') }}"><i class="bi bi-box-seam"></i> Ver Bodegas</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección: Técnicos -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light"><strong><i class="bi bi-people"></i> Técnicos Registrados</strong></div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-primary">
+          <tr><th>Nombre</th><th>Email</th><th>ID</th><th>Fecha Creación</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+          {% for t in tecnicos %}
+          <tr>
+            <td>{{ t.name }}</td>
+            <td><a href="mailto:{{ t.email }}">{{ t.email }}</a></td>
+            <td>{{ t.id }}</td>
+            <td>{{ t.created_at.strftime('%d-%m-%Y') }}</td>
+            <td>
+              <a href="{{ url_for('admin.ver_tecnico', tecnico_id=t.id) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i> Ver</a>
+              <a href="{{ url_for('admin.editar_tecnico', tecnico_id=t.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Editar</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-muted">No hay técnicos registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sección: Recomendaciones -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light"><strong><i class="bi bi-list-check"></i> Últimas Recomendaciones</strong></div>
+    <ul class="list-group list-group-flush">
+      {% for r in ultimas_recomendaciones %}
+      <li class="list-group-item">
+        <div class="d-flex justify-content-between">
+          <div><i class="bi bi-calendar-event me-2"></i><strong>{{ r.fecha.strftime('%d-%m-%Y') }}</strong> by {{ r.tecnico.name }}</div>
+          <small class="text-muted">Huerto: {{ r.huerto.nombre if r.huerto else '—' }}</small>
+        </div>
+        <p class="mb-1">{{ r.contenido }}</p>
+      </li>
+      {% else %}
+      <li class="list-group-item text-center text-muted">Sin recomendaciones recientes.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Sección: Huertos -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light"><strong><i class="bi bi-tree"></i> Huertos Registrados</strong></div>
+    <div class="table-responsive">
+      <table class="table table-striped mb-0">
+        <thead class="table-success">
+          <tr><th>Nombre</th><th>Ubicación</th><th>Superf. (ha)</th><th>Cultivo</th><th>Siembra</th><th>Técnico Asignado</th></tr>
+        </thead>
+        <tbody>
+          {% for h in huertos %}
+          <tr>
+            <td>{{ h.nombre }}</td>
+            <td>{{ h.ubicacion }}</td>
+            <td>{{ h.superficie_ha }}</td>
+            <td>{{ h.tipo_cultivo }}</td>
+            <td>{{ h.fecha_siembra.strftime('%d-%m-%Y') }}</td>
+            <td><a href="mailto:{{ h.responsable.email }}">{{ h.responsable.name }}</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-center text-muted">No hay huertos registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sección: Bodegas -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light"><strong><i class="bi bi-box-seam"></i> Bodegas Registradas</strong></div>
+    <div class="card-body">
+      <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for b in bodegas %}
+        <div class="col">
+          <div class="card border-success h-100 shadow-sm">
+            <div class="card-body">
+              <h5><i class="bi bi-house-door-fill me-2"></i>{{ b.nombre }}</h5>
+              <p class="mb-1"><strong>Huerto:</strong> {{ b.huerto.nombre if b.huerto else '—' }}</p>
+              <p class="mb-1"><strong>Ubicación:</strong> {{ b.ubicacion or '—' }}</p>
+              <p class="mb-1"><strong>Responsable:</strong> <a href="mailto:{{ b.responsable.email }}">{{ b.responsable.name }}</a></p>
+              <p class="mb-0"><strong>Creada:</strong> {{ b.created_at.strftime('%d-%m-%Y') }}</p>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+              <a href="{{ url_for('admin.ver_quimicos', bodega_id=b.id) }}" class="btn btn-outline-success btn-sm">Ver químicos</a>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="col"><div class="alert alert-info text-center mb-0">No hay bodegas registradas.</div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+{% endblock %}

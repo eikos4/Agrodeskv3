@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Recomendaciones{% endblock %}
+
+{% block content %}
+<!-- Mensaje de bienvenida -->
+<div class="alert alert-info text-center mb-4">
+  <h4>Bienvenido a AgroCloud</h4>
+  <p>El INGENIERO AGRONOMO, <strong>{{ current_user.creador.name }}</strong>, te estará acompañando con sugerencias para tu cosecha.</p>
+
+  {% if current_user.created_by %}
+  
+  {% else %}
+    <p>Este perfil no tiene un administrador asignado.</p>
+  {% endif %}
+
+</div>
+
+<h2 class="text-success mb-4"><i class="bi bi-journal-text"></i> Recomendaciones Técnicas Asignadas</h2>
+
+<!-- Mostrar Huertos Asignados -->
+
+<div class="alert alert-success shadow-sm d-flex align-items-center mb-4">
+  <i class="bi bi-megaphone fs-3 me-3"></i>
+  <div>
+    <h5 class="mb-1">Instrucciones Técnicas</h5>
+    <p class="mb-0">Tu ingeniero agrónomo ha enviado las siguientes recomendaciones para tu gestión de campo.</p>
+  </div>
+</div>
+
+<h4 class="text-success mb-3"><i class="bi bi-tree"></i> Mis Huertos</h4>
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+  {% for h in huertos %}
+  <div class="col">
+    <div class="card border-success h-100 shadow-sm">
+      <div class="card-header bg-success text-white">
+        <h5 class="card-title mb-0"><i class="bi bi-tree-fill"></i> {{ h.nombre }}</h5>
+      </div>
+      <div class="card-body">
+        <p><i class="bi bi-geo-alt-fill text-success"></i> <strong>Ubicación:</strong> {{ h.ubicacion }}</p>
+        <p><i class="bi bi-flower2 text-success"></i> <strong>Cultivo:</strong> {{ h.tipo_cultivo }}</p>
+        <p><i class="bi bi-rulers text-success"></i> <strong>Superficie:</strong> {{ h.superficie_ha }} ha</p>
+        <p><i class="bi bi-calendar-check text-success"></i> <strong>Siembra:</strong> {{ h.fecha_siembra.strftime('%d-%m-%Y') }}</p>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12">
+    <div class="alert alert-info text-center">
+      <i class="bi bi-info-circle"></i> No tienes huertos asignados aún.
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Recomendaciones Recientes -->
+<h4 class="text-success mb-3 mt-5"><i class="bi bi-clipboard-check"></i> Recomendaciones Recientes</h4>
+<div class="list-group shadow-sm">
+  {% for r in recomendaciones %}
+  <div class="list-group-item list-group-item-action border-start border-success border-4">
+    <div class="d-flex w-100 justify-content-between">
+      <h6 class="mb-1"><i class="bi bi-calendar-event text-success"></i> {{ r.fecha.strftime('%d-%m-%Y') }}</h6>
+      {% if r.autor %}
+      <small class="text-muted">Emitida por: {{ r.autor.name }}</small>
+      {% endif %}
+    </div>
+    <p class="mb-1">📌 {{ r.contenido }}</p>
+  </div>
+  {% else %}
+  <div class="list-group-item text-muted text-center">No tienes recomendaciones aún.</div>
+  {% endfor %}
+</div>
+
+<!-- Bodegas Asignadas -->
+<div class="container mt-4">
+  <h2 class="text-success mb-4"><i class="bi bi-box-seam"></i> Bodegas Registradas</h2>
+
+  <div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for bodega in bodegas %}
+    <div class="col">
+      <div class="card border-success shadow-sm h-100">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-house-door-fill"></i> {{ bodega.nombre }}</strong>
+          <small>{{ bodega.huerto.nombre }}</small>
+        </div>
+        <div class="card-body">
+          <p><i class="bi bi-geo-alt-fill text-success"></i> <strong>Ubicación:</strong> {{ bodega.ubicacion or "No especificada" }}</p>
+          <p><i class="bi bi-person-circle text-success"></i> <strong>Responsable:</strong> {{ bodega.responsable.name if bodega.responsable else 'Sin asignar' }}</p>
+          <a href="{{ url_for('admin.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-success btn-sm mt-2">
+            {# <a href="{{ url_for('admin.ver_quimicos', bodega_id=bodega.id) }}">Ver químicos</a> #}
+          </a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> No hay bodegas registradas aún.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<h4 class="text-success mb-3"><i class="bi bi-tree"></i> Mis Huertos Asignados</h4>
+<div class="row row-cols-1 row-cols-md-2 g-4">
+  {% for huerto in huertos %}
+    <div class="col">
+      <div class="card border-info shadow-sm h-100">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-tree-fill"></i> {{ huerto.nombre }}</h5>
+        </div>
+        <div class="card-body">
+          <p><i class="bi bi-geo-alt-fill text-info"></i> <strong>Ubicación:</strong> {{ huerto.ubicacion }}</p>
+          <p><i class="bi bi-flower2 text-info"></i> <strong>Cultivo:</strong> {{ huerto.tipo_cultivo }}</p>
+          <p><i class="bi bi-rulers text-info"></i> <strong>Superficie:</strong> {{ huerto.superficie_ha }} ha</p>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> No tienes huertos asignados aún.
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Mostrar Bodegas Asignadas -->
+<div class="row row-cols-1 row-cols-md-2 g-4">
+  {% for bodega in bodegas %}
+    <div class="col">
+      <div class="card border-info shadow-sm h-100">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-house-door-fill"></i> {{ bodega.nombre }}</h5>
+        </div>
+        <div class="card-body">
+          <p><i class="bi bi-geo-alt-fill text-info"></i> <strong>Ubicación:</strong> {{ bodega.ubicacion or "No especificada" }}</p>
+          <p><i class="bi bi-person-circle text-info"></i> <strong>Responsable:</strong> {{ bodega.responsable.name if bodega.responsable else 'Sin asignar' }}</p>
+          
+          <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-info btn-sm mt-2">
+            Ver químicos
+          </a>
+          <!-- Botón Agregar Químico -->
+          <a href="{{ url_for('tecnico.agregar_quimico', bodega_id=bodega.id) }}" class="btn btn-outline-success btn-sm mt-2">
+            Agregar Químico
+          </a>
+          
+          <!-- Sección para mostrar los químicos asociados -->
+          <hr>
+          <h6 class="mt-2">Químicos registrados:</h6>
+          {% if bodega.quimicos %}
+            <ul class="list-unstyled mb-0">
+              {% for quimico in bodega.quimicos %}
+                <li>
+                  <strong>{{ quimico.nombre }}</strong> - {{ quimico.tipo }} - {{ quimico.cantidad_litros }} l
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No hay químicos registrados.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> No tienes bodegas asignadas aún.
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Sección para mostrar los químicos asociados en una tabla -->
+<hr>
+<h6 class="mt-2">Químicos registrados:</h6>
+{% if bodega.quimicos %}
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped table-sm mb-0">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Cantidad (l)</th>
+          <th>Fecha Ingreso</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for quimico in bodega.quimicos %}
+        <tr>
+          <td>{{ quimico.nombre }}</td>
+          <td>{{ quimico.tipo }}</td>
+          <td>{{ quimico.cantidad_litros }}</td>
+          <td>
+            {% if quimico.fecha_ingreso %}
+              {{ quimico.fecha_ingreso.strftime('%d-%m-%Y') }}
+            {% else %}
+              No especificada
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('tecnico.editar_quimico', quimico_id=quimico.id) }}" class="btn btn-outline-secondary btn-sm">
+              Editar
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="text-muted mb-0">No hay químicos registrados.</p>
+{% endif %}
+
+
+<!-- Mostrar Recomendaciones -->
+<h4 class="text-success mb-3 mt-5"><i class="bi bi-file-earmark-text"></i> Recomendaciones Recientes</h4>
+<div class="row row-cols-1 row-cols-md-2 g-4">
+  {% for r in recomendaciones %}
+    <div class="col">
+      <div class="card border-success shadow-sm h-100">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-calendar-event"></i> {{ r.fecha.strftime('%d-%m-%Y') }}</span>
+          {% if r.categoria %}
+            <span class="badge bg-light text-success">{{ r.categoria }}</span>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <h5 class="card-title"><i class="bi bi-file-earmark-text"></i> Instrucción</h5>
+          <p class="card-text">{{ r.contenido }}</p>
+
+          <hr>
+          {% if r.autor %}
+            <p class="mb-1"><i class="bi bi-person-circle"></i> Emitida por: <strong>{{ r.autor.name }}</strong></p>
+          {% endif %}
+
+          {% if r.estado %}
+            <p><i class="bi bi-check2-circle"></i> Estado: 
+              {% if r.estado == 'pendiente' %}
+                <span class="badge bg-warning text-dark">Pendiente</span>
+              {% else %}
+                <span class="badge bg-success">Aplicada</span>
+              {% endif %}
+            </p>
+          {% endif %}
+
+          {% if r.adjunto %}
+            <p><i class="bi bi-paperclip"></i> <a href="{{ url_for('static', filename='adjuntos/' + r.adjunto) }}" target="_blank">Ver archivo adjunto</a></p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> No tienes recomendaciones asignadas aún.
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Funcionalidad de actualización entre Administrador y Técnico -->
+{% if current_user.role == 'admin' %}
+  <!-- Mostrar botón para actualizar estado de la recomendación -->
+  <div class="mt-4">
+    <h5 class="text-info">Actualización de Recomendación</h5>
+    <p>Como administrador, puedes actualizar el estado de las recomendaciones de los técnicos.</p>
+    <form method="POST" action="{{ url_for('admin.actualizar_recomendacion', recomendacion_id=r.id) }}">
+      <select name="estado" class="form-select">
+        <option value="pendiente" {% if r.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+        <option value="aplicada" {% if r.estado == 'aplicada' %}selected{% endif %}>Aplicada</option>
+      </select>
+      <button type="submit" class="btn btn-outline-success btn-sm mt-2">Actualizar Estado</button>
+    </form>
+  </div>
+{% endif %}
+
+</div>
+{% endblock %}

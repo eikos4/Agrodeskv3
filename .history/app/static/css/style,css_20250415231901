@@ -1,0 +1,90 @@
+/* Colores base y tipografía */
+body {
+    background-color: #f4fdf6;
+  }
+  
+  /* Sección Hero */
+  .hero {
+    background: linear-gradient(120deg, #388e3c, #66bb6a);
+    color: white;
+    padding: 100px 0;
+    text-align: center;
+    animation: fadeIn 1.5s ease-in;
+  }
+  
+  /* Botones personalizados */
+  .btn-agro {
+    background-color: #43a047;
+    color: white;
+    transition: 0.3s;
+  }
+  .btn-agro:hover {
+    background-color: #2e7d32;
+  }
+  
+  /* Íconos de características */
+  .feature-icon {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    font-size: 3rem;
+    padding: 20px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-bottom: 15px;
+    transition: transform 0.3s;
+  }
+  .feature-icon:hover {
+    transform: scale(1.1);
+  }
+  
+  /* Carousel */
+  .carousel img {
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+  
+  /* Animación */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  /* Tarjetas de características */
+  .feature-card {
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 12px;
+    padding: 30px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  }
+  .feature-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px rgba(0, 128, 0, 0.15);
+  }
+  
+  /* Sección Hero Estática */
+  .hero-static {
+    /* Si usas Jinja en CSS, considera mover este bloque al template */
+    background: url('{{ url_for('static', filename='fondo8.jpeg') }}') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 600px;
+    position: relative;
+  }
+  .hero-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+  .hero-container {
+    position: relative;
+    z-index: 2;
+    min-height: 600px;
+  }
+  .hero-content {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+  }
+  

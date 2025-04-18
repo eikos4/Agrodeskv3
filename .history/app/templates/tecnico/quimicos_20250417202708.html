@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Químicos - {{ bodega.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="text-success mb-4"><i class="bi bi-beaker"></i> Químicos en {{ bodega.nombre }}</h2>
+
+  {% if quimicos %}
+  <div class="table-responsive">
+    <table class="table table-bordered shadow-sm">
+      <thead class="table-success">
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Descripción</th>
+          <th>Cantidad (L)</th>
+          <th>Fecha Ingreso</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in quimicos %}
+        <tr>
+          <td>{{ q.nombre }}</td>
+          <td>{{ q.tipo }}</td>
+          <td>{{ q.descripcion }}</td>
+          <td>{{ q.cantidad_litros }}</td>
+          <td>{{ q.fecha_ingreso.strftime('%d-%m-%Y') if q.fecha_ingreso else '—' }}</td>
+          <td>
+            <a href="{{ url_for('tecnico.editar_quimico', quimico_id=q.id) }}" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-pencil"></i> Editar
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info">No hay químicos registrados en esta bodega.</div>
+  {% endif %}
+
+  <a href="{{ url_for('tecnico.ver_recomendaciones') }}" class="btn btn-outline-secondary mt-3">
+    <i class="bi bi-arrow-left"></i> Volver
+  </a>
+</div>
+{% endblock %}

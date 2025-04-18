@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Mis Bodegas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="text-success mb-4"><i class="bi bi-box-seam"></i> Bodegas a mi cargo</h2>
+
+  <div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for bodega in bodegas %}
+    <div class="col">
+      <div class="card border-success shadow-sm h-100">
+        <div class="card-header bg-success text-white">
+          <strong><i class="bi bi-house-door-fill"></i> {{ bodega.nombre }}</strong>
+        </div>
+        <div class="card-body">
+          <p><i class="bi bi-tree-fill text-success"></i> <strong>Huerto:</strong> {{ bodega.huerto.nombre }}</p>
+          <p><i class="bi bi-geo-alt-fill text-success"></i> <strong>Ubicación:</strong> {{ bodega.ubicacion }}</p>
+          
+          <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-success btn-sm mt-2">
+            <i class="bi bi-flask"></i> Ver Químicos
+          </a>
+          <a href="{{ url_for('tecnico.agregar_quimico', bodega_id=bodega.id) }}" class="btn btn-outline-primary btn-sm mt-2">
+            <i class="bi bi-plus-circle"></i> Agregar Químico
+          </a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> No tienes bodegas asignadas aún.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

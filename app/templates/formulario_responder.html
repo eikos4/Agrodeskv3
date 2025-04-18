@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Responder Formulario{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4 text-success"><i class="bi bi-journal-check"></i> Formulario de Tarea</h2>
+  <p class="text-muted">{{ formulario_tarea.descripcion }}</p>
+
+  <form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="row g-4">
+      {% for item in form.items %}
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">{{ item.descripcion.data }}</h5>
+            <div class="form-check">
+              {{ item.realizado(class="form-check-input") }}
+              <label class="form-check-label">Marcar como realizado</label>
+            </div>
+            <div class="mt-2">
+              {{ item.comentario.label(class="form-label") }}
+              {{ item.comentario(class="form-control", rows="2") }}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-4 text-center">
+      {{ form.submit(class="btn btn-success btn-lg px-5") }}
+    </div>
+  </form>
+</div>
+{% endblock %}

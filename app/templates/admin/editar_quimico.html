@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Editar Químico{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2>Editar Químico: {{ quimico.nombre }}</h2>
+  <form method="post">
+    <div class="mb-3">
+      <label>Nombre</label>
+      <input type="text" name="nombre" class="form-control" value="{{ quimico.nombre }}" required>
+    </div>
+    <div class="mb-3">
+      <label>Tipo</label>
+      <input type="text" name="tipo" class="form-control" value="{{ quimico.tipo }}">
+    </div>
+    <div class="mb-3">
+      <label>Descripción</label>
+      <textarea name="descripcion" class="form-control">{{ quimico.descripcion }}</textarea>
+    </div>
+    <div class="mb-3">
+      <label>Cantidad (Litros)</label>
+      <input type="number" name="cantidad_litros" step="0.01" class="form-control" value="{{ quimico.cantidad_litros }}">
+    </div>
+    <button class="btn btn-success">Guardar Cambios</button>
+    <a href="{{ url_for('admin.ver_quimicos', bodega_id=quimico.bodega_id) }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}
