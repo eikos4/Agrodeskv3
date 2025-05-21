@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Página no encontrada{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+  <h1 class="display-4 text-danger"><i class="bi bi-exclamation-triangle-fill"></i> 404</h1>
+  <p class="lead">Lo sentimos, la página que buscas murio en germinació</p>
+  <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">Volver al login</a>
+
+</div>
+{% endblock %}

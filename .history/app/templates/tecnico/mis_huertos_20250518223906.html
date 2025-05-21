@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Mis Huertos{% endblock %}
+{% block content %}
+<div class="container py-4">
+
+  <h2 class="mb-4 text-success">
+    <i class="bi bi-tree-fill"></i> Mis Huertos
+  </h2>
+  {% if huertos|length == 1 %}
+    <!-- Destaca el único huerto asignado -->
+    {% set h = huertos[0] %}
+    <div class="row mb-5">
+      <div class="col-12">
+        <div class="card shadow-lg border-success position-relative" style="min-height: 340px;">
+          <span class="position-absolute top-0 end-0 badge bg-primary fs-6 me-3 mt-3 shadow">ID {{ h.id }}</span>
+          <div class="card-header bg-success text-white">
+            <i class="bi bi-tree-fill"></i> {{ h.nombre }} <span class="badge bg-light text-success ms-2">Principal</span>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <p class="mb-1"><strong>Ubicación:</strong> {{ h.ubicacion or "—" }}</p>
+                <p class="mb-1"><strong>Superficie:</strong> {{ h.superficie_ha }} ha</p>
+                <p class="mb-1"><strong>Cultivo:</strong> {{ h.tipo_cultivo or "—" }}</p>
+                <p class="mb-1"><strong>Siembra:</strong> {{ h.fecha_siembra.strftime('%d-%m-%Y') if h.fecha_siembra else "—" }}</p>
+              </div>
+              <div class="col-md-6 mb-2">
+                <p class="mb-1"><strong>Bodegas:</strong>
+                  <span class="badge bg-warning text-dark">{{ h.bodegas|length }}</span>
+                </p>
+                <p class="mb-1"><strong>Actividades:</strong>
+                  <span class="badge bg-info">{{ h.actividades|length }}</span>
+                </p>
+                {% if h.actividades %}
+                  {% set last_act = h.actividades|sort(attribute='fecha')|last %}
+                  <p class="mb-1"><strong>Última actividad:</strong>
+                    <span class="text-muted">{{ last_act.tipo|capitalize }} el {{ last_act.fecha.strftime('%d-%m-%Y') }}</span>
+                  </p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-end">
+            <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" class="btn btn-outline-success btn-lg">
+              <i class="bi bi-journal-text"></i> Bitácora
+            </a>
+            <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn btn-outline-info btn-lg">
+              <i class="bi bi-plus-lg"></i> Nueva Actividad
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% elif huertos %}
+    <!-- Cards para múltiples huertos -->
+    <div class="row g-4">
+      {% for h in huertos %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card shadow-lg h-100 border-success position-relative">
+          <span class="position-absolute top-0 end-0 badge bg-primary fs-6 me-3 mt-3 shadow">ID {{ h.id }}</span>
+          <div class="card-header bg-success text-white">
+            <i class="bi bi-tree-fill"></i> {{ h.nombre }}
+          </div>
+          <div class="card-body">
+            <p><strong>Ubicación:</strong> {{ h.ubicacion or "—" }}</p>
+            <p><strong>Superficie:</strong> {{ h.superficie_ha }} ha</p>
+            <p><strong>Cultivo:</strong> {{ h.tipo_cultivo or "—" }}</p>
+            <p><strong>Siembra:</strong> {{ h.fecha_siembra.strftime('%d-%m-%Y') if h.fecha_siembra else "—" }}</p>
+            <p><strong>Bodegas:</strong> <span class="badge bg-warning text-dark">{{ h.bodegas|length }}</span></p>
+            <p><strong>Actividades:</strong> <span class="badge bg-info">{{ h.actividades|length }}</span></p>
+            {% if h.actividades %}
+              {% set last_act = h.actividades|sort(attribute='fecha')|last %}
+              <p><strong>Última actividad:</strong>
+                <span class="text-muted">{{ last_act.tipo|capitalize }} el {{ last_act.fecha.strftime('%d-%m-%Y') }}</span>
+              </p>
+            {% endif %}
+          </div>
+          <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-end">
+            <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" class="btn btn-outline-success btn-sm">
+              <i class="bi bi-journal-text"></i> Bitácora
+            </a>
+            <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn btn-outline-info btn-sm">
+              <i class="bi bi-plus-lg"></i> Nueva Actividad
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info text-center mb-0">No tienes huertos asignados.</div>
+  {% endif %}
+
+</div>
+{% endblock %}

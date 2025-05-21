@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Detalle Actividad{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-3 text-success"><i class="bi bi-file-earmark-text"></i> Detalle de Actividad</h2>
+  <div class="card shadow">
+    <div class="card-header bg-light">
+      <strong>{{ actividad.tipo|capitalize }}</strong> | {{ actividad.fecha.strftime('%d-%m-%Y') }}
+    </div>
+    <div class="card-body">
+      <p><strong>Descripción:</strong> {{ actividad.descripcion }}</p>
+      <p><strong>Responsable:</strong> {{ actividad.responsable }}</p>
+      {% if actividad.plaga %}
+      <p><strong>Plaga/Enfermedad:</strong> {{ actividad.plaga }}</p>
+      {% endif %}
+      {% if actividad.nivel_infestacion %}
+      <p><strong>Nivel de infestación:</strong> {{ actividad.nivel_infestacion }}</p>
+      {% endif %}
+      {% if actividad.producto %}
+      <p><strong>Producto aplicado:</strong> {{ actividad.producto }}</p>
+      {% endif %}
+      {% if actividad.dosis %}
+      <p><strong>Dosis aplicada:</strong> {{ actividad.dosis }}</p>
+      {% endif %}
+      {% if actividad.resultado %}
+      <p><strong>Resultado / Seguimiento:</strong> {{ actividad.resultado }}</p>
+      {% endif %}
+      {% if actividad.fotos %}
+      <p><strong>Fotos:</strong><br>
+        <img src="{{ url_for('static', filename='uploads/' ~ actividad.fotos) }}" alt="Foto Actividad" class="img-fluid rounded" style="max-width: 250px;">
+      </p>
+      {% endif %}
+      {% if actividad.observaciones %}
+      <p><strong>Observaciones:</strong> {{ actividad.observaciones }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="mt-4">
+    <a href="{{ url_for('admin.bitacora_huerto', huerto_id=actividad.huerto.id) }}" class="btn btn-secondary">Volver a bitácora</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Mis Recomendaciones{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-3 text-success"><i class="bi bi-chat-dots"></i> Mis Recomendaciones</h2>
+  <ul class="list-group list-group-flush">
+    {% for r in recomendaciones %}
+    <li class="list-group-item">
+      <span class="text-primary"><i class="bi bi-calendar-event"></i> {{ r.fecha.strftime('%d-%m-%Y') }}</span>
+      <div><strong>Autor:</strong> {{ r.autor.name if r.autor else 'Admin' }}</div>
+      <div>{{ r.contenido }}</div>
+      {% if r.categoria %}
+        <small class="badge bg-info">{{ r.categoria }}</small>
+      {% endif %}
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted text-center">No tienes recomendaciones asignadas.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

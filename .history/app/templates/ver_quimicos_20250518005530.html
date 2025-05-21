@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Químicos en Bodega {{ bodega.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4 text-success">
+    <i class="bi bi-flask"></i> Químicos en Bodega <strong>{{ bodega.nombre }}</strong>
+  </h2>
+  <p class="mb-3"><i class="bi bi-geo-alt"></i> <strong>Ubicación:</strong> {{ bodega.ubicacion or "—" }}</p>
+  <p class="mb-3"><i class="bi bi-house-door"></i> <strong>Huerto:</strong> {{ bodega.huerto.nombre }}</p>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead class="table-success">
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Descripción</th>
+          <th>Cantidad (L)</th>
+          <th>Fecha Ingreso</th>
+          {% if es_admin %}
+            <th>Acciones</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in quimicos %}
+        <tr>
+          <td>{{ q.nombre }}</td>
+          <td>{{ q.tipo }}</td>
+          <td>{{ q.descripcion or "—" }}</td>
+          <td>{{ q.cantidad_litros }}</td>
+          <td>{{ q.fecha_ingreso.strftime('%d-%m-%Y') if q.fecha_ingreso else "—" }}</td>
+          {% if es_admin %}
+            <td>
+              <a href="{{ url_for('admin.editar_quimico', quimico_id=q.id) }}" class="btn btn-outline-info btn-sm">Editar</a>
+              <!-- Puedes agregar eliminar, etc -->
+            </td>
+          {% endif %}
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="{{ 6 if es_admin else 5 }}" class="text-center text-muted">No hay químicos registrados en esta bodega.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-3">
+    {% if es_admin %}
+      <a href="{{ url_for('admin.agregar_quimico', bodega_id=bodega.id) }}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Agregar Químico
+      </a>
+    {% else %}
+      <a href="{{ url_for('tecnico.agregar_quimico', bodega_id=bodega.id) }}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Agregar Químico
+      </a>
+    {% endif %}
+    <a href="{{ request.referrer or url_for('main.index') }}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+</div>
+{% endblock %}

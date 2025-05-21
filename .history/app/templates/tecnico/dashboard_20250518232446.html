@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Nuevo Huerto{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow border-0">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0"><i class="bi bi-tree-fill me-2"></i> Registrar Nuevo Huerto</h4>
+        </div>
+        <div class="card-body">
+          <form method="POST" autocomplete="off">
+            {{ form.hidden_tag() }}
+            <div class="row g-3">
+              <div class="col-md-6">
+                {{ form.nombre.label(class="form-label") }}
+                {{ form.nombre(class="form-control", placeholder="Nombre del huerto") }}
+                {% if form.nombre.errors %}
+                  <div class="invalid-feedback d-block">{{ form.nombre.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                {{ form.ubicacion.label(class="form-label") }}
+                {{ form.ubicacion(class="form-control", placeholder="Ubicación (campo, sector, etc.)") }}
+                {% if form.ubicacion.errors %}
+                  <div class="invalid-feedback d-block">{{ form.ubicacion.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="row g-3 mt-2">
+              <div class="col-md-4">
+                {{ form.superficie_ha.label(class="form-label") }}
+                {{ form.superficie_ha(class="form-control", placeholder="Ej: 1.5") }}
+                {% if form.superficie_ha.errors %}
+                  <div class="invalid-feedback d-block">{{ form.superficie_ha.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                {{ form.tipo_cultivo.label(class="form-label") }}
+                {{ form.tipo_cultivo(class="form-control", placeholder="Ej: Avellano europeo") }}
+                {% if form.tipo_cultivo.errors %}
+                  <div class="invalid-feedback d-block">{{ form.tipo_cultivo.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                {{ form.fecha_siembra.label(class="form-label") }}
+                {{ form.fecha_siembra(class="form-control", type="date") }}
+                {% if form.fecha_siembra.errors %}
+                  <div class="invalid-feedback d-block">{{ form.fecha_siembra.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="mb-3 mt-2">
+              {{ form.responsable_id.label(class="form-label") }}
+              {{ form.responsable_id(class="form-select") }}
+              {% if form.responsable_id.errors %}
+                <div class="invalid-feedback d-block">{{ form.responsable_id.errors[0] }}</div>
+              {% endif %}
+            </div>
+            <div class="d-flex gap-2 mt-4 justify-content-end">
+              <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Cancelar
+              </a>
+              {{ form.submit(class="btn btn-success px-4") }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

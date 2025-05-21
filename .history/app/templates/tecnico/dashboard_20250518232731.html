@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Panel Técnico{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Bienvenida -->
+  <div class="alert alert-success shadow-sm d-flex align-items-center mb-4">
+    <i class="bi bi-person-circle fs-2 me-3"></i>
+    <div>
+      <h4 class="mb-1">¡Hola, {{ current_user.name }}!</h4>
+      <div class="text-muted">Panel Técnico — Gestión de Huertos y Bodegas</div>
+    </div>
+  </div>
+
+  <!-- Panel Resumen -->
+  <div class="row mb-4 g-3">
+    <div class="col-6 col-md-4">
+      <div class="card text-white bg-success shadow h-100">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-tree-fill fs-1 me-3"></i>
+          <div>
+            <h3 class="mb-0">{{ huertos|length }}</h3>
+            <div>Huertos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="card text-white bg-warning shadow h-100">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-box-seam fs-1 me-3"></i>
+          <div>
+            <h3 class="mb-0">{{ bodegas|length }}</h3>
+            <div>Bodegas</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card text-white bg-info shadow h-100">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-clipboard-check fs-1 me-3"></i>
+          <div>
+            <h3 class="mb-0">{{ recomendaciones|length }}</h3>
+            <div>Recomendaciones</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mis Huertos -->
+  <h3 class="text-success mb-3 mt-5"><i class="bi bi-tree"></i> Mis Huertos Asignados</h3>
+  <div class="row g-4">
+    {% for h in huertos %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card border-success h-100 shadow-sm position-relative">
+        <span class="position-absolute top-0 end-0 badge bg-primary fs-6 me-3 mt-3">ID {{ h.id }}</span>
+        <div class="card-header bg-success text-white">
+          <i class="bi bi-tree-fill"></i> {{ h.nombre }}
+        </div>
+        <div class="card-body">
+          <p><i class="bi bi-geo-alt-fill text-success"></i> <strong>Ubicación:</strong> {{ h.ubicacion or "—" }}</p>
+          <p><i class="bi bi-flower2 text-success"></i> <strong>Cultivo:</strong> {{ h.tipo_cultivo or "—" }}</p>
+          <p><i class="bi bi-rulers text-success"></i> <strong>Superficie:</strong> {{ h.superficie_ha }} ha</p>
+          <p><i class="bi bi-calendar-check text-success"></i> <strong>Siembra:</strong> {{ h.fecha_siembra.strftime('%d-%m-%Y') if h.fecha_siembra else "—" }}</p>
+        </div>
+        <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-end">
+          <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-journal-text"></i> Bitácora
+          </a>
+          <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-plus-lg"></i> Nueva Actividad
+          </a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> No tienes huertos asignados aún.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Recomendaciones Recientes -->
+  <h3 class="text-success mb-3 mt-5"><i class="bi bi-clipboard-check"></i> Recomendaciones Recientes</h3>
+  <div class="list-group shadow-sm mb-4">
+    {% for r in recomendaciones %}
+    <div class="list-group-item list-group-item-action border-start border-success border-4">
+      <div class="d-flex w-100 justify-content-between">
+        <h6 class="mb-1">
+          <i class="bi bi-calendar-event text-success"></i> {{ r.fecha.strftime('%d-%m-%Y') }}
+        </h6>
+        {% if r.autor %}
+          <small class="text-muted">Emitida por: {{ r.autor.name }}</small>
+        {% endif %}
+      </div>
+      <p class="mb-1">📌 {{ r.contenido }}</p>
+    </div>
+    {% else %}
+    <div class="list-group-item text-muted text-center">No tienes recomendaciones aún.</div>
+    {% endfor %}
+  </div>
+
+  <!-- Bodegas Asignadas -->
+  <h3 class="text-success mb-3 mt-5"><i class="bi bi-box-seam"></i> Mis Bodegas Asignadass</h3>
+  <div class="row g-4">
+    {% for bodega in bodegas %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card border-success shadow-sm h-100 position-relative">
+        <span class="position-absolute top-0 end-0 badge bg-primary fs-6 me-3 mt-3">ID {{ bodega.id }}</span>
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-house-door-fill"></i> {{ bodega.nombre }}</strong>
+          <small>{{ bodega.huerto.nombre if bodega.huerto else "Sin huerto" }}</small>
+        </div>
+        <div class="card-body">
+          <p><i class="bi bi-geo-alt-fill text-success"></i> <strong>Ubicación:</strong> {{ bodega.ubicacion or "No especificada" }}</p>
+          <p><i class="bi bi-person-circle text-success"></i> <strong>Responsable:</strong> {{ bodega.responsable.name if bodega.responsable else 'Sin asignar' }}</p>
+          <p><i class="bi bi-flask text-info"></i> <strong>Químicos:</strong>
+            <span class="badge bg-info">{{ bodega.quimicos|length }}</span>
+          </p>
+        </div>
+        <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-end">
+          <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-flask"></i> Ver Químicos
+          </a>
+          <a href="{{ url_for('tecnico.agregar_quimico', bodega_id=bodega.id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-plus-circle"></i> Agregar Químico
+          </a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> No tienes bodegas asignadas aún.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

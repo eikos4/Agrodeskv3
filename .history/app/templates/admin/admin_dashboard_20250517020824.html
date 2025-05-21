@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Administrativo{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Título del panel -->
+  <h2 class="mb-4 text-success">
+    <i class="bi bi-person-circle"></i> Bienvenido, {{ current_user.name }}
+  </h2>
+  <p class="text-muted">Panel principal — Rol: <strong>{{ current_user.role|capitalize }}</strong></p>
+
+  {% if notificaciones %}
+  <!-- Notificaciones -->
+  <div class="alert alert-light border-start border-4 border-success shadow-sm mb-4">
+    <h5><i class="bi bi-bell-fill text-success"></i> Notificaciones</h5>
+    <ul class="mb-0 ps-3">
+      {% for n in notificaciones %}
+        <li><strong>{{ n.titulo }}</strong> — {{ n.mensaje }} <small class="text-muted">({{ n.fecha.strftime('%d-%m-%Y') }})</small></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if current_user.role == 'admin' %}
+  <!-- Estadísticas generales -->
+  <div class="row g-3 mb-4">
+    {% set stats = [
+      {'icon':'person-lines-fill','count': tecnicos|length, 'label':'Técnicos','color':'primary'},
+      {'icon':'tree-fill','count': huertos|length,       'label':'Huertos','color':'success'},
+      {'icon':'box-seam','count': bodegas|length,       'label':'Bodegas','color':'warning'},
+      {'icon':'list-check','count': ultimas_recomendaciones|length,'label':'Reco.','color':'secondary'}
+    ] %}
+    {% for item in stats %}
+    <div class="col-md-3">
+      <div class="card text-white bg-{{ item.color }} shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-{{ item.icon }} fs-1 me-3"></i>
+          <div>
+            <h3 class="mb-0">{{ item.count }}</h3>
+            <small>{{ item.label }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Acciones rápidas -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light"><strong><i class="bi bi-gear-fill"></i> Acciones Rápidas</strong></div>
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-primary" href="{{ url_for('admin.crear_tecnico') }}"><i class="bi bi-person-plus"></i> Técnico</a>
+        <a class="btn btn-outline-warning" href="{{ url_for('admin.recomendar') }}"><i class="bi bi-chat-left-dots"></i> Recomendación</a>
+        <a class="btn btn-outline-success" href="{{ url_for('admin.crear_huerto') }}"><i class="bi bi-tree-fill"></i> Huerto</a>
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin.crear_bodega') }}"><i class="bi bi-plus-circle"></i> Bodega</a>
+        <a class="btn btn-outline-success" href="{{ url_for('admin.listar_bodegas') }}"><i class="bi bi-box-seam"></i> Ver Bodegas</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección: Técnicos y Recomendaciones -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="card h-100 shadow-sm">
+        <div class="card-header bg-light"><strong><i class="bi bi-people"></i> Técnicos</strong></div>
+        <ul class="list-group list-group-flush">
+          {% for t in tecnicos %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="mb-1">{{ t.name }}</h6>
+                <p class="mb-1">
+                  <i class="bi bi-envelope-fill"></i>
+                  <a href="mailto:{{ t.email }}">{{ t.email }}</a>
+                </p>
+                <p class="mb-1">
+                  <i class="bi bi-person-badge-fill"></i>
+                  Usuario: {{ t.name|lower|replace(' ', '.') }}
+                </p>
+                <p class="mb-0">
+                  <i class="bi bi-lock-fill"></i>
+                  Contraseña: ****** 
+                  <a href="{{ url_for('admin.reset_password', tecnico_id=t.id) }}" class="ms-2 btn btn-sm btn-outline-info">
+                    <i class="bi bi-arrow-clockwise"></i> Reset
+                  </a>
+                </p>
+              </div>
+              <span class="badge bg-success align-self-center">ID {{ t.id }}</span>
+            </div>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">No hay técnicos registrados.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100 shadow-sm">
+        <div class="card-header bg-light"><strong><i class="bi bi-list-check"></i> Recomendaciones</strong></div>
+        <ul class="list-group list-group-flush">
+          {% for r in ultimas_recomendaciones %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <i class="bi bi-calendar-event me-2"></i>
+                <strong>{{ r.fecha.strftime('%d-%m-%Y') }}</strong> — {{ r.tecnico.name }}
+                <span class="ms-3 text-muted">Huerto: {{ r.huerto.nombre if r.huerto else '—' }}</span>
+                <p class="mb-0">{{ r.contenido }}</p>
+              </div>
+              <div>
+                <a href="{{ url_for('admin.actualizar_recomendacion', recomendacion_id=r.id) }}" class="btn btn-sm btn-outline-info" title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{{ url_for('admin.historial_recomendaciones', tecnico_id=r.tecnico.id) }}" class="btn btn-sm btn-outline-secondary" title="Historial técnico">
+                  <i class="bi bi-clock-history"></i>
+                </a>
+              </div>
+            </div>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">No hay recomendaciones.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección: Huertos Registrados Mejorada -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <div>
+        <strong><i class="bi bi-tree"></i> Vista Global de Huertos</strong>
+        <span class="badge bg-success ms-2">{{ huertos|length }} huertos</span>
+      </div>
+      <!-- Filtros rápidos -->
+      <form class="d-flex gap-2" method="get" action="">
+        <select name="tecnico_id" class="form-select form-select-sm">
+          <option value="">Todos los técnicos</option>
+          {% for t in tecnicos %}
+            <option value="{{ t.id }}" {% if request.args.get('tecnico_id', type=int) == t.id %}selected{% endif %}>
+              {{ t.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <select name="tipo_cultivo" class="form-select form-select-sm">
+          <option value="">Todos los cultivos</option>
+          {% for tipo in tipos_cultivo %}
+            <option value="{{ tipo }}" {% if request.args.get('tipo_cultivo') == tipo %}selected{% endif %}>
+              {{ tipo }}
+            </option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-outline-primary btn-sm">Filtrar</button>
+      </form>
+    </div>
+    <div class="table-responsive">
+      <table id="tablaHuertos" class="table table-striped table-bordered align-middle">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Ubicación</th>
+            <th>Superf. (ha)</th>
+            <th>Cultivo</th>
+            <th>Siembra</th>
+            <th>Técnico</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in huertos %}
+          <tr>
+            <td>{{ h.nombre }}</td>
+            <td>{{ h.ubicacion }}</td>
+            <td>{{ h.superficie_ha }}</td>
+            <td>{{ h.tipo_cultivo }}</td>
+            <td>{{ h.fecha_siembra.strftime('%d-%m-%Y') }}</td>
+            <td>{{ h.responsable.name }}</td>
+            <td>
+              <a href="{{ url_for('admin.ver_huerto', huerto_id=h.id) }}" class="btn btn-sm btn-outline-success" title="Ver detalles">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('admin.editar_huerto', huerto_id=h.id) }}" class="btn btn-sm btn-outline-primary" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sección: Bodegas Registradas -->
+  <div class="row g-4">
+    <div class="col-lg-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light"><strong><i class="bi bi-box-seam"></i> Bodegas Registradas</strong></div>
+        <div class="card-body">
+          <div class="row row-cols-1 g-3">
+            {% for b in bodegas %}
+            <div class="col">
+              <div class="card border-success h-100">
+                <div class="card-body d-flex flex-column justify-content-between">
+                  <div>
+                    <h5><i class="bi bi-house-door-fill me-2"></i>{{ b.nombre }}</h5>
+                    <p class="mb-1"><strong>Huerto:</strong> {{ b.huerto.nombre if b.huerto else '—' }}</p>
+                    <p class="mb-1"><strong>Ubicación:</strong> {{ b.ubicacion or '—' }}</p>
+                    <p class="mb-0"><strong>Resp.:</strong> {{ b.responsable.name if b.responsable else '—' }}</p>
+                  </div>
+                  <a href="{{ url_for('admin.ver_quimicos', bodega_id=b.id) }}" class="btn btn-outline-success mt-3">Ver químicos</a>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <div class="col"><div class="alert alert-info text-center mb-0">No hay bodegas.</div></div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <!-- DataTables CSS y JS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      $('#tablaHuertos').DataTable({
+        pageLength: 10,
+        lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
+        language: {
+          url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+        }
+      });
+    });
+  </script>
+{% endblock %}

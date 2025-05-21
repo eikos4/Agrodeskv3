@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Bitácora de Actividades - {{ huerto.nombre }}{% endblock %}
+{% block content %}
+<div class="container my-5">
+  <div class="d-flex flex-wrap align-items-center mb-4 gap-3">
+    <h2 class="mb-0 text-success"><i class="bi bi-journal-text"></i> Bitácora: <span class="fw-bold">{{ huerto.nombre }}</span></h2>
+    <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=huerto.id) }}" class="btn btn-success ms-auto">
+      <i class="bi bi-plus-circle"></i> Nueva Actividad
+    </a>
+  </div>
+
+  <form method="get" class="row align-items-end mb-4 g-2">
+    <div class="col-md-3">
+      <label class="form-label fw-bold mb-0" for="filtro_anio"><i class="bi bi-calendar-range"></i> Año</label>
+      <select name="anio" id="filtro_anio" class="form-select">
+        <option value="">Todos</option>
+        {% for anio in lista_anios %}
+          <option value="{{ anio }}" {% if anio==anio_seleccionado %}selected{% endif %}>{{ anio }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-bold mb-0" for="filtro_tipo"><i class="bi bi-tag"></i> Tipo</label>
+      <select name="tipo" id="filtro_tipo" class="form-select">
+        <option value="">Todos</option>
+        <option value="control_plagas" {% if tipo_seleccionado=='control_plagas' %}selected{% endif %}>Control de Plagas</option>
+        <option value="poda" {% if tipo_seleccionado=='poda' %}selected{% endif %}>Poda</option>
+        <option value="riego" {% if tipo_seleccionado=='riego' %}selected{% endif %}>Riego</option>
+        <option value="fertilizacion" {% if tipo_seleccionado=='fertilizacion' %}selected{% endif %}>Fertilización</option>
+        <option value="cosecha" {% if tipo_seleccionado=='cosecha' %}selected{% endif %}>Cosecha</option>
+        <option value="otra" {% if tipo_seleccionado=='otra' %}selected{% endif %}>Otra</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-outline-success w-100"><i class="bi bi-funnel"></i> Filtrar</button>
+    </div>
+  </form>
+
+  <!-- Línea de tiempo PRO -->
+  <ul class="timeline-actividades">
+    {% for actividad in actividades %}
+      <li class="animate__animated animate__fadeInUp">
+        <div class="card shadow border-0 mb-4">
+          <div class="card-header d-flex align-items-center gap-3" style="background: #f7faf7;">
+            <span class="badge
+              {% if actividad.tipo == 'control_plagas' %}bg-danger
+              {% elif actividad.tipo == 'poda' %}bg-success
+              {% elif actividad.tipo == 'riego' %}bg-primary
+              {% elif actividad.tipo == 'fertilizacion' %}bg-warning text-dark
+              {% elif actividad.tipo == 'cosecha' %}bg-info text-dark
+              {% else %}bg-secondary{% endif %}
+              fs-6 px-3 py-2">
+              <i class="
+                {% if actividad.tipo == 'control_plagas' %}bi-bug
+                {% elif actividad.tipo == 'poda' %}bi-scissors
+                {% elif actividad.tipo == 'riego' %}bi-droplet
+                {% elif actividad.tipo == 'fertilizacion' %}bi-flower2
+                {% elif actividad.tipo == 'cosecha' %}bi-basket
+                {% else %}bi-gear{% endif %}
+                me-1"></i>
+              {{ actividad.tipo|capitalize }}
+            </span>
+            <span class="text-muted small">
+              <i class="bi bi-calendar-event"></i>
+              {{ actividad.fecha.strftime('%d-%m-%Y') }}
+            </span>
+          </div>
+          <div class="card-body py-3">
+            <p class="mb-2">
+              {{ actividad.descripcion[:120] }}{% if actividad.descripcion|length > 120 %}...{% endif %}
+            </p>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <span class="badge bg-light text-muted">
+                <i class="bi bi-person"></i> Responsable: {{ actividad.responsable or "Sin especificar" }}
+              </span>
+              <a href="{{ url_for('tecnico.detalle_actividad', actividad_id=actividad.id) }}" class="btn btn-outline-info btn-sm ms-auto">
+                <i class="bi bi-eye"></i> Ver detalle
+              </a>
+            </div>
+          </div>
+        </div>
+      </li>
+    {% else %}
+      <li>
+        <div class="alert alert-info text-center my-5">
+          <i class="bi bi-info-circle"></i>
+          No hay actividades registradas para este filtro.
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- Línea de tiempo moderna -->
+<style>
+.timeline-actividades { 
+  list-style: none; 
+  padding-left: 0; 
+  margin-left: 1rem;
+  position: relative;
+}
+.timeline-actividades li { 
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+.timeline-actividades li:before {
+  content: '';
+  position: absolute;
+  left: -1.5rem;
+  top: 18px;
+  width: 12px;
+  height: 12px;
+  background: #28a745;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 3px #e5ffe5;
+  z-index: 2;
+  transition: background 0.2s;
+}
+.timeline-actividades li:last-child:before { background: #bdbdbd; }
+.timeline-actividades::before {
+  content: '';
+  position: absolute;
+  left: -1rem;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #c8e6c9;
+  border-radius: 2px;
+  z-index: 1;
+}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+{% endblock %}

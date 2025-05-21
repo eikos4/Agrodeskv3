@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Iniciar Sesión | AgroCloud{% endblock %}
+
+{% block content %}
+<style>
+  body {
+    background: url('/static/fondo8.jpg') no-repeat center center fixed;
+    background-size: cover;
+  }
+
+
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 30px rgba(0,0,0,0.1);
+    animation: fadeInUp 0.9s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .left-banner {
+    background-color: rgba(46, 125, 50, 0.9);
+    color: white;
+    border-radius: 1rem 0 0 1rem;
+    padding: 2rem;
+  }
+</style>
+
+<div class="row justify-content-center align-items-center" style="min-height: 90vh;">
+  <div class="col-md-10">
+    <div class="card glass-card border-0">
+      <div class="row g-0">
+        <!-- Información agronómica -->
+        <div class="col-md-6 left-banner d-flex flex-column justify-content-center">
+          <h3 class="fw-bold">🌱 Bienvenido a AgroSMART</h3>
+          <p class="mt-3">
+            Si eres un <strong>técnico agrónomo</strong>, recuerda revisar tus <u>recomendaciones personalizadas</u> sobre:
+          </p>
+          <ul>
+            <li>✔️ Manejo de plagas</li>
+            <li>✔️ Fertilización y riego</li>
+            <li>✔️ Actividades de cultivo</li>
+          </ul>
+          <p class="mt-4"><em>MESA DE AYUDA: soporte@agroSMART.com</em></p>
+         
+        </div>
+
+        <!-- Formulario -->
+        <div class="col-md-6 p-5">
+          <h4 class="text-success mb-4 text-center"><i class="bi bi-box-arrow-in-right"></i> Iniciar sesión</h4>
+          <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.email.label(class="form-label") }}
+              {{ form.email(class="form-control", placeholder="Correo electrónico o usuario") }}
+            </div>
+            <div class="mb-3">
+              {{ form.password.label(class="form-label") }}
+              {{ form.password(class="form-control", placeholder="Contraseña") }}
+            </div>
+            {{ form.submit(class="btn btn-agro w-100") }}
+          </form>
+          <p class="text-center mt-3 text-muted small">
+            Acceso exclusivo para clientes registrados. 
+          </p>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

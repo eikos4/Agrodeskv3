@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Mis Huertos{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4 text-success"><i class="bi bi-tree-fill"></i> Mis Huertos</h2>
+  <div class="row g-4">
+    {% for h in huertos %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card shadow-lg h-100 border-success">
+        <div class="card-header bg-success text-white">
+          <i class="bi bi-tree-fill"></i> {{ h.nombre }}
+        </div>
+        <div class="card-body">
+          <p><strong>Ubicación:</strong> {{ h.ubicacion or "—" }}</p>
+          <p><strong>Superficie:</strong> {{ h.superficie_ha }} ha</p>
+          <p><strong>Cultivo:</strong> {{ h.tipo_cultivo or "—" }}</p>
+          <p><strong>Siembra:</strong> {{ h.fecha_siembra.strftime('%d-%m-%Y') if h.fecha_siembra else "—" }}</p>
+        </div>
+        <div class="card-footer bg-light d-flex flex-wrap gap-2">
+          <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" class="btn btn-outline-success btn-sm"><i class="bi bi-journal-text"></i> Bitácora</a>
+          <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn btn-outline-info btn-sm"><i class="bi bi-plus-lg"></i> Nueva Actividad</a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center mb-0">No tienes huertos asignados.</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
