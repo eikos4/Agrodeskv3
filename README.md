@@ -1,6 +1,6 @@
-# 🌿 AgroCLOUD
+# 🌿 AgroDESK
 
-**AgroCLOUD** es un sistema web de gestión agrícola diseñado para ingenieros agrónomos, técnicos y administradores de campo. La plataforma permite registrar, visualizar y administrar información sobre huertos, bodegas, químicos y recomendaciones técnicas, optimizando las operaciones en terreno.
+**AgroDESK** es un sistema web de gestión agrícola diseñado para ingenieros agrónomos, técnicos y administradores de campo. La plataforma permite registrar, visualizar y administrar información sobre huertos, bodegas, químicos y recomendaciones técnicas, optimizando las operaciones en terreno.
 
 ---
 
@@ -87,10 +87,10 @@ flask run
 
 ## 📸 Capturas de pantalla (opcional)
 
-_Añade imágenes de tu sistema aquí para mostrar la interfaz_
+_Añadir imágenes del sistema mostrar la interfaz_
 
 ---
 
 ## 📄 Licencia
 
-MIT © 2025 — AgroCLOUD
+MIT © 2025 — AgroDESK
