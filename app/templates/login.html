@@ -1,145 +1,309 @@
 {% extends "base.html" %}
-{% block title %}Iniciar Sesión | AgroSMART{% endblock %}
+{% block title %}Iniciar Sesión | AgroDESK{% endblock %}
 
 {% block content %}
+{% set _bg = url_for('static', filename='fondo8.jpg') %}
+
 <style>
-  body {
-    background: url('/static/fondo8.jpg') no-repeat center center fixed;
-    background-size: cover;
-    min-height: 100vh;
+  :root{
+    /* Tema oscuro por defecto */
+    --ink:#e9f5ef; --muted:#b8cac5; --stroke:rgba(255,255,255,.12);
+    --success:#198754; --olive:#7b904b; --gold:#c4b95f;
+    --card-bg: rgba(13,25,22,.90);
+    --field-bg:#0f1a18; --field-bd:#2e463f; --field-focus:#8bc28a;
+    --fab-bg:#0f1a18; --fab-bd:#2e463f;
+    --agrobot-bg: rgba(33,57,49,.70); --agrobot-bd:#28463e; --agrobot-ink:#cae5dc;
+    --overlay-radial: radial-gradient(60% 50% at 50% 25%, rgba(11,25,21,.10) 0%, rgba(8,20,18,.55) 55%, rgba(6,18,16,.90) 100%);
+    --overlay-linear: linear-gradient(180deg, rgba(10,24,22,.25) 0%, rgba(10,24,22,.85) 70%, rgba(10,24,22,.95) 100%);
+  }
+  /* Tema claro */
+  :root[data-theme="light"]{
+    --ink:#0f1a18; --muted:#4b6660; --stroke:rgba(0,0,0,.10);
+    --card-bg: rgba(255,255,255,.92);
+    --field-bg:#ffffff; --field-bd:#cfdad6; --field-focus:#7bb07a;
+    --fab-bg:#ffffff; --fab-bd:#cfdad6;
+    --agrobot-bg: rgba(227,242,234,.95); --agrobot-bd:#cfe8d8; --agrobot-ink:#184b3b;
+    --overlay-radial: radial-gradient(60% 50% at 50% 25%, rgba(255,255,255,.10) 0%, rgba(255,255,255,.30) 50%, rgba(255,255,255,.55) 100%);
+    --overlay-linear: linear-gradient(180deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.25) 60%, rgba(255,255,255,.35) 100%);
   }
 
-  .glass-card {
-    background: rgba(231, 236, 239, 0.88); /* gris humo, con glass */
-    border-radius: 1rem;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 6px 32px rgba(16, 74, 87, 0.12); /* azul petróleo muy suave */
-    animation: fadeInUp 0.8s;
+  /* ===== Hero de fondo ===== */
+  .auth-hero{ position: fixed; inset:0; overflow:hidden; z-index:0; }
+  .auth-hero .layer-img{
+    position:absolute; inset:0;
+    background: url('{{ _bg }}') center/cover no-repeat fixed;
+    filter:saturate(.95) contrast(.98); opacity:.85; transition: opacity .6s ease;
+  }
+  .auth-hero .layer-grad{ position:absolute; inset:0; background: var(--overlay-radial), var(--overlay-linear); pointer-events:none; }
+  .auth-hero .layer-dots{
+    position:absolute; inset:-20%;
+    background-image:url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='2' fill='%23ffffff10'/%3E%3C/svg%3E");
+    animation: floatDots 45s linear infinite; opacity:.35; pointer-events:none;
+  }
+  @keyframes floatDots { from{ transform:translateY(0)} to{ transform:translateY(-10%)} }
+
+  /* ===== Layout ===== */
+  .auth-wrap{ position: relative; z-index:1; min-height: 100vh; display:grid; place-items:center; padding: clamp(1rem, 3vw, 2rem); }
+  .auth-card{
+    width:100%; max-width: 520px; background: var(--card-bg); border:1px solid var(--stroke);
+    border-radius: 1rem; box-shadow: 0 24px 64px rgba(0,0,0,.45); overflow:hidden; animation: rise .6s ease both;
+  }
+  @keyframes rise { from{opacity:0; transform: translateY(18px)} to{opacity:1; transform:none} }
+
+  /* Brand bar + Theme switch */
+  .brand-bar{
+    background: linear-gradient(90deg, var(--olive) 0%, var(--gold) 100%); color:#0f1a18;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.9rem 1.1rem; font-weight:800; letter-spacing:.4px; position:relative; overflow:hidden;
+  }
+  .brand-bar::after{
+    content:""; position:absolute; inset:0; background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.35) 25%, transparent 50%);
+    transform: translateX(-100%); animation: shimmer 5s infinite; mix-blend-mode: soft-light;
+  }
+  @keyframes shimmer { 0%{transform:translateX(-100%)} 60%{transform:translateX(100%)} 100%{transform:translateX(100%)} }
+  .theme-btn{ border:1px solid var(--stroke); background: transparent; color: #0f1a18; padding:.25rem .55rem; border-radius:.55rem; }
+
+  /* AgroBot */
+  .agrobot{ border-left:4px solid var(--success); background: var(--agrobot-bg); border:1px solid var(--agrobot-bd); color: var(--agrobot-ink);
+    border-radius:.9rem; padding:.8rem .9rem; margin: .9rem .9rem 0; }
+  .agrobot-avatar{ width:40px; height:40px; border-radius:50%; background:#e8f5ee; color:var(--success);
+    display:grid; place-items:center; font-size:1.25rem; box-shadow: inset 0 0 0 2px #c5ecd4; }
+  .agrobot-fab{
+    position: fixed; right: 1rem; bottom: 1rem; z-index: 1050;
+    background:var(--fab-bg); color:var(--ink); border:1px solid var(--fab-bd);
+    border-radius:999px; padding:.55rem .8rem; display:inline-flex; align-items:center; gap:.5rem;
+    box-shadow:0 12px 36px rgba(0,0,0,.35);
   }
 
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(40px);}
-    to { opacity: 1; transform: translateY(0);}
-  }
+  /* Cuerpo */
+  .auth-body{ padding: .9rem .9rem 1.2rem; }
+  .auth-title{ color:var(--ink); font-weight:800; letter-spacing:.2px; margin: .6rem .2rem .2rem; }
+  .auth-sub{ color:var(--muted); margin: 0 .2rem 1rem; font-size:.92rem; }
 
-  .left-banner {
-    background: linear-gradient(120deg, #104a57 70%, #7b904b 100%);
-    color: #fffbe6;
-    border-radius: 1rem 0 0 1rem;
-    padding: 2rem 2.2rem;
-    min-height: 350px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .left-banner h3 {
-    color: #c4b95f; /* oro */
-    letter-spacing: 1px;
-    font-weight: bold;
-  }
-  .left-banner ul {
-    list-style: none;
-    padding-left: 0;
-  }
-  .left-banner ul li {
-    margin-bottom: 0.5rem;
-    font-size: 1.07rem;
-    position: relative;
-    padding-left: 1.4em;
-  }
-  .left-banner ul li::before {
-    content: "★";
-    color: #c4b95f;
-    font-size: 1em;
-    position: absolute;
-    left: 0;
-    top: 0.05em;
-  }
-  .left-banner em {
-    color: #f0e9c1;
-    font-size: 0.95rem;
-  }
+  /* Campos */
+  .form-floating>.form-control{ background:var(--field-bg); color:var(--ink); border:1px solid var(--field-bd); height:3.2rem; }
+  .form-floating>.form-control:focus{ border-color:var(--field-focus); box-shadow:0 0 0 .2rem color-mix(in srgb, var(--field-focus) 18%, transparent); }
+  .form-floating>label{ color:color-mix(in srgb, var(--muted) 78%, white 22%); }
+  .input-icon{ position:absolute; right:.9rem; top:50%; transform:translateY(-50%); color:color-mix(in srgb, var(--muted) 70%, white 30%); cursor:pointer; user-select:none; }
+  .hint{ color:var(--muted); font-size:.8rem; margin: .25rem .1rem 0; }
 
-  .login-title {
-    color: #104a57;
-    font-weight: 700;
+  /* Botón */
+  .btn-agro{
+    background: linear-gradient(90deg, var(--olive) 0%, var(--gold) 100%); color:#0f1a18; font-weight:800; letter-spacing:.4px; border:none;
+    box-shadow: 0 10px 28px rgba(196,185,95,.2); height: 2.9rem;
   }
-  .form-label {
-    color: #104a57;
-    font-weight: 500;
-  }
-  .form-control {
-    border-radius: 0.75rem;
-    border: 1.5px solid #c4b95f;
-    transition: border 0.2s;
-  }
-  .form-control:focus {
-    border-color: #104a57;
-    box-shadow: 0 0 4px #c4b95f30;
-  }
-  .btn-agro {
-    background: linear-gradient(90deg, #c4b95f 0%, #7b904b 100%);
-    color: #104a57;
-    font-weight: bold;
-    border-radius: 0.7rem;
-    border: none;
-    letter-spacing: 1px;
-    box-shadow: 0 2px 10px #104a5740;
-    transition: background 0.2s;
-  }
-  .btn-agro:hover {
-    background: linear-gradient(90deg, #7b904b 0%, #c4b95f 100%);
-    color: #fff;
-  }
+  .btn-agro:hover{ filter:brightness(1.02); }
+  .btn-agro .spinner-border{ --bs-spinner-width:1.2rem; --bs-spinner-height:1.2rem; }
 
-  @media (max-width: 991px) {
-    .left-banner {
-      border-radius: 1rem 1rem 0 0;
-      min-height: unset;
-    }
+  /* Flash */
+  .auth-flash{ padding: .6rem .9rem 0; }
+  .auth-flash .alert{ border-radius:.65rem; padding:.55rem .75rem; }
+
+  @media (prefers-reduced-motion: reduce){
+    .auth-hero .layer-img{ transition:none !important; }
+    .auth-card{ animation:none !important; }
+    .brand-bar::after{ animation:none !important; opacity:.25; }
   }
 </style>
 
+<div class="auth-hero" aria-hidden="true">
+  <div class="layer-img" id="bgImg"></div>
+  <div class="layer-grad"></div>
+  <div class="layer-dots"></div>
+</div>
 
-<div class="row justify-content-center align-items-center" style="min-height: 95vh;">
-  <div class="col-md-10">
-    <div class="card glass-card border-0">
-      <div class="row g-0">
-        <!-- Banner informativo -->
-        <div class="col-md-6 left-banner">
-          <h3>Bienvenido a AgroSMART</h3>
-          <p class="mt-3 mb-2">
-            <b>Accede a tu gestión agrícola digital:</b>
-          </p>
-          <ul>
-            <li>Control de plagas y seguimiento de cultivos</li>
-            <li>Recomendaciones técnicas personalizadas</li>
-            <li>Registro fácil de actividades y recursos</li>
-          </ul>
-          <p class="mt-3"><em>Soporte técnico: <a href="mailto:soporte@agrosmart.com" class="text-warning text-decoration-underline">soporte@agrosmart.com</a></em></p>
-        </div>
+<div class="auth-wrap">
+  <div class="auth-card">
 
-        <!-- Formulario de login -->
-        <div class="col-md-6 p-5 d-flex flex-column justify-content-center">
-          <h4 class="login-title text-center mb-4"><i class="bi bi-box-arrow-in-right"></i> Iniciar sesión</h4>
-          <form method="POST" autocomplete="off">
-            {{ form.hidden_tag() }}
-            <div class="mb-3">
-              {{ form.email.label(class="form-label") }}
-              {{ form.email(class="form-control", placeholder="Correo electrónico o usuario") }}
-            </div>
-            <div class="mb-3">
-              {{ form.password.label(class="form-label") }}
-              {{ form.password(class="form-control", placeholder="Contraseña") }}
-            </div>
-            {{ form.submit(class="btn btn-agro w-100") }}
-          </form>
-          <p class="text-center mt-3 text-muted small mb-0">
-            Acceso exclusivo para personal autorizado. 
-          </p>
+    <div class="brand-bar">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-cloud"></i> Agro <b>DESK</b>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <small class="fw-semibold">Acceso</small>
+        <button id="themeToggle" type="button" class="theme-btn" title="Cambiar tema">
+          <i id="themeIcon" class="bi"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- AgroBot (ocultable) -->
+    <div id="agrobotBox" class="agrobot">
+      <div class="d-flex align-items-start gap-3">
+        <div class="agrobot-avatar">🤖</div>
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-start">
+            <strong>AgroBot</strong>
+            <button id="hideAgrobotBtn" class="btn btn-sm btn-outline-success py-0 px-2">Ocultar</button>
+          </div>
+          <div class="small" id="agrobotTip">
+            Te acompaño con <b>alertas</b>, <b>recomendaciones</b> y <b>atajos</b> para cuidar tu campo.
+          </div>
         </div>
       </div>
     </div>
+
+    <div class="auth-body">
+      <!-- Flash -->
+      <div class="auth-flash">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <h5 class="auth-title"><i class="bi bi-box-arrow-in-right me-1"></i> Inicia sesión</h5>
+      <div class="auth-sub">Usa tu correo y tu contraseña corporativa.</div>
+
+      <form method="POST" id="loginForm" autocomplete="off" novalidate>
+        {{ form.hidden_tag() }}
+
+      <div class="form-floating mb-3 position-relative">
+  {{ form.empresa(class="form-select", id="empresaInput") }}
+  <label for="empresaInput">Empresa</label>
+  {% if form.empresa.errors %}
+    <div class="text-danger small mt-1">{{ form.empresa.errors[0] }}</div>
+  {% else %}
+    <div class="hint">Selecciona tu empresa o consultora</div>
+  {% endif %}
+</div>
+
+
+
+        <div class="form-floating mb-3 position-relative">
+          {{ form.email(class="form-control", id="emailInput", placeholder="nombre@agro.cl", autocomplete="username") }}
+          <label for="emailInput">Correo electrónico</label>
+          {% if form.email.errors %}
+            <div class="text-danger small mt-1">{{ form.email.errors[0] }}</div>
+          {% else %}
+            <div class="hint">Ej: empresa@agrodesk.cl</div>
+          {% endif %}
+        </div>
+
+        <div class="form-floating mb-2 position-relative">
+          {{ form.password(class="form-control", id=form.password.id, placeholder="••••••••", autocomplete="current-password", type="password") }}
+          <label for="{{ form.password.id }}">Contraseña</label>
+          <span id="togglePwd" class="input-icon" role="button" aria-label="Mostrar contraseña" aria-pressed="false">
+            <i class="bi bi-eye"></i>
+          </span>
+        </div>
+        <div class="form-check mb-3">
+  {{ form.remember(class="form-check-input", id="rememberCheck") }}
+  <label class="form-check-label" for="rememberCheck">Recordarme</label>
+</div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="hint" id="capsHint" style="display:none;"><i class="bi bi-exclamation-triangle"></i> Bloq Mayús activo</div>
+          {% if form.password.errors %}
+            <div class="text-danger small ms-auto">{{ form.password.errors[0] }}</div>
+          {% else %}
+            <div class="hint ms-auto">Manténla privada.</div>
+          {% endif %}
+        </div>
+
+        <button id="submitBtn" class="btn btn-agro w-100 d-inline-flex align-items-center justify-content-center gap-2">
+          <span id="submitText"><i class="bi bi-lock-fill"></i> Iniciar sesión</span>
+          <span id="submitSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+        </button>
+
+      
+      </form>
+    </div>
   </div>
 </div>
+
+<!-- FAB para reabrir AgroBot -->
+<button id="showAgrobotBtn" type="button" class="agrobot-fab d-none"
+        aria-controls="agrobotBox" aria-expanded="false" aria-label="Mostrar AgroBot">
+  <i class="bi bi-robot"></i> AgroBot
+</button>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function(){
+  /* ===== Preload fondo ===== */
+  const bgEl = document.getElementById('bgImg');
+  const preload = new Image();
+  preload.onload = ()=> bgEl.style.opacity = 1;
+  preload.src = "{{ _bg }}";
+
+  /* ===== Tema: auto por sistema + toggle persistente ===== */
+  const THEME_KEY = 'agro:theme';
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const icon = document.getElementById('themeIcon');
+
+  function applyTheme(mode){
+    if(mode === 'light'){ root.setAttribute('data-theme','light'); icon.className = 'bi bi-sun'; }
+    else if(mode === 'dark'){ root.removeAttribute('data-theme'); icon.className = 'bi bi-moon'; }
+    else {
+      // auto: respeta sistema
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      prefersLight ? root.setAttribute('data-theme','light') : root.removeAttribute('data-theme');
+      icon.className = prefersLight ? 'bi bi-sun' : 'bi bi-moon';
+    }
+  }
+  let saved = localStorage.getItem(THEME_KEY) || 'auto';
+  applyTheme(saved);
+  // escucha cambios del sistema si está en auto
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', e=>{
+    if(localStorage.getItem(THEME_KEY) === 'auto'){ applyTheme('auto'); }
+  });
+  btn?.addEventListener('click', ()=>{
+    saved = (saved === 'auto') ? 'light' : (saved === 'light') ? 'dark' : 'auto';
+    localStorage.setItem(THEME_KEY, saved);
+    applyTheme(saved);
+  });
+
+  /* ===== AgroBot persistencia ===== */
+  const KEY='agrobotHidden:login_ultra';
+  const box=document.getElementById('agrobotBox');
+  const hide=document.getElementById('hideAgrobotBtn');
+  const show=document.getElementById('showAgrobotBtn');
+  function setHidden(h){ if(!box||!show)return; box.classList.toggle('d-none',h); show.classList.toggle('d-none',!h); }
+  setHidden(localStorage.getItem(KEY)==='true');
+  hide?.addEventListener('click',()=>{localStorage.setItem(KEY,'true'); setHidden(true);});
+  show?.addEventListener('click',()=>{localStorage.setItem(KEY,'false'); setHidden(false); try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){};});
+
+  // Tips rotativos
+  const tips=[
+    "Atajos para registrar actividades en segundos.",
+    "Recomendaciones técnicas según tu realidad.",
+    "Alertas y seguimiento de plagas.",
+    "Geo y bitácora: todo en un solo lugar."
+  ];
+  const tipEl=document.getElementById('agrobotTip'); let i=0;
+  setInterval(()=>{ if(!tipEl) return; i=(i+1)%tips.length; tipEl.innerHTML=tips[i]; }, 5500);
+
+  // Toggle contraseña + CapsLock
+  const pwd=document.getElementById('{{ form.password.id }}');
+  const toggle=document.getElementById('togglePwd');
+  toggle?.addEventListener('click', ()=>{
+    if(!pwd) return;
+    const show=pwd.type==='password';
+    pwd.type = show ? 'text' : 'password';
+    toggle.setAttribute('aria-pressed', String(show));
+    toggle.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+  });
+  const capsHint=document.getElementById('capsHint');
+  pwd?.addEventListener('keyup', (e)=>{ if(!e.getModifierState) return; capsHint.style.display=e.getModifierState('CapsLock')?'':'none'; });
+
+  // Loading en submit + bloqueo doble click
+  const form=document.getElementById('loginForm');
+  const btnSubmit=document.getElementById('submitBtn');
+  const txt=document.getElementById('submitText');
+  const spn=document.getElementById('submitSpinner');
+  form?.addEventListener('submit', ()=>{ btnSubmit.disabled=true; spn.classList.remove('d-none'); txt.style.opacity=.85; });
+
+  // Autofocus email
+  document.getElementById('emailInput')?.focus();
+})();
+</script>
 {% endblock %}

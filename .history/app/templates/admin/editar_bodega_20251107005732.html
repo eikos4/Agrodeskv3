@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Editar Bodega{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow border-0" style="background-color: #F5F5DC;">
+        <div class="card-header d-flex align-items-center" style="background-color: #4CAF50; color: white;">
+          <i class="bi bi-pencil-square me-2"></i>
+          <span>Editarr Bodega</span>
+        </div>
+
+        <div class="card-body" style="color: #2F4F4F;">
+          <form method="POST" autocomplete="off">
+            {{ form.hidden_tag() }}
+
+            <div class="row g-3">
+              <!-- Nombre -->
+              <div class="col-md-6">
+                {{ form.nombre.label(class="form-label") }}
+                {{ form.nombre(class="form-control", placeholder="Ej: Bodega Central") }}
+                {% if form.nombre.errors %}
+                  <div class="form-text text-danger">{{ form.nombre.errors[0] }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Ubicación -->
+              <div class="col-md-6">
+                {{ form.ubicacion.label(class="form-label") }}
+                {{ form.ubicacion(class="form-control", placeholder="Ej: Sector Sur") }}
+                {% if form.ubicacion.errors %}
+                  <div class="form-text text-danger">{{ form.ubicacion.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+              <!-- Huerto asociado -->
+              <div class="col-md-6">
+                {{ form.huerto_id.label(class="form-label") }}
+                {{ form.huerto_id(class="form-select") }}
+                {% if form.huerto_id.errors %}
+                  <div class="form-text text-danger">{{ form.huerto_id.errors[0] }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Responsable -->
+              <div class="col-md-6">
+                {{ form.responsable_id.label(class="form-label") }}
+                {{ form.responsable_id(class="form-select") }}
+                {% if form.responsable_id.errors %}
+                  <div class="form-text text-danger">{{ form.responsable_id.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <a href="{{ url_for('admin.listar_bodegas') }}" class="btn" style="background-color: #F9A825; color: white;">
+                <i class="bi bi-arrow-left"></i> Cancelar
+              </a>
+              <button type="submit" class="btn" style="background-color: #4CAF50; color: white;">
+                <i class="bi bi-save2"></i> Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

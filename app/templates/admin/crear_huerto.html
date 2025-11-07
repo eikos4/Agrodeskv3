@@ -5,69 +5,189 @@
 <div class="container py-4">
   <div class="row justify-content-center">
     <div class="col-lg-8">
+
+      {# 🤖 AgroBot arriba — ocultable (cuando se oculta aparece botón flotante abajo) #}
+      <div id="agrobotBox" class="card shadow-sm border-0 mb-4" role="region" aria-label="Asistente AgroBot">
+        <div class="card-body d-flex flex-wrap align-items-start gap-3">
+          <i class="bi bi-robot fs-1 text-success" aria-hidden="true"></i>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+              <div>
+                <h5 class="mb-1">AgroBot — Registrar nuevo huerto</h5>
+                <p class="mb-2 text-muted small">¿Qué necesitas para crearlo correctamente?</p>
+              </div>
+              <button id="hideAgrobotBtn" type="button" class="btn btn-outline-secondary btn-sm"
+                      aria-controls="agrobotBox" aria-expanded="true">
+                <i class="bi bi-eye-slash"></i> Ocultar
+              </button>
+            </div>
+            <ul class="mb-0 small">
+              <li><b>Nombre y ubicación:</b> identifica el predio y dónde está.</li>
+              <li><b>Superficie (ha) y cultivo:</b> base para planificar labores y costos.</li>
+              <li><b>Fecha de siembra:</b> útil para fenología y trazabilidad.</li>
+              <li><b>Técnico responsable:</b> gestiona bitácora, bodegas y recomendaciones.</li>
+            </ul>
+
+            
+          </div>
+        </div>
+      </div>
+
+      {# 📋 Formulario #}
       <div class="card shadow border-0">
         <div class="card-header bg-success text-white">
           <h4 class="mb-0"><i class="bi bi-tree-fill me-2"></i> Registrar Nuevo Huerto</h4>
         </div>
         <div class="card-body">
-          <form method="POST" autocomplete="off">
+          <form method="POST" autocomplete="off" novalidate>
             {{ form.hidden_tag() }}
+
             <div class="row g-3">
               <div class="col-md-6">
-                {{ form.nombre.label(class="form-label") }}
-                {{ form.nombre(class="form-control", placeholder="Nombre del huerto") }}
+                {{ form.nombre.label(class_="form-label") }}
+                {{ form.nombre(class_="form-control", placeholder="Ej: Fundo El Maitén – Cuartel 3", autofocus=True) }}
                 {% if form.nombre.errors %}
                   <div class="invalid-feedback d-block">{{ form.nombre.errors[0] }}</div>
                 {% endif %}
               </div>
               <div class="col-md-6">
-                {{ form.ubicacion.label(class="form-label") }}
-                {{ form.ubicacion(class="form-control", placeholder="Ubicación (campo, sector, etc.)") }}
+                {{ form.ubicacion.label(class_="form-label") }}
+                {{ form.ubicacion(class_="form-control", placeholder="Comuna/sector o coordenadas") }}
                 {% if form.ubicacion.errors %}
                   <div class="invalid-feedback d-block">{{ form.ubicacion.errors[0] }}</div>
                 {% endif %}
               </div>
             </div>
+
             <div class="row g-3 mt-2">
               <div class="col-md-4">
-                {{ form.superficie_ha.label(class="form-label") }}
-                {{ form.superficie_ha(class="form-control", placeholder="Ej: 1.5") }}
+                {{ form.superficie_ha.label(class_="form-label") }}
+                {{ form.superficie_ha(class_="form-control", placeholder="Ej: 1.50", step="0.01", min="0") }}
+                <div class="form-text">Usa punto para decimales (ej. 2.75).</div>
                 {% if form.superficie_ha.errors %}
                   <div class="invalid-feedback d-block">{{ form.superficie_ha.errors[0] }}</div>
                 {% endif %}
               </div>
               <div class="col-md-4">
-                {{ form.tipo_cultivo.label(class="form-label") }}
-                {{ form.tipo_cultivo(class="form-control", placeholder="Ej: Avellano europeo") }}
+                {{ form.tipo_cultivo.label(class_="form-label") }}
+                {{ form.tipo_cultivo(class_="form-control", placeholder="Ej: Avellano europeo", list="cultivo_sugerencias") }}
+                <datalist id="cultivo_sugerencias">
+                  <option value="Avellano europeo"></option>
+                  <option value="Nogal"></option>
+                  <option value="Cerezos"></option>
+                  <option value="Manzanos"></option>
+                  <option value="Vides"></option>
+                </datalist>
                 {% if form.tipo_cultivo.errors %}
                   <div class="invalid-feedback d-block">{{ form.tipo_cultivo.errors[0] }}</div>
                 {% endif %}
               </div>
               <div class="col-md-4">
-                {{ form.fecha_siembra.label(class="form-label") }}
-                {{ form.fecha_siembra(class="form-control", type="date") }}
+                {{ form.fecha_siembra.label(class_="form-label") }}
+                {{ form.fecha_siembra(class_="form-control", type="date") }}
                 {% if form.fecha_siembra.errors %}
                   <div class="invalid-feedback d-block">{{ form.fecha_siembra.errors[0] }}</div>
                 {% endif %}
               </div>
             </div>
+
             <div class="mb-3 mt-2">
-              {{ form.responsable_id.label(class="form-label") }}
-              {{ form.responsable_id(class="form-select") }}
+              {{ form.responsable_id.label(class_="form-label") }}
+              {{ form.responsable_id(class_="form-select") }}
+              <div class="form-text">Puedes dejar “— Sin asignar —” y definirlo más tarde.</div>
               {% if form.responsable_id.errors %}
                 <div class="invalid-feedback d-block">{{ form.responsable_id.errors[0] }}</div>
               {% endif %}
             </div>
+
             <div class="d-flex gap-2 mt-4 justify-content-end">
               <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-x-circle"></i> Cancelar
               </a>
-              {{ form.submit(class="btn btn-success px-4") }}
+              {{ form.submit(class_="btn btn-success px-4") }}
             </div>
           </form>
         </div>
       </div>
+
+      <p class="text-muted small mt-3">
+        <i class="bi bi-info-circle"></i>
+        Consejo: después de crear el huerto podrás asociar <b>bodegas</b>, registrar <b>actividades</b> y enviar <b>recomendaciones</b>.
+      </p>
+
     </div>
   </div>
 </div>
+
+{# Botón flotante para reabrir AgroBot (aparece cuando está oculto) #}
+<button id="showAgrobotBtn" type="button"
+        class="btn btn-success agrobot-fab d-none"
+        aria-controls="agrobotBox" aria-expanded="false" aria-label="Mostrar AgroBot">
+  <i class="bi bi-robot"></i> AgroBot
+</button>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function(){
+  // Persistencia de AgroBot por página
+  const STORAGE_KEY = 'agrobotHidden:nuevo_huerto';
+  const banner = document.getElementById('agrobotBox');
+  const hideBtn = document.getElementById('hideAgrobotBtn');
+  const showBtn = document.getElementById('showAgrobotBtn');
+
+  function setHidden(hidden){
+    if (!banner || !showBtn) return;
+    if (hidden){
+      banner.classList.add('d-none');
+      showBtn.classList.remove('d-none');
+      showBtn.setAttribute('aria-expanded','true');
+    } else {
+      banner.classList.remove('d-none');
+      showBtn.classList.add('d-none');
+      showBtn.setAttribute('aria-expanded','false');
+    }
+  }
+
+  function applyInitial(){
+    const hidden = localStorage.getItem(STORAGE_KEY) === 'true';
+    setHidden(hidden);
+  }
+
+  hideBtn?.addEventListener('click', ()=>{
+    localStorage.setItem(STORAGE_KEY, 'true');
+    setHidden(true);
+  });
+
+  showBtn?.addEventListener('click', ()=>{
+    localStorage.setItem(STORAGE_KEY, 'false');
+    setHidden(false);
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){}
+  });
+
+  applyInitial();
+})();
+</script>
+
+<style>
+/* Botón flotante AgroBot — se muestra cuando el banner está oculto */
+.agrobot-fab{
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1050;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+}
+
+/* Ajustes tipográficos móviles para el bloque AgroBot */
+@media (max-width: 576px){
+  .card-body .fs-1{ font-size: 2rem !important; }
+  .card-body h5{ font-size: 1.05rem; }
+  .card-body p, .card-body li{ font-size: .95rem; }
+}
+</style>
 {% endblock %}

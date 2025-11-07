@@ -2,12 +2,19 @@
 {% block title %}Asignar Recomendación{% endblock %}
 
 {% block content %}
+
+<!-- Título de página -->
+  <h2 class="mb-3 text-success">
+    <i class="bi bi-box-seam"></i> Recomendación Agronomas
+  </h2>
 <div class="container py-4">
-  <div class="row justify-content-center">
-    <div class="col-lg-7">
+
+  <div class="row g-4">
+    <!-- Columna formulario -->
+    <div class="col-lg-8">
       <div class="card shadow border-0">
         <div class="card-header bg-success text-white">
-          <h4 class="mb-0"><i class="bi bi-chat-dots-fill me-2"></i> Enviar  Recomendación</h4>
+          <h4 class="mb-0"><i class="bi bi-chat-dots-fill me-2"></i> Enviar Recomendación</h4>
         </div>
         <div class="card-body">
 
@@ -52,6 +59,78 @@
         </div>
       </div>
     </div>
+
+    <!-- Columna AgroBot -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex gap-3">
+          <i class="bi bi-robot fs-1 text-success"></i>
+          <div>
+            <h5 class="mb-2">AgroBot</h5>
+            <p class="mb-2"><strong>¿Para qué sirve este módulo?</strong></p>
+            <ul class="mb-2 small">
+              <li>Enviar <b>indicaciones técnicas</b> rápidas a los técnicos en terreno.</li>
+              <li>Dejar registro por <b>fecha y responsable</b> de lo enviado.</li>
+              <li>Facilitar el <b>seguimiento</b> de acciones y decisiones agronómicas.</li>
+            </ul>
+            <p class="text-muted small mb-0">Tip: sé concreto y accionable (qué, cuándo, dosis, sector).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historial de recomendaciones -->
+  <div class="card shadow border-0 mt-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recomendaciones enviadas</h5>
+    </div>
+    <div class="card-body">
+      {% if recomendaciones %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle" id="tabla-recomendaciones">
+            <thead class="table-success">
+              <tr>
+                <th>Fecha</th>
+                <th>Técnico</th>
+                <th>Campo</th>
+                <th>Contenido</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in recomendaciones %}
+                <tr>
+                  <td>
+                    {% if r.created_at %}{{ r.created_at.strftime('%d-%m-%Y %H:%M') }}
+                    {% elif r.fecha %}{{ r.fecha.strftime('%d-%m-%Y %H:%M') }}
+                    {% else %}—{% endif %}
+                  </td>
+                  <td>{{ r.tecnico.name if r.tecnico and r.tecnico.name else (r.tecnico.username if r.tecnico else '—') }}</td>
+                  <td>{{ r.huerto.nombre if r.huerto else '—' }}</td>
+                  <td class="text-truncate" style="max-width: 420px;">{{ r.contenido }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">Aún no hay recomendaciones enviadas.</p>
+      {% endif %}
+    </div>
   </div>
 </div>
+
+<!-- Activar DataTables si está disponible -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.jQuery && $.fn.DataTable) {
+    $('#tabla-recomendaciones').DataTable({
+      order: [[0, 'desc']],
+      pageLength: 10,
+      lengthChange: false,
+      language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+  }
+});
+</script>
 {% endblock %}

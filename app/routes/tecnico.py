@@ -1,241 +1,413 @@
+# app/routes/tecnico.py
 from datetime import datetime
-from flask import Blueprint, flash, render_template, redirect, request, url_for
-from flask_login import login_required, current_user
-from app.models import Bodega, Huerto, Recomendacion, Quimico, FormularioTarea, ChecklistItem, db
-from app.forms import QuimicoForm, ResponderFormularioForm, ChecklistItemForm, RegistrarActividadForm
 from functools import wraps
 
-tecnico_bp = Blueprint('tecnico', __name__, url_prefix='/tecnico')
+from flask import Blueprint, flash, render_template, redirect, request, url_for, abort
+from flask_login import login_required, current_user
+from sqlalchemy import extract
+from sqlalchemy.orm import selectinload
 
-# === Decorador: solo técnicos pueden acceder ===
+from app.extensions import db  # 👈 DB desde extensions
+from app.models import (
+    Bodega, Huerto, Recomendacion, Quimico,
+    FormularioTarea, ChecklistItem, ActividadHuerto
+)
+from app.forms import (
+    QuimicoForm, ResponderFormularioForm, ChecklistItemForm, RegistrarActividadForm
+)
+
+tecnico_bp = Blueprint("tecnico", __name__, url_prefix="/tecnico")
+
+
+# =============== Decoradores / helpers acceso ===============
 def tecnico_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.role != 'tecnico':
+        if not current_user.is_authenticated or current_user.role != "tecnico":
             flash("Acceso solo permitido a técnicos.", "danger")
-            return redirect(url_for('auth.login'))
+            return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
     return decorated_function
 
-# === Helpers de permisos ===
-def tecnico_puede_acceder_a_bodega(bodega):
-    # Puede acceder si está asignado por relación o es responsable principal
-    return (
-        bodega in current_user.bodegas_asignadas.all() or
-        bodega.responsable_id == current_user.id
-    )
 
-def tecnico_puede_acceder_a_huerto(huerto):
-    # Acceso si está asignado al técnico o es responsable principal
-    return (
-        huerto in current_user.huertos_asignados or
-        huerto.responsable_id == current_user.id
-    )
+def _same_empresa(obj) -> bool:
+    """Chequea que el objeto pertenezca a la misma empresa del usuario."""
+    return getattr(obj, "empresa_id", None) == getattr(current_user, "empresa_id", None)
 
-# === Dashboard técnico ===
-@tecnico_bp.route('/tecnico/dashboard')
+
+def tecnico_puede_acceder_a_bodega(bodega: Bodega) -> bool:
+    """Misma empresa y (responsable == técnico) o asignado vía M2M."""
+    if not bodega or not _same_empresa(bodega):
+        return False
+    # responsable directo
+    if bodega.responsable_id == current_user.id:
+        return True
+    # asignación M2M (lazy='dynamic' → .filter()/.count() evita cargar todo)
+    try:
+        return bodega.tecnicos_asignados.filter_by(id=current_user.id).count() > 0
+    except Exception:
+        # Si la relación no es dynamic:
+        return current_user in getattr(bodega, "tecnicos_asignados", [])
+
+
+def tecnico_puede_acceder_a_huerto(huerto: Huerto) -> bool:
+    """Misma empresa y (responsable == técnico) o aparece en su lista asignada."""
+    if not huerto or not _same_empresa(huerto):
+        return False
+    if huerto.responsable_id == current_user.id:
+        return True
+    # Si mantienes una relación de asignación explícita, valida aquí.
+    try:
+        return huerto in getattr(current_user, "huertos_asignados", [])
+    except Exception:
+        return False
+
+
+def _get_huerto_or_404(huerto_id: int) -> Huerto:
+    return Huerto.query.filter_by(
+        id=huerto_id, empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+
+def _get_bodega_or_404(bodega_id: int) -> Bodega:
+    return Bodega.query.filter_by(
+        id=bodega_id, empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+
+# ================== Dashboard técnico ==================
+@tecnico_bp.route("/tecnico/dashboard")
 @login_required
 @tecnico_required
 def tecnico_dashboard():
-    # Bodegas por relación y responsabilidad
-    bodegas = list(
-        set(current_user.bodegas_asignadas.all()) |
-        set(Bodega.query.filter_by(responsable_id=current_user.id).all())
-    )
-    huertos = list(
-        set(current_user.huertos_asignados) |
-        set(Huerto.query.filter_by(responsable_id=current_user.id).all())
-    )
-    recomendaciones = Recomendacion.query.filter_by(tecnico_id=current_user.id).all()
-    return render_template(
-        'tecnico/tecnico_dashboard.html',
-        bodegas=bodegas, huertos=huertos, recomendaciones=recomendaciones
+    page = request.args.get("page", 1, type=int)
+    per_page = 6
+
+    # Huertos donde es responsable (del mismo tenant)
+    huertos_paginados = (
+        Huerto.query.filter_by(
+            responsable_id=current_user.id,
+            empresa_id=current_user.empresa_id
+        )
+        .order_by(Huerto.nombre.asc())
+        .paginate(page=page, per_page=per_page, error_out=False)
     )
 
-# === Recomendaciones ===
-@tecnico_bp.route('/recomendaciones')
+    # Bodegas donde es responsable (del mismo tenant)
+    bodegas = (
+        Bodega.query.filter_by(
+            responsable_id=current_user.id,
+            empresa_id=current_user.empresa_id
+        )
+        .order_by(Bodega.nombre.asc())
+        .all()
+    )
+
+    recomendaciones = (
+        Recomendacion.query.filter_by(
+            tecnico_id=current_user.id,
+            empresa_id=current_user.empresa_id
+        )
+        .order_by(Recomendacion.fecha.desc())
+        .limit(5)
+        .all()
+    )
+
+    return render_template(
+        "tecnico/tecnico_dashboard.html",
+        huertos_paginados=huertos_paginados,
+        huertos=huertos_paginados.items,
+        bodegas=bodegas,
+        recomendaciones=recomendaciones,
+        notificaciones=[],
+    )
+
+
+# ================== Recomendaciones ==================
+@tecnico_bp.route("/recomendaciones")
 @login_required
 @tecnico_required
 def ver_recomendaciones():
-    todas = Recomendacion.query.filter_by(tecnico_id=current_user.id).order_by(Recomendacion.fecha.desc()).all()
-    recomendaciones_pendientes = [r for r in todas if r.estado != 'completada']
-    recomendaciones_completadas = [r for r in todas if r.estado == 'completada']
+    todas = (
+        Recomendacion.query.filter_by(
+            tecnico_id=current_user.id,
+            empresa_id=current_user.empresa_id
+        )
+        .order_by(Recomendacion.fecha.desc())
+        .all()
+    )
+    pendientes = [r for r in todas if r.estado != "completada"]
+    hechas = [r for r in todas if r.estado == "completada"]
     return render_template(
         "tecnico/recomendaciones.html",
-        recomendaciones_pendientes=recomendaciones_pendientes,
-        recomendaciones_completadas=recomendaciones_completadas
+        recomendaciones_pendientes=pendientes,
+        recomendaciones_completadas=hechas,
     )
 
-@tecnico_bp.route('/recomendacion/<int:reco_id>/completar', methods=['POST'])
+
+@tecnico_bp.route("/recomendacion/<int:reco_id>/completar", methods=["POST"])
 @login_required
 @tecnico_required
 def completar_recomendacion(reco_id):
-    recomendacion = Recomendacion.query.get_or_404(reco_id)
-    if recomendacion.tecnico_id != current_user.id:
-        flash("No puedes modificar esta recomendación.", "danger")
-        return redirect(url_for('tecnico.ver_recomendaciones'))
-    recomendacion.estado = 'completada'
+    r = Recomendacion.query.filter_by(
+        id=reco_id, tecnico_id=current_user.id, empresa_id=current_user.empresa_id
+    ).first_or_404()
+    r.estado = "completada"
     db.session.commit()
     flash("¡Recomendación marcada como completada!", "success")
-    return redirect(url_for('tecnico.ver_recomendaciones'))
+    return redirect(url_for("tecnico.ver_recomendaciones"))
 
-# === Huertos asignados ===
-@tecnico_bp.route('/mis_huertos')
+
+# ================== Mis huertos ==================
+@tecnico_bp.route("/mis_huertos")
 @login_required
 @tecnico_required
 def mis_huertos():
-    huertos = list(
-        set(current_user.huertos_asignados) |
-        set(Huerto.query.filter_by(responsable_id=current_user.id).all())
+    # Responsable
+    q1 = Huerto.query.filter_by(
+        responsable_id=current_user.id, empresa_id=current_user.empresa_id
     )
-    return render_template('tecnico/mis_huertos.html', huertos=huertos)
+    # Si tienes otra relación de asignación explícita, agrégala aquí.
+    huertos = list({*q1.all()})
+    return render_template("tecnico/mis_huertos.html", huertos=huertos)
 
-# === Bitácora de huerto técnico (con filtros) ===
-@tecnico_bp.route('/huerto/<int:huerto_id>/bitacora')
+
+# ================== Bitácora de huerto ==================
+@tecnico_bp.route("/huerto/<int:huerto_id>/bitacora")
 @login_required
 @tecnico_required
 def bitacora_huerto(huerto_id):
-    huerto = Huerto.query.get_or_404(huerto_id)
+    huerto = _get_huerto_or_404(huerto_id)
     if not tecnico_puede_acceder_a_huerto(huerto):
         flash("No tienes acceso a este huerto.", "danger")
-        return redirect(url_for('tecnico.mis_huertos'))
-    actividades = huerto.actividades
-    return render_template('tecnico/bitacora_huerto.html', huerto=huerto, actividades=actividades)
+        return redirect(url_for("tecnico.mis_huertos"))
+
+    anio = request.args.get("anio", type=int)
+    tipo = request.args.get("tipo", default=None, type=str)
+
+    q = ActividadHuerto.query.filter_by(huerto_id=huerto.id)
+    if anio:
+        q = q.filter(extract("year", ActividadHuerto.fecha) == anio)
+    if tipo:
+        q = q.filter(ActividadHuerto.tipo == tipo)
+
+    actividades = q.order_by(ActividadHuerto.fecha.desc()).all()
+    anios = (
+        db.session.query(extract("year", ActividadHuerto.fecha))
+        .filter(ActividadHuerto.huerto_id == huerto.id)
+        .distinct()
+        .all()
+    )
+    lista_anios = sorted({int(a[0]) for a in anios}, reverse=True)
+
+    return render_template(
+        "admin/bitacora_huerto.html",
+        huerto=huerto,
+        actividades=actividades,
+        lista_anios=lista_anios,
+        anio_seleccionado=anio,
+        tipo_seleccionado=tipo,
+    )
 
 
-# === Registrar actividad en huerto técnico ===
-@tecnico_bp.route('/huerto/<int:huerto_id>/registrar_actividad', methods=['GET', 'POST'])
+# ================== Registrar actividad ==================
+@tecnico_bp.route("/huerto/<int:huerto_id>/registrar_actividad", methods=["GET", "POST"])
 @login_required
 @tecnico_required
 def registrar_actividad_huerto(huerto_id):
-    huerto = Huerto.query.get_or_404(huerto_id)
+    huerto = _get_huerto_or_404(huerto_id)
     if not tecnico_puede_acceder_a_huerto(huerto):
         flash("No tienes acceso a este huerto.", "danger")
-        return redirect(url_for('tecnico.mis_huertos'))
+        return redirect(url_for("tecnico.mis_huertos"))
+
     form = RegistrarActividadForm()
     if form.validate_on_submit():
         try:
-            from app.models import ActividadHuerto
-            actividad = ActividadHuerto(
+            act = ActividadHuerto(
                 huerto_id=huerto.id,
                 fecha=form.fecha.data,
                 tipo=form.tipo.data,
                 descripcion=form.descripcion.data,
-                responsable=current_user.name,
+                responsable=(current_user.name or current_user.email),
                 producto=form.producto.data,
                 dosis=form.dosis.data,
                 plaga=form.plaga.data,
                 nivel_infestacion=form.nivel_infestacion.data,
                 resultado=form.resultado.data,
-                fotos='',
+                fotos="",
                 observaciones=form.observaciones.data,
             )
-            db.session.add(actividad)
+            # Si ActividadHuerto tiene empresa_id NOT NULL en tu modelo, descomenta:
+            # act.empresa_id = current_user.empresa_id
+            db.session.add(act)
             db.session.commit()
             flash("✅ Actividad registrada exitosamente.", "success")
-            return redirect(url_for('tecnico.bitacora_huerto', huerto_id=huerto.id))
+            return redirect(url_for("tecnico.bitacora_huerto", huerto_id=huerto.id))
         except Exception as e:
             db.session.rollback()
             flash(f"Error registrando actividad: {e}", "danger")
-    return render_template('tecnico/registrar_actividad.html', form=form, huerto=huerto)
 
-# === Ver bodegas asignadas (por relación y/o responsable) ===
-@tecnico_bp.route('/mis_bodegas')
+    return render_template("tecnico/registrar_actividad.html", form=form, huerto=huerto)
+
+
+# ================== Mis bodegas ==================
+@tecnico_bp.route("/mis_bodegas")
 @login_required
 @tecnico_required
 def mis_bodegas():
-    bodegas = list(
-        set(current_user.bodegas_asignadas.all()) |
-        set(Bodega.query.filter_by(responsable_id=current_user.id).all())
-    )
+    # M2M + responsable, siempre filtrando por empresa
+    bodegas_set = set()
+
+    # Many-to-many (si es lazy='dynamic', usa .all())
+    try:
+        for b in current_user.bodegas_asignadas.filter_by(empresa_id=current_user.empresa_id).all():
+            bodegas_set.add(b)
+    except Exception:
+        for b in getattr(current_user, "bodegas_asignadas", []):
+            if _same_empresa(b):
+                bodegas_set.add(b)
+
+    # Responsable
+    for b in Bodega.query.filter_by(
+        responsable_id=current_user.id, empresa_id=current_user.empresa_id
+    ).all():
+        bodegas_set.add(b)
+
+    bodegas = sorted(list(bodegas_set), key=lambda x: (x.nombre or "").lower())
     return render_template("tecnico/mis_bodegas.html", bodegas=bodegas)
 
-# === Ver químicos en una bodega ===
-@tecnico_bp.route('/bodega/<int:bodega_id>/quimicos')
+
+# ================== Químicos (ver/agregar/editar/eliminar) ==================
+@tecnico_bp.route("/bodega/<int:bodega_id>/quimicos")
 @login_required
 @tecnico_required
 def ver_quimicos(bodega_id):
-    bodega = Bodega.query.get_or_404(bodega_id)
+    bodega = _get_bodega_or_404(bodega_id)
     if not tecnico_puede_acceder_a_bodega(bodega):
         flash("No tienes permiso para acceder a esta bodega.", "danger")
-        return redirect(url_for('tecnico.mis_bodegas'))
-    quimicos = bodega.quimicos
-    return render_template('tecnico/quimicos.html', bodega=bodega, quimicos=quimicos)
+        return redirect(url_for("tecnico.mis_bodegas"))
 
-# === Agregar nuevo químico ===
-@tecnico_bp.route('/bodega/<int:bodega_id>/quimicos/nuevo', methods=['GET', 'POST'])
+    bodega = (
+        Bodega.query.filter_by(id=bodega.id, empresa_id=current_user.empresa_id)
+        .options(selectinload(Bodega.quimicos), selectinload(Bodega.huerto))
+        .first_or_404()
+    )
+    return render_template("tecnico/quimicos.html", bodega=bodega, quimicos=bodega.quimicos)
+
+
+@tecnico_bp.route("/bodega/<int:bodega_id>/quimicos/nuevo", methods=["GET", "POST"])
 @login_required
 @tecnico_required
 def agregar_quimico(bodega_id):
-    bodega = Bodega.query.get_or_404(bodega_id)
+    bodega = _get_bodega_or_404(bodega_id)
     if not tecnico_puede_acceder_a_bodega(bodega):
         flash("No tienes permiso para agregar químicos en esta bodega.", "danger")
-        return redirect(url_for('tecnico.mis_bodegas'))
+        return redirect(url_for("tecnico.mis_bodegas"))
+
     form = QuimicoForm()
     if form.validate_on_submit():
         try:
-            nuevo_quimico = Quimico(
-                nombre=form.nombre.data,
+            q = Quimico(
+                nombre=form.nombre.data.strip(),
                 tipo=form.tipo.data,
-                descripcion=form.descripcion.data,
+                descripcion=form.descripcion.data or "",
                 cantidad_litros=form.cantidad_litros.data,
                 fecha_ingreso=form.fecha_ingreso.data,
-                bodega_id=bodega.id
+                bodega_id=bodega.id,
+                empresa_id=current_user.empresa_id,  # 👈 evita IntegrityError NOT NULL
             )
-            db.session.add(nuevo_quimico)
+            db.session.add(q)
             db.session.commit()
+
+            if request.form.get("seguir"):
+                flash("Químico agregado. Puedes cargar otro.", "success")
+                return redirect(url_for("tecnico.agregar_quimico", bodega_id=bodega.id))
+
             flash("✅ Químico agregado correctamente.", "success")
-            return redirect(url_for('tecnico.ver_quimicos', bodega_id=bodega.id))
+            return redirect(url_for("tecnico.ver_quimicos", bodega_id=bodega.id))
         except Exception as e:
             db.session.rollback()
-            flash("Error al agregar químico: " + str(e), "danger")
-    return render_template('tecnico/agregar_quimico.html', form=form, bodega=bodega)
+            flash(f"Error al agregar químico: {e}", "danger")
 
-# === Editar químico existente ===
-@tecnico_bp.route('/quimicos/<int:quimico_id>/editar', methods=['GET', 'POST'])
+    return render_template("tecnico/agregar_quimico.html", form=form, bodega=bodega)
+
+
+@tecnico_bp.route("/quimicos/<int:quimico_id>/editar", methods=["GET", "POST"])
 @login_required
 @tecnico_required
 def editar_quimico(quimico_id):
-    quimico = Quimico.query.get_or_404(quimico_id)
+    quimico = Quimico.query.filter_by(
+        id=quimico_id, empresa_id=current_user.empresa_id
+    ).first_or_404()
     bodega = quimico.bodega
     if not tecnico_puede_acceder_a_bodega(bodega):
         flash("No tienes permiso para editar químicos en esta bodega.", "danger")
-        return redirect(url_for('tecnico.mis_bodegas'))
+        return redirect(url_for("tecnico.mis_bodegas"))
+
     form = QuimicoForm(obj=quimico)
     if form.validate_on_submit():
         try:
-            quimico.nombre = form.nombre.data
+            quimico.nombre = form.nombre.data.strip()
             quimico.tipo = form.tipo.data
-            quimico.descripcion = form.descripcion.data
+            quimico.descripcion = form.descripcion.data or ""
             quimico.cantidad_litros = form.cantidad_litros.data
             quimico.fecha_ingreso = form.fecha_ingreso.data
+            # quimico.empresa_id se mantiene
             db.session.commit()
             flash("Químico actualizado exitosamente.", "success")
-            return redirect(url_for('tecnico.ver_quimicos', bodega_id=bodega.id))
+            return redirect(url_for("tecnico.ver_quimicos", bodega_id=bodega.id))
         except Exception as e:
             db.session.rollback()
-            flash("Error al actualizar químico: " + str(e), "danger")
-    return render_template('tecnico/editar_quimico.html', form=form, quimico=quimico)
+            flash(f"Error al actualizar químico: {e}", "danger")
 
-# === Responder formulario técnico (checklist) ===
-@tecnico_bp.route('/formulario/<int:formulario_id>', methods=['GET', 'POST'])
+    return render_template("tecnico/editar_quimico.html", form=form, quimico=quimico)
+
+
+@tecnico_bp.route("/quimicos/<int:quimico_id>/eliminar", methods=["POST"])
+@login_required
+@tecnico_required
+def eliminar_quimico(quimico_id):
+    quimico = Quimico.query.filter_by(
+        id=quimico_id, empresa_id=current_user.empresa_id
+    ).first_or_404()
+    bodega = quimico.bodega
+    if not tecnico_puede_acceder_a_bodega(bodega):
+        flash("No tienes permiso para eliminar químicos en esta bodega.", "danger")
+        return redirect(url_for("tecnico.mis_bodegas"))
+    try:
+        db.session.delete(quimico)
+        db.session.commit()
+        flash("🗑️ Químico eliminado exitosamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al eliminar químico: {e}", "danger")
+    return redirect(url_for("tecnico.ver_quimicos", bodega_id=bodega.id))
+
+
+# ================== Formularios (Checklist) ==================
+@tecnico_bp.route("/formulario/<int:formulario_id>", methods=["GET", "POST"])
 @login_required
 @tecnico_required
 def responder_formulario(formulario_id):
-    formulario = FormularioTarea.query.get_or_404(formulario_id)
+    formulario = FormularioTarea.query.filter_by(
+        id=formulario_id, empresa_id=current_user.empresa_id
+    ).first_or_404()
     if formulario.tecnico_id != current_user.id:
         flash("No tienes acceso a este formulario.", "danger")
-        return redirect(url_for('tecnico.tecnico_dashboard'))
+        return redirect(url_for("tecnico.tecnico_dashboard"))
+
     form = ResponderFormularioForm()
     items = formulario.checklist_items
+
     if not form.is_submitted():
         form.items.entries.clear()
         for item in items:
-            form_item = ChecklistItemForm()
-            form_item.descripcion.data = item.descripcion
-            form_item.realizado.data = item.realizado
-            form_item.comentario.data = item.comentario
-            form.items.append_entry(form_item)
+            fi = ChecklistItemForm()
+            fi.descripcion.data = item.descripcion
+            fi.realizado.data = item.realizado
+            fi.comentario.data = item.comentario
+            form.items.append_entry(fi)
+
     if form.validate_on_submit():
         try:
             for i, item_form in enumerate(form.items):
@@ -244,8 +416,53 @@ def responder_formulario(formulario_id):
             formulario.estado = "completado"
             db.session.commit()
             flash("Formulario respondido correctamente.", "success")
-            return redirect(url_for('tecnico.tecnico_dashboard'))
+            return redirect(url_for("tecnico.tecnico_dashboard"))
         except Exception as e:
             db.session.rollback()
-            flash("Error al responder formulario: " + str(e), "danger")
+            flash(f"Error al responder formulario: {e}", "danger")
+
     return render_template("tecnico/formulario_responder.html", form=form, formulario_tarea=formulario)
+
+
+# ================== Todos los químicos (debug vista) ==================
+@tecnico_bp.route("/todos_los_quimicos")
+@login_required
+@tecnico_required
+def todos_los_quimicos():
+    print("=== DEBUG DETALLADO ===")
+    print(f"Usuario actual: {current_user.name} (ID: {current_user.id})")
+
+    bodegas_m2m = []
+    try:
+        bodegas_m2m = current_user.bodegas_asignadas.filter_by(empresa_id=current_user.empresa_id).all()
+    except Exception:
+        bodegas_m2m = [b for b in getattr(current_user, "bodegas_asignadas", []) if _same_empresa(b)]
+    print(f"1) M2M bodegas: {len(bodegas_m2m)}")
+
+    bodegas_resp = Bodega.query.filter_by(responsable_id=current_user.id, empresa_id=current_user.empresa_id).all()
+    print(f"2) Bodegas responsable: {len(bodegas_resp)}")
+
+    # Consolidado
+    bodegas = list({*bodegas_m2m, *bodegas_resp})
+    quimicos = []
+    for b in bodegas:
+        quimicos.extend(b.quimicos)
+
+    return render_template("tecnico/todos_los_quimicos.html", quimicos=quimicos, bodegas=bodegas)
+
+
+# ================== Selector de huerto rápido ==================
+@tecnico_bp.route("/actividad/nueva", methods=["GET"], endpoint="registrar_actividad")
+@login_required
+@tecnico_required
+def registrar_actividad():
+    huerto_id = request.args.get("huerto_id", type=int)
+    if huerto_id:
+        return redirect(url_for("tecnico.registrar_actividad_huerto", huerto_id=huerto_id))
+
+    huertos = (
+        Huerto.query.filter_by(empresa_id=current_user.empresa_id, responsable_id=current_user.id)
+        .order_by(Huerto.nombre.asc())
+        .all()
+    )
+    return render_template("tecnico/elegir_huerto.html", huertos=huertos)

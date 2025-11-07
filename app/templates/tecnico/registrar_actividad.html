@@ -5,6 +5,55 @@
 <div class="container my-5">
   <div class="row justify-content-center">
     <div class="col-lg-10 col-xl-8">
+
+      {# 🤖 AgroBot — explicación para el TÉCNICO (ocultable) #}
+      <div id="agrobotBox" class="card shadow-sm border-0 mb-4" role="region" aria-label="AgroBot - Ayuda de Actividades">
+        <div class="card-body d-flex flex-wrap align-items-start gap-3">
+          <i class="bi bi-robot fs-1 text-success" aria-hidden="true"></i>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+              <div>
+                <h5 class="mb-1">AgroBot — ¿Para qué sirve este módulo?</h5>
+                <p class="mb-2 text-muted small">Este módulo es para que el <b>técnico</b> registre las <b>actividades</b> realizadas en el huerto <b>{{ huerto.nombre }}</b>.</p>
+              </div>
+              <button id="hideAgrobotBtn" type="button" class="btn btn-outline-secondary btn-sm"
+                      aria-controls="agrobotBox" aria-expanded="true">
+                <i class="bi bi-eye-slash"></i> Ocultar
+              </button>
+            </div>
+
+            <div class="row g-3 small">
+              <div class="col-12 col-md-7">
+                <ul class="mb-0">
+                  <li><b>Trazabilidad diaria:</b> deja registro de fecha, tipo de labor y responsable.</li>
+                  <li><b>Control de plagas:</b> habilita campos de plaga, nivel, producto y dosis.</li>
+                  <li><b>Evidencia:</b> puedes adjuntar <b>fotos</b> y <b>observaciones</b> para auditorías.</li>
+                  <li><b>Seguimiento:</b> lo que registres alimenta la <b>bitácora</b> del huerto.</li>
+                </ul>
+              </div>
+              <div class="col-12 col-md-5">
+                <div class="bg-success-subtle rounded p-3 h-100">
+                  <div class="fw-semibold mb-2">Tips rápidos</div>
+                  <ul class="mb-0">
+                    <li>Describe <b>qué</b> se hizo y <b>dónde</b>.</li>
+                    <li>Si aplicaste producto, anota <b>dosis</b> y <b>resultado</b>.</li>
+                    <li>Sube foto(s) claras del trabajo/comprobante.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {# Botón flotante para reabrir AgroBot (aparece cuando lo ocultas) #}
+      <button id="showAgrobotBtn" type="button"
+              class="btn btn-success agrobot-fab d-none"
+              aria-controls="agrobotBox" aria-expanded="false" aria-label="Mostrar AgroBot">
+        <i class="bi bi-robot"></i> AgroBot
+      </button>
+
       <div class="card shadow-lg border-success">
         <div class="card-header bg-success text-white d-flex align-items-center">
           <i class="bi bi-plus-circle-fill me-2 fs-3"></i>
@@ -19,19 +68,19 @@
                 <label class="form-label fw-bold">
                   <i class="bi bi-calendar-event me-1"></i> {{ form.fecha.label.text }}
                 </label>
-                {{ form.fecha(class="form-control") }}
+                {{ form.fecha(class_="form-control") }}
               </div>
               <div class="col-md-4 mb-3 mb-md-0">
                 <label class="form-label fw-bold">
                   <i class="bi bi-list-task me-1"></i> {{ form.tipo.label.text }}
                 </label>
-                {{ form.tipo(class="form-select", id="tipo-actividad") }}
+                {{ form.tipo(class_="form-select", id="tipo-actividad") }}
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-bold">
                   <i class="bi bi-person-fill me-1"></i> {{ form.responsable.label.text }}
                 </label>
-                {{ form.responsable(class="form-control") }}
+                {{ form.responsable(class_="form-control") }}
               </div>
             </div>
 
@@ -39,29 +88,29 @@
               <label class="form-label fw-bold">
                 <i class="bi bi-card-text me-1"></i> {{ form.descripcion.label.text }}
               </label>
-              {{ form.descripcion(class="form-control", rows=2, placeholder="Describe la actividad realizada...") }}
+              {{ form.descripcion(class_="form-control", rows=2, placeholder="Describe la actividad realizada...") }}
             </div>
 
-            <!-- Campos para Control de Plagas (colapsable animado) -->
+            <!-- Campos para Control de Plagas (colapsable) -->
             <div id="plagas-campos" class="border rounded p-3 mb-3" style="display: none; background: #f6fafd;">
               <div class="row">
                 <div class="col-md-4 mb-3">
                   <label class="form-label fw-bold">
                     <i class="bi bi-bug-fill me-1"></i> {{ form.plaga.label.text }}
                   </label>
-                  {{ form.plaga(class="form-control") }}
+                  {{ form.plaga(class_="form-control") }}
                 </div>
                 <div class="col-md-4 mb-3">
                   <label class="form-label fw-bold">
                     <i class="bi bi-bar-chart-line me-1"></i> {{ form.nivel_infestacion.label.text }}
                   </label>
-                  {{ form.nivel_infestacion(class="form-control") }}
+                  {{ form.nivel_infestacion(class_="form-control") }}
                 </div>
                 <div class="col-md-4 mb-3">
                   <label class="form-label fw-bold">
                     <i class="bi bi-flask me-1"></i> {{ form.producto.label.text }}
                   </label>
-                  {{ form.producto(class="form-control") }}
+                  {{ form.producto(class_="form-control") }}
                 </div>
               </div>
               <div class="row">
@@ -69,13 +118,13 @@
                   <label class="form-label fw-bold">
                     <i class="bi bi-cup-straw me-1"></i> {{ form.dosis.label.text }}
                   </label>
-                  {{ form.dosis(class="form-control") }}
+                  {{ form.dosis(class_="form-control") }}
                 </div>
                 <div class="col-md-6 mb-3">
                   <label class="form-label fw-bold">
                     <i class="bi bi-clipboard-check me-1"></i> {{ form.resultado.label.text }}
                   </label>
-                  {{ form.resultado(class="form-control") }}
+                  {{ form.resultado(class_="form-control") }}
                 </div>
               </div>
             </div>
@@ -86,47 +135,105 @@
                   <i class="bi bi-image-fill me-1"></i> {{ form.fotos.label.text }}
                   <span class="text-muted small" title="Opcional">(opcional)</span>
                 </label>
-                {{ form.fotos(class="form-control") }}
+                {{ form.fotos(class_="form-control") }}
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold">
                   <i class="bi bi-info-circle me-1"></i> {{ form.observaciones.label.text }}
                   <span class="text-muted small" title="Opcional">(opcional)</span>
                 </label>
-                {{ form.observaciones(class="form-control", rows=2, placeholder="Observaciones generales...") }}
+                {{ form.observaciones(class_="form-control", rows=2, placeholder="Observaciones generales...") }}
               </div>
             </div>
 
             <div class="d-flex gap-3 mt-4 justify-content-end">
               <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=huerto.id) }}"
-                class="btn btn-outline-secondary">
+                 class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Cancelar
               </a>
-              {{ form.submit(class="btn btn-success btn-lg px-4", icon="bi bi-check-circle-fill") }}
+              {{ form.submit(class_="btn btn-success btn-lg px-4") }}
             </div>
           </form>
         </div>
       </div>
+
     </div>
   </div>
 </div>
 
+{# Animaciones opcionales #}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
 <script>
+  // Mostrar/Ocultar campos de plagas según tipo
   function togglePlagasCampos() {
     const tipo = document.getElementById("tipo-actividad").value;
     const campos = document.getElementById("plagas-campos");
-    // Usa una pequeña animación de fade para UX
     if (tipo === "control_plagas") {
       campos.style.display = "block";
-      campos.classList.add('animate__fadeIn');
+      campos.classList.add('animate__animated','animate__fadeIn');
     } else {
       campos.style.display = "none";
+      campos.classList.remove('animate__animated','animate__fadeIn');
     }
   }
   document.getElementById("tipo-actividad").addEventListener("change", togglePlagasCampos);
-  window.onload = togglePlagasCampos;
+  window.addEventListener('load', togglePlagasCampos);
+
+  // Persistencia de AgroBot (mostrar/ocultar)
+  (function(){
+    const STORAGE_KEY = 'agrobotHidden:tecnico_reg_actividad';
+    const banner = document.getElementById('agrobotBox');
+    const hideBtn = document.getElementById('hideAgrobotBtn');
+    const showBtn = document.getElementById('showAgrobotBtn');
+
+    function setHidden(hidden){
+      if (!banner || !showBtn) return;
+      if (hidden){
+        banner.classList.add('d-none');
+        showBtn.classList.remove('d-none');
+        showBtn.setAttribute('aria-expanded','true');
+      } else {
+        banner.classList.remove('d-none');
+        showBtn.classList.add('d-none');
+        showBtn.setAttribute('aria-expanded','false');
+      }
+    }
+
+    function applyInitial(){
+      const hidden = localStorage.getItem(STORAGE_KEY) === 'true';
+      setHidden(hidden);
+    }
+
+    hideBtn?.addEventListener('click', ()=>{
+      localStorage.setItem(STORAGE_KEY, 'true');
+      setHidden(true);
+    });
+
+    showBtn?.addEventListener('click', ()=>{
+      localStorage.setItem(STORAGE_KEY, 'false');
+      setHidden(false);
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){}
+    });
+
+    applyInitial();
+  })();
 </script>
 
-<!-- Puedes agregar animate.css para mejores animaciones -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<style>
+/* Botón flotante AgroBot: aparece cuando el banner está oculto */
+.agrobot-fab{
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1050;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+}
+</style>
 {% endblock %}

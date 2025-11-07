@@ -8,39 +8,92 @@
 
   {% if quimicos %}
   <div class="table-responsive">
-    <table class="table table-bordered table-hover align-middle shadow-sm">
+    <table class="table table-bordered table-hover align-middle shadow-sm" id="tabla-quimicos">
       <thead class="table-success text-center">
         <tr>
-          <th><i class="bi bi-tag-fill"></i> Nombre</th>
-          <th><i class="bi bi-flask"></i> Tipo</th>
-          <th><i class="bi bi-card-text"></i> Descripción</th>
-          <th><i class="bi bi-droplet-half"></i> Cantidad (L)</th>
-          <th><i class="bi bi-calendar-check"></i> Ingreso</th>
-          <th><i class="bi bi-gear"></i> Acciones</th>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Descripción</th>
+          <th>Cantidad</th>
+          <th>Unidad</th>
+          <th>Ingreso</th>
+          <th>Vencimiento</th>
+          <th>Estado</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        {% for q in quimicos %}
-        <tr>
-          <td><i class="bi bi-capsule text-primary me-1"></i>{{ q.nombre }}</td>
-          <td>{{ q.tipo or '—' }}</td>
-          <td>{{ q.descripcion or '—' }}</td>
+      {% for q in quimicos %}
+        <tr 
+          {% if q.cantidad_litros <= 10 %}
+            class="table-warning"
+            title="Stock bajo"
+          {% endif %}
+        >
+          <td>
+            <i class="bi bi-capsule text-primary me-1"></i>
+            {{ q.nombre }}
+            {% if q.cantidad_litros <= 10 %}
+              <span class="badge bg-warning text-dark ms-1">Stock bajo</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge bg-info text-dark">{{ q.tipo or '—' }}</span>
+          </td>
+          <td>
+            <span data-bs-toggle="tooltip" title="{{ q.descripcion or 'Sin descripción' }}">
+              {{ q.descripcion[:18] ~ ('...' if q.descripcion and q.descripcion|length > 18 else '') }}
+            </span>
+          </td>
           <td class="text-end">{{ q.cantidad_litros }}</td>
+          <td class="text-center">{{ q.unidad or 'L' }}</td>
           <td class="text-center">{{ q.fecha_ingreso.strftime('%d-%m-%Y') if q.fecha_ingreso else '—' }}</td>
           <td class="text-center">
-            <a href="{{ url_for('admin.editar_quimico', quimico_id=q.id) }}" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-pencil-square"></i> Editar
+            {% if q.fecha_vencimiento %}
+              <span class="badge bg-secondary">
+                {{ q.fecha_vencimiento.strftime('%d-%m-%Y') }}
+              </span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if q.fecha_vencimiento and q.fecha_vencimiento < now() %}
+              <span class="badge bg-danger">Vencido</span>
+            {% elif q.fecha_vencimiento and (q.fecha_vencimiento - now()).days <= 30 %}
+              <span class="badge bg-warning text-dark">Por vencer</span>
+            {% else %}
+              <span class="badge bg-success">Activo</span>
+            {% endif %}
+          </td>
+          <td class="d-flex gap-2">
+            <a href="{{ url_for('admin.editar_quimico', quimico_id=q.id) }}" class="btn btn-sm btn-outline-primary" title="Editar">
+              <i class="bi bi-pencil"></i>
             </a>
+            <form action="{{ url_for('admin.eliminar_quimico', quimico_id=q.id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este químico?');">
+              <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
           </td>
         </tr>
-        {% endfor %}
+      {% endfor %}
       </tbody>
     </table>
   </div>
+  <script>
+    // Activa tooltips Bootstrap 5
+    document.addEventListener('DOMContentLoaded', function() {
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+      tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl)
+      })
+    });
+  </script>
   {% else %}
-  <div class="alert alert-info d-flex align-items-center" role="alert">
-    <i class="bi bi-info-circle-fill me-2"></i> No hay químicos registrados en esta bodega.
-  </div>
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+      <i class="bi bi-info-circle-fill me-2"></i> No hay químicos registrados en esta bodega.
+    </div>
   {% endif %}
 
   <div class="mt-4">

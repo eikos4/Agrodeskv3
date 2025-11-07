@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Parcelas{% endblock %}
+{% block content %}
+<div class="container py-4">
+
+  <div id="agrobotBox" class="card shadow-sm border-0 mb-3">
+    <div class="card-body d-flex gap-3 align-items-start">
+      <i class="bi bi-robot fs-1 text-success"></i>
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between">
+          <h5 class="mb-1">AgroBot — Catálogo de Parcelas</h5>
+          <button id="hideAgrobotBtn" class="btn btn-outline-secondary btn-sm">Ocultar</button>
+        </div>
+        <p class="small text-muted mb-2">Administra polígonos por huerto. Sirve para trazabilidad espacial y reportes por zona.</p>
+        <a href="{{ url_for('geo_admin.parcela_nueva') }}" class="btn btn-success btn-sm">
+          <i class="bi bi-plus-lg"></i> Nueva Parcela
+        </a>
+      </div>
+    </div>
+  </div>
+  <button id="showAgrobotBtn" class="btn btn-success agrobot-fab d-none"><i class="bi bi-robot"></i> AgroBot</button>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% if parcelas %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-success">
+          <tr><th>Huerto</th><th>Parcela</th><th>Área (ha)</th><th class="text-end">Acciones</th></tr>
+        </thead>
+        <tbody>
+          {% for p in parcelas %}
+          <tr>
+            <td>{{ p.huerto.nombre if p.huerto else '—' }}</td>
+            <td>{{ p.nombre }}</td>
+            <td>{{ '%.2f'|format(p.area_ha) if p.area_ha else '—' }}</td>
+            <td class="text-end">
+              <a href="{{ url_for('geo_admin.parcela_editar', parcela_id=p.id) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-pencil"></i> Editar
+              </a>
+              <form class="d-inline" method="POST" action="{{ url_for('geo_admin.parcela_eliminar', parcela_id=p.id) }}"
+                    onsubmit="return confirm('Eliminar parcela {{ p.nombre }}?');">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">Aún no hay parcelas.</p>
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  const key='agrobot:parcelas';const b=document.getElementById('agrobotBox');
+  const h=document.getElementById('hideAgrobotBtn');const s=document.getElementById('showAgrobotBtn');
+  function set(v){ if(v){b.classList.add('d-none');s.classList.remove('d-none');}
+                   else{b.classList.remove('d-none');s.classList.add('d-none');} }
+  set(localStorage.getItem(key)==='1'); h?.addEventListener('click',()=>{localStorage.setItem(key,'1');set(true);});
+  s?.addEventListener('click',()=>{localStorage.setItem(key,'0');set(false);window.scrollTo({top:0,behavior:'smooth'});});
+})();
+</script>
+<style>.agrobot-fab{position:fixed;right:1rem;bottom:1rem;z-index:1050;box-shadow:0 .5rem 1rem rgba(0,0,0,.15);}</style>
+{% endblock %}

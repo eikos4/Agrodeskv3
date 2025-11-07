@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Editar Bodega | AgroDESK{% endblock %}
+
+{% block content %}
+<div class="container py-5 fade-in">
+
+  <!-- 🤖 AgroBot Info -->
+  <div class="alert alert-success shadow-sm mb-4 border-start border-4 border-success-subtle">
+    <div class="d-flex align-items-start gap-3">
+      <div class="fs-1">🤖</div>
+      <div>
+        <h5 class="fw-bold text-success mb-1">AgroBot Asistente</h5>
+        <p class="mb-0">
+          Las <strong>bodegas</strong> son áreas asignadas dentro de un huerto donde se <b>almacenan productos químicos</b>,
+          fertilizantes o insumos agrícolas 🧪.  
+          <br>Recuerda mantener la información actualizada y asignar siempre un responsable.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tarjeta principal -->
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow border-0">
+        <div class="card-header d-flex align-items-center justify-content-between bg-success text-white py-3 px-4">
+          <div>
+            <i class="bi bi-box-seam me-2"></i>
+            <span class="fw-bold">Editar Bodega</span>
+          </div>
+          <span class="badge bg-light text-success-emphasis">Gestión de almacenes</span>
+        </div>
+
+        <div class="card-body p-4">
+          <form method="POST" autocomplete="off">
+            {{ form.hidden_tag() }}
+
+            <!-- Datos principales -->
+            <div class="row g-3">
+              <div class="col-md-6">
+                {{ form.nombre.label(class="form-label fw-semibold") }}
+                {{ form.nombre(class="form-control", placeholder="Ej: Bodega Central") }}
+                {% if form.nombre.errors %}
+                  <div class="form-text text-danger">{{ form.nombre.errors[0] }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                {{ form.ubicacion.label(class="form-label fw-semibold") }}
+                {{ form.ubicacion(class="form-control", placeholder="Ej: Sector Norte") }}
+                {% if form.ubicacion.errors %}
+                  <div class="form-text text-danger">{{ form.ubicacion.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Relaciones -->
+            <div class="row g-3 mt-3">
+              <div class="col-md-6">
+                {{ form.huerto_id.label(class="form-label fw-semibold") }}
+                {{ form.huerto_id(class="form-select") }}
+                {% if form.huerto_id.errors %}
+                  <div class="form-text text-danger">{{ form.huerto_id.errors[0] }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                {{ form.responsable_id.label(class="form-label fw-semibold") }}
+                {{ form.responsable_id(class="form-select") }}
+                {% if form.responsable_id.errors %}
+                  <div class="form-text text-danger">{{ form.responsable_id.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <a href="{{ url_for('admin.listar_bodegas') }}" class="btn btn-outline-warning px-4">
+                <i class="bi bi-arrow-left"></i> Cancelar
+              </a>
+              <button type="submit" class="btn btn-success px-4">
+                <i class="bi bi-save"></i> Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card-footer bg-light small text-muted text-center py-2">
+          <i class="bi bi-info-circle"></i> Los cambios se reflejarán automáticamente en los reportes del huerto.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Animación -->
+<style>
+  .fade-in { animation: fadeIn .6s ease both; }
+  @keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: none;} }
+  .alert-success { background-color: #f0fff7; border-color: #d3f7e5; }
+</style>
+{% endblock %}

@@ -3,130 +3,355 @@
 
 {% block content %}
 <div class="container py-4">
-  <h2 class="mb-3 text-success"><i class="bi bi-tree"></i> Bitácora de {{ huerto.nombre }}</h2>
-  <div class="mb-2">
-    <span class="me-3"><strong>Ubicación:</strong> {{ huerto.ubicacion or "—" }}</span>
-    <span><strong>Técnico:</strong> {{ huerto.responsable.name if huerto.responsable else "Sin asignar" }}</span>
-  </div>
-  <div class="mb-4 d-flex gap-2">
-    <a href="{{ url_for('admin.registrar_actividad_huerto', huerto_id=huerto.id) }}" class="btn btn-success">
-      <i class="bi bi-plus-lg"></i> Nueva Actividad
-    </a>
-    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">Volver</a>
+  <!-- Header -->
+  <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+    <div>
+      <h2 class="mb-1 text-success"><i class="bi bi-tree"></i> Bitácora de {{ huerto.nombre }}</h2>
+      <div class="text-muted small">
+        <span class="me-3"><strong>Ubicación:</strong> {{ huerto.ubicacion or "—" }}</span>
+        <span><strong>Técnico:</strong> {{ huerto.responsable.name if huerto.responsable else "Sin asignar" }}</span>
+      </div>
+    </div>
+    <div class="ms-auto d-flex flex-wrap gap-2">
+      <a href="{{ url_for('admin.registrar_actividad_huerto', huerto_id=huerto.id) }}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Nueva Actividad
+      </a>
+
+      {% if current_user.is_authenticated and current_user.role == 'admin' %}
+      <a
+        href="{{ url_for('docs.admin_panel', huerto_id=huerto.id, next=request.full_path) }}"
+        class="btn btn-outline-primary"
+        title="Subir documento asociado a este huerto"
+      >
+        <i class="bi bi-upload"></i> Subir documento al huerto
+      </a>
+      {% endif %}
+
+      <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">Volver</a>
+
+      <button onclick="window.print()" class="btn btn-outline-primary">
+        <i class="bi bi-printer"></i> Imprimir
+      </button>
+    </div>
   </div>
 
-  <!-- Resumen rápido -->
-  <div class="mb-4">
-    <span class="badge rounded-pill bg-success fs-6 me-2">{{ actividades|length }} actividades</span>
+  <!-- Chips resumen -->
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <span class="badge rounded-pill bg-success-subtle text-success-emphasis px-3 py-2">
+      <i class="bi bi-activity me-1"></i> {{ actividades|length }} actividades
+    </span>
     {% if lista_anios %}
-      <span class="badge bg-light text-dark">Años registrados: {{ lista_anios|join(', ') }}</span>
+      <span class="badge rounded-pill bg-light text-dark px-3 py-2">
+        <i class="bi bi-calendar-range me-1"></i> Años: {{ lista_anios|join(', ') }}
+      </span>
     {% endif %}
+    <!-- conteo por tipo (si tienes esa utilidad, si no puedes quitar este bloque) -->
+    {% set tipos = {
+      'control_plagas':'bi-bug', 'poda':'bi-scissors',
+      'riego':'bi-droplet', 'fertilizacion':'bi-bezier',
+      'cosecha':'bi-basket3', 'otra':'bi-plus-lg'
+    } %}
+    {% for t, icon in tipos.items() %}
+      {% set n = actividades | selectattr('tipo', 'equalto', t) | list | length %}
+      {% if n > 0 %}
+      <span class="badge bg-light text-dark px-3 py-2">
+        <i class="bi {{ icon }} me-1"></i>{{ t|replace('_',' ') }}: {{ n }}
+      </span>
+      {% endif %}
+    {% endfor %}
   </div>
 
-  <!-- Filtros -->
-  <form method="get" class="row g-2 mb-4">
-    <div class="col-md-3">
-      <select name="anio" class="form-select">
-        <option value="">Todos los años</option>
-        {% for anio in lista_anios %}
-          <option value="{{ anio }}" {% if anio_seleccionado==anio %}selected{% endif %}>{{ anio }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select name="tipo" class="form-select">
-        <option value="">Todas las actividades</option>
-        <option value="control_plagas" {% if tipo_seleccionado=='control_plagas' %}selected{% endif %}>Control Plagas</option>
-        <option value="poda" {% if tipo_seleccionado=='poda' %}selected{% endif %}>Poda</option>
-        <option value="riego" {% if tipo_seleccionado=='riego' %}selected{% endif %}>Riego</option>
-        <option value="fertilizacion" {% if tipo_seleccionado=='fertilizacion' %}selected{% endif %}>Fertilización</option>
-        <option value="cosecha" {% if tipo_seleccionado=='cosecha' %}selected{% endif %}>Cosecha</option>
-        <option value="otra" {% if tipo_seleccionado=='otra' %}selected{% endif %}>Otra</option>
-      </select>
-    </div>
-    <div class="col-md-2">
-      <button class="btn btn-outline-success w-100" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
-    </div>
-  </form>
+  <!-- Tabs -->
+  <ul class="nav nav-tabs no-print" id="bitacoraTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tab-acts" data-bs-toggle="tab" data-bs-target="#pane-acts" type="button" role="tab">
+        Actividades
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-docs" data-bs-toggle="tab" data-bs-target="#pane-docs" type="button" role="tab">
+        Documentos
+      </button>
+    </li>
+  </ul>
 
-  <!-- Timeline mejorado -->
-  <div class="timeline-pro position-relative">
-    {% for act in actividades %}
-    <div class="timeline-item mb-4">
-      <div class="timeline-dot {{ tipo_color(act.tipo) }}">
-        <i class="bi {{ tipo_icono(act.tipo) }}"></i>
+  <div class="tab-content">
+    <!-- ===== Pestaña ACTIVIDADES ===== -->
+    <div class="tab-pane fade show active" id="pane-acts" role="tabpanel" aria-labelledby="tab-acts">
+      <!-- Filtros plegables -->
+      <div class="card my-3 no-print">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+          <strong>Filtros</strong>
+          <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+            <i class="bi bi-funnel me-1"></i> Mostrar / Ocultar
+          </button>
+        </div>
+        <div class="collapse show" id="filtersCollapse">
+          <div class="card-body">
+            <form method="get" class="row g-2">
+              <div class="col-md-3">
+                <label class="form-label small mb-1">Año</label>
+                <select name="anio" class="form-select">
+                  <option value="">Todos</option>
+                  {% for anio in lista_anios %}
+                    <option value="{{ anio }}" {% if anio_seleccionado==anio %}selected{% endif %}>{{ anio }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small mb-1">Tipo</label>
+                <select name="tipo" class="form-select">
+                  <option value="">Todos</option>
+                  <option value="control_plagas" {% if tipo_seleccionado=='control_plagas' %}selected{% endif %}>Control Plagas</option>
+                  <option value="poda" {% if tipo_seleccionado=='poda' %}selected{% endif %}>Poda</option>
+                  <option value="riego" {% if tipo_seleccionado=='riego' %}selected{% endif %}>Riego</option>
+                  <option value="fertilizacion" {% if tipo_seleccionado=='fertilizacion' %}selected{% endif %}>Fertilización</option>
+                  <option value="cosecha" {% if tipo_seleccionado=='cosecha' %}selected{% endif %}>Cosecha</option>
+                  <option value="otra" {% if tipo_seleccionado=='otra' %}selected{% endif %}>Otra</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small mb-1">Buscar</label>
+                <input class="form-control" type="text" name="q" value="{{ request.args.get('q','') }}" placeholder="Descripción, responsable, producto…">
+              </div>
+              <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-success w-100" type="submit"><i class="bi bi-filter"></i> Aplicar</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
-      <div class="timeline-content card shadow-sm border-0">
-        <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
-          <span class="fw-bold text-capitalize">{{ act.tipo|replace("_", " ") }}</span>
-          <span class="text-muted"><i class="bi bi-calendar-event"></i> {{ act.fecha.strftime('%d-%m-%Y') }}</span>
+
+      <!-- Timeline Actividades -->
+      <div class="timeline-pro position-relative">
+        {% for act in actividades %}
+        <div class="timeline-item mb-4">
+          <div class="timeline-dot {{ tipo_color(act.tipo) }}">
+            <i class="bi {{ tipo_icono(act.tipo) }}"></i>
+          </div>
+          <div class="timeline-content card shadow-sm border-0">
+            <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+              <span class="fw-bold text-capitalize">{{ act.tipo|replace("_", " ") }}</span>
+              <span class="text-muted"><i class="bi bi-calendar-event"></i> {{ act.fecha.strftime('%d-%m-%Y') }}</span>
+            </div>
+            <div class="card-body py-2 px-3">
+              <p class="mb-2">{{ act.descripcion }}</p>
+              <small class="text-muted d-block mb-1">
+                Responsable: {{ act.responsable }}
+              </small>
+              <div class="d-flex flex-wrap gap-2">
+                {% if act.producto %}<span class="badge bg-light text-dark">{{ act.producto }}</span>{% endif %}
+                {% if act.plaga %}<span class="badge bg-light text-dark">{{ act.plaga }}</span>{% endif %}
+                {% if act.resultado %}<span class="badge bg-info">{{ act.resultado }}</span>{% endif %}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="card-body py-2 px-3">
-          <p class="mb-2">{{ act.descripcion }}</p>
-          <small class="text-muted d-block mb-1">
-            Responsable: {{ act.responsable }}
-          </small>
-          {% if act.resultado %}
-            <span class="badge bg-info">Resultado: {{ act.resultado }}</span>
-          {% endif %}
+        {% else %}
+          <div class="alert alert-info text-center">No hay actividades para este filtro.</div>
+        {% endfor %}
+        <div class="timeline-line"></div>
+      </div>
+    </div>
+
+    <!-- ===== Pestaña DOCUMENTOS ===== -->
+    <div class="tab-pane fade" id="pane-docs" role="tabpanel" aria-labelledby="tab-docs">
+      <div class="card my-3">
+        <div class="card-header py-2 d-flex flex-wrap gap-2 align-items-center">
+          <strong>Documentos disponibles</strong>
+          <div class="ms-auto d-flex gap-2 no-print">
+            <input id="docSearch" type="search" class="form-control form-control-sm" placeholder="Buscar título o categoría">
+            <button id="btnDocsReload" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-arrow-clockwise"></i> Refrescar
+            </button>
+          </div>
         </div>
-        <div class="card-footer py-2 px-3 d-flex gap-2">
-          {# Botón "detalle" (quítalo si no tienes endpoint aún) #}
-          {# <a href="{{ url_for('admin.detalle_actividad', actividad_id=act.id) }}" class="btn btn-outline-secondary btn-sm">Detalle</a> #}
-          <span class="badge bg-light text-dark">{{ act.producto or "" }}</span>
-          <span class="badge bg-light text-dark">{{ act.plaga or "" }}</span>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle" id="docsTable">
+              <thead>
+                <tr>
+                  <th style="min-width: 260px">Título</th>
+                  <th>Categoría</th>
+                  <th>Fecha</th>
+                  <th class="text-end">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="docsBody">
+                <tr><td colspan="4" class="text-muted p-3">Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Línea de tiempo documentos (opcional, bonito para admin) -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong>Línea de tiempo de documentos</strong>
+          <small class="text-muted">Más recientes primero</small>
+        </div>
+        <div class="card-body">
+          <ul class="doc-timeline list-unstyled m-0" id="docsTimeline"></ul>
         </div>
       </div>
     </div>
-    {% else %}
-      <div class="alert alert-info text-center">No hay actividades para este filtro.</div>
-    {% endfor %}
-    <div class="timeline-line"></div>
   </div>
 </div>
 
-<!-- Timeline PRO CSS -->
+<!-- Scripts -->
+<script>
+(function(){
+  const HUERTO_ID = {{ huerto.id if huerto else 'null' }};
+  const $body = document.getElementById('docsBody');
+  const $table = document.getElementById('docsTable');
+  const $search = document.getElementById('docSearch');
+  const $reload = document.getElementById('btnDocsReload');
+  const $timeline = document.getElementById('docsTimeline');
+
+  function rowHTML(d){
+    return `
+      <tr data-title="${(d.titulo||'').toLowerCase()}" data-cat="${(d.categoria||'').toLowerCase()}">
+        <td>${d.titulo}</td>
+        <td>${d.categoria || '—'}</td>
+        <td>${d.fecha}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-primary" href="/docs/view/${d.id}" target="_blank">Ver</a>
+          <a class="btn btn-sm btn-outline-secondary" href="/docs/download/${d.id}">Descargar</a>
+          <button class="btn btn-sm btn-outline-dark" onclick="printDoc(${d.id})">Imprimir</button>
+        </td>
+      </tr>`;
+  }
+
+  function timelineItemHTML(d){
+    return `
+      <li class="doc-tl-item d-flex">
+        <div class="doc-tl-dot"><i class="bi bi-file-earmark-text"></i></div>
+        <div class="doc-tl-content card flex-fill shadow-sm border-0">
+          <div class="card-body py-2 px-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="me-3">
+                <div class="fw-semibold">${d.titulo}</div>
+                <div class="small text-muted">${d.categoria || 'General'}</div>
+              </div>
+              <div class="text-nowrap small text-muted">
+                <i class="bi bi-clock"></i> ${d.fecha}
+              </div>
+            </div>
+            <div class="mt-2 d-flex gap-2">
+              <a class="btn btn-sm btn-outline-primary" href="/docs/view/${d.id}" target="_blank">Ver</a>
+              <a class="btn btn-sm btn-outline-secondary" href="/docs/download/${d.id}">Descargar</a>
+              <button class="btn btn-sm btn-outline-dark" onclick="printDoc(${d.id})">Imprimir</button>
+            </div>
+          </div>
+        </div>
+      </li>`;
+  }
+
+  function emptyRow(){
+    return `<tr><td colspan="4" class="text-muted p-3">No hay documentos.</td></tr>`;
+  }
+
+  function loadDocs(){
+  const url = `/docs/list${HUERTO_ID ? ('?huerto_id=' + HUERTO_ID) : ''}`;
+  $body.innerHTML = `<tr><td colspan="4" class="text-muted p-3">Cargando…</td></tr>`;
+  fetch(url)
+    .then(async (r) => {
+      const ct = r.headers.get('content-type') || '';
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error(`HTTP ${r.status} — ${text.slice(0,200)}`);
+      }
+      if (!ct.includes('application/json')) {
+        const text = await r.text();
+        throw new Error(`Respuesta no JSON — ${text.slice(0,200)}`);
+      }
+      return r.json();
+    })
+    .then(data => {
+      const items = (data && data.items) ? data.items : [];
+      if (!items.length){
+        $body.innerHTML = `<tr><td colspan="4" class="text-muted p-3">No hay documentos.</td></tr>`;
+        $timeline.innerHTML = '';
+        return;
+      }
+      $body.innerHTML = items.map(rowHTML).join('');
+      $timeline.innerHTML = items.map(timelineItemHTML).join('');
+      applySearch();
+    })
+    .catch(err => {
+      console.error('Docs load error:', err);
+      $body.innerHTML = `<tr><td colspan="4" class="text-danger p-3">Error cargando documentos: ${err.message}</td></tr>`;
+    });
+}
+
+
+  function applySearch(){
+    const q = ($search?.value || '').trim().toLowerCase();
+    if (!$table) return;
+    const rows = $table.querySelectorAll('tbody tr');
+    let shown = 0;
+    rows.forEach(tr => {
+      const tt = tr.getAttribute('data-title') || '';
+      const cc = tr.getAttribute('data-cat') || '';
+      const ok = !q || tt.includes(q) || cc.includes(q);
+      tr.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    });
+    if (shown === 0) {
+      $body.innerHTML = emptyRow();
+    }
+  }
+
+  window.printDoc = function(id) {
+    const w = window.open(`/docs/view/${id}`, '_blank');
+    const tryPrint = () => {
+      if (w && w.document && w.document.readyState === 'complete') {
+        w.focus(); w.print();
+      } else { setTimeout(tryPrint, 500); }
+    };
+    tryPrint();
+  }
+
+  $search?.addEventListener('input', applySearch);
+  $reload?.addEventListener('click', loadDocs);
+
+  // Carga cuando se abre la pestaña Documentos (y también inicial por si ya está activa)
+  const docsTab = document.getElementById('tab-docs');
+  docsTab?.addEventListener('shown.bs.tab', loadDocs);
+  if (document.querySelector('#pane-docs.show')) loadDocs();
+})();
+</script>
+
+<!-- Styles -->
 <style>
-.timeline-pro {
-  position: relative;
-  padding-left: 2.5rem;
-}
-.timeline-line {
-  position: absolute;
-  top: 0; left: 18px; width: 4px; height: 100%;
-  background: #43a047;
-  z-index: 0;
-  border-radius: 2px;
-}
-.timeline-item {
-  position: relative;
-  z-index: 1;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: flex-start;
-}
-.timeline-dot {
-  width: 36px; height: 36px;
-  background: #fff;
-  border: 4px solid #43a047;
-  border-radius: 50%;
-  position: relative;
-  left: -36px;
-  z-index: 2;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.25rem;
-}
+/* timeline actividades */
+.timeline-pro { position: relative; padding-left: 2.5rem; }
+.timeline-line { position: absolute; top: 0; left: 18px; width: 4px; height: 100%; background: #43a047; z-index: 0; border-radius: 2px; }
+.timeline-item { position: relative; z-index: 1; margin-bottom: 1.5rem; display: flex; align-items: flex-start; }
+.timeline-dot { width: 36px; height: 36px; background: #fff; border: 4px solid #43a047; border-radius: 50%; position: relative; left: -36px; z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
 .timeline-dot.bg-fertilizacion { border-color: #ffb300; color: #ffb300;}
 .timeline-dot.bg-riego        { border-color: #29b6f6; color: #29b6f6;}
 .timeline-dot.bg-poda         { border-color: #6d4c41; color: #6d4c41;}
 .timeline-dot.bg-cosecha      { border-color: #d84315; color: #d84315;}
 .timeline-dot.bg-control_plagas { border-color: #e53935; color: #e53935;}
 .timeline-dot.bg-otra         { border-color: #789262; color: #789262;}
-.timeline-content {
-  margin-left: 12px;
-  width: 100%;
+.timeline-content { margin-left: 12px; width: 100%; }
+
+/* timeline docs */
+.doc-timeline { position: relative; padding-left: 1.75rem; }
+.doc-timeline::before { content: ""; position: absolute; top: 0; bottom: 0; left: 12px; width: 2px; background: rgba(76, 175, 80, .35); border-radius: 1px; }
+.doc-tl-item { position: relative; margin-bottom: 1rem; }
+.doc-tl-dot { position: absolute; left: -2px; top: 6px; width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 3px solid #43a047; display: flex; align-items: center; justify-content: center; color: #43a047; z-index: 1; }
+.doc-tl-content { margin-left: 1rem; }
+
+/* print */
+@media print {
+  .no-print, .btn, .alert, nav, header, footer, .nav-tabs, .tab-pane:not(.active) { display: none !important; }
+  body { background: white !important; }
+  .card { box-shadow: none !important; border: 1px solid #ccc; page-break-inside: avoid; }
+  .timeline-pro { padding-left: 0; }
+  .timeline-line, .timeline-dot, .doc-timeline::before, .doc-tl-dot { display: none; }
 }
 </style>
 {% endblock %}
-
-

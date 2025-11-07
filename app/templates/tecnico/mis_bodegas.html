@@ -5,29 +5,59 @@
 <div class="container py-4">
 
   <!-- Título de página -->
-  <h2 class="mb-4 text-success">
+  <h2 class="mb-3 text-success">
     <i class="bi bi-box-seam"></i> Bodegas a mi cargo
   </h2>
 
-  <div class="row g-4">
+  <!-- Intro explicativa con "robot" -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body d-flex align-items-start gap-3">
+      <div class="flex-shrink-0" aria-hidden="true" style="font-size:2.25rem; line-height:1">
+        🤖
+      </div>
+      <div>
+        <h5 class="mb-1">Esto te recomienda tu asistente</h5>
+        <p class="mb-2 text-muted" style="font-size:1.05rem">
+          <strong>¿Qué es una bodega?</strong> Es el lugar donde guardas y controlas tus <em>químicos</em> (fertilizantes, fitosanitarios, etc.). 
+          Llevar este registro te ayuda a mantener orden, seguridad y un <strong>histórico del campo</strong> para tomar mejores decisiones.
+        </p>
+        <ul class="mb-0 small text-muted">
+          <li>Ve la cantidad disponible y el tipo de cada químico.</li>
+          <li>Consulta rápidamente a qué <strong>huerto</strong> pertenece cada bodega.</li>
+          <li>Agrega nuevos químicos cuando ingresen al inventario.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de búsqueda simple -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <label for="buscarBodega" class="form-label mb-1">Buscar bodega</label>
+      <input id="buscarBodega" type="search" class="form-control" placeholder="Nombre, ubicación o huerto…">
+    </div>
+  </div>
+
+  <!-- Grid de bodegas -->
+  <div class="row g-4" id="gridBodegas">
     {% for bodega in bodegas %}
-      <div class="col-12 col-md-6 col-lg-4">
-        <div class="card border-success shadow-lg h-100 position-relative">
+      <div class="col-12 col-md-6 col-lg-4 card-bodega"
+           data-name="{{ (bodega.nombre or '')|lower }}"
+           data-ubic="{{ (bodega.ubicacion or '')|lower }}"
+           data-huerto="{{ (bodega.huerto.nombre if bodega.huerto else '')|lower }}">
+        <div class="card border-success shadow h-100 position-relative">
 
-          <!-- Badge de ID arriba a la derecha -->
-         
-
-          <!-- Header: nombre y huerto -->
+          <!-- Encabezado -->
           <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-            <div>
+            <div class="fw-semibold">
               <i class="bi bi-house-door-fill"></i> {{ bodega.nombre }}
             </div>
             <span class="badge bg-light text-success">
-              Huerto: {{ bodega.huerto.nombre }}
+              Huerto: {{ bodega.huerto.nombre if bodega.huerto else "—" }}
             </span>
           </div>
 
-          <!-- Body: info general -->
+          <!-- Cuerpo -->
           <div class="card-body">
             <p class="mb-1">
               <i class="bi bi-geo-alt-fill text-success"></i>
@@ -43,12 +73,13 @@
               <strong>Químicos:</strong>
               <span class="badge bg-info">{{ bodega.quimicos|length }}</span>
             </p>
+
             {% if bodega.quimicos %}
               <ul class="list-group list-group-flush mb-2">
                 {% for q in bodega.quimicos[:3] %}
                   <li class="list-group-item d-flex justify-content-between align-items-center small">
-                    {{ q.nombre }}
-                    <span class="badge bg-secondary">{{ q.cantidad_litros }} L</span>
+                    <span class="text-truncate" title="{{ q.nombre }}">{{ q.nombre }}</span>
+                    <span class="badge bg-secondary">{{ q.cantidad_litros or 0 }} L</span>
                   </li>
                 {% endfor %}
                 {% if bodega.quimicos|length > 3 %}
@@ -57,10 +88,12 @@
                   </li>
                 {% endif %}
               </ul>
+            {% else %}
+              <div class="small text-muted">Sin químicos registrados aún.</div>
             {% endif %}
           </div>
 
-          <!-- Footer: acciones rápidas -->
+          <!-- Acciones -->
           <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-end">
             <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-success btn-sm">
               <i class="bi bi-flask"></i> Ver Químicos
@@ -79,6 +112,37 @@
       </div>
     {% endfor %}
   </div>
-
 </div>
+
+<!-- JS: filtro simple por texto -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const input = document.getElementById('buscarBodega');
+  const cards = Array.from(document.querySelectorAll('.card-bodega'));
+
+  function doFilter() {
+    const t = (input.value || '').trim().toLowerCase();
+    cards.forEach(c => {
+      const hit = [c.dataset.name, c.dataset.ubic, c.dataset.huerto].some(v => (v||'').includes(t));
+      c.style.display = (!t || hit) ? '' : 'none';
+    });
+  }
+  input?.addEventListener('input', doFilter);
+});
+</script>
+
+<!-- Accesibilidad & legibilidad -->
+<style>
+/* Subir un poquito el tamaño de fuente general del bloque */
+.container { font-size: 1.02rem; }
+
+/* Mejoras de foco para navegación por teclado */
+.card a:focus, .btn:focus, .form-control:focus, .form-select:focus {
+  box-shadow: 0 0 0 .2rem rgba(25,135,84,.25) !important; /* verde bootstrap */
+  outline: none;
+}
+
+/* Asegurar buen contraste en badges claros */
+.badge.bg-light.text-success { border: 1px solid #cfe9dc; }
+</style>
 {% endblock %}

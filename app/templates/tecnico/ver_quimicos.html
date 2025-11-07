@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Ver Químicos - AgroDESK{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-droplet-fill text-info"></i> Todos mis Químicos</h2>
+            <span class="badge bg-info fs-6">{{ quimicos|length }} químicos en total</span>
+        </div>
+
+        <!-- Filtro por bodega (opcional) -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-funnel"></i> Filtros</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="filtroBodega" class="form-label">Filtrar por bodega:</label>
+                        <select class="form-select" id="filtroBodega">
+                            <option value="">Todas las bodegas</option>
+                            {% for bodega in bodegas %}
+                            <option value="{{ bodega.id }}">{{ bodega.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="filtroTipo" class="form-label">Filtrar por tipo:</label>
+                        <select class="form-select" id="filtroTipo">
+                            <option value="">Todos los tipos</option>
+                            <!-- Los tipos se llenarán dinámicamente con JavaScript -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="buscarQuimico" class="form-label">Buscar químico:</label>
+                        <input type="text" class="form-control" id="buscarQuimico" placeholder="Buscar por nombre...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de químicos -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-table"></i> Lista de Químicos</h6>
+            </div>
+            <div class="card-body">
+                {% if quimicos %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="tablaQuimicos">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Cantidad (L)</th>
+                                <th>Bodega</th>
+                                <th>Huerto</th>
+                                <th>Fecha Ingreso</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for quimico in quimicos %}
+                            <tr data-bodega-id="{{ quimico.bodega.id }}" data-tipo="{{ quimico.tipo or '' }}">
+                                <td>
+                                    <strong>{{ quimico.nombre }}</strong>
+                                    {% if quimico.descripcion %}
+                                    <br><small class="text-muted">{{ quimico.descripcion[:50] }}{% if quimico.descripcion|length > 50 %}...{% endif %}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if quimico.tipo %}
+                                    <span class="badge bg-secondary">{{ quimico.tipo }}</span>
+                                    {% else %}
+                                    <span class="text-muted">Sin tipo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="fw-bold {% if quimico.cantidad_litros < 10 %}text-danger{% elif quimico.cantidad_litros < 50 %}text-warning{% else %}text-success{% endif %}">
+                                        {{ quimico.cantidad_litros or 0 }} L
+                                    </span>
+                                </td>
+                                <td>
+                                    <i class="bi bi-archive"></i> {{ quimico.bodega.nombre }}
+                                </td>
+                                <td>
+                                    <i class="bi bi-tree"></i> {{ quimico.bodega.huerto.nombre }}
+                                </td>
+                                <td>
+                                    {% if quimico.fecha_ingreso %}
+                                    {{ quimico.fecha_ingreso.strftime('%d/%m/%Y') }}
+                                    {% else %}
+                                    <span class="text-muted">Sin fecha</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if quimico.cantidad_litros and quimico.cantidad_litros > 0 %}
+                                        {% if quimico.cantidad_litros < 10 %}
+                                        <span class="badge bg-danger">Stock Bajo</span>
+                                        {% elif quimico.cantidad_litros < 50 %}
+                                        <span class="badge bg-warning">Stock Medio</span>
+                                        {% else %}
+                                        <span class="badge bg-success">Stock Alto</span>
+                                        {% endif %}
+                                    {% else %}
+                                    <span class="badge bg-dark">Sin Stock</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-droplet display-1 text-muted"></i>
+                    <h4 class="text-muted mt-3">No tienes químicos asignados</h4>
+                    <p class="text-muted">Contacta con el administrador para que te asigne bodegas con químicos.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Resumen por bodegas -->
+        {% if bodegas %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <h4><i class="bi bi-bar-chart"></i> Resumen por Bodegas</h4>
+            </div>
+            {% for bodega in bodegas %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-archive"></i> {{ bodega.nombre }}
+                        </h6>
+                        <p class="card-text">
+                            <small class="text-muted">Huerto: {{ bodega.huerto.nombre }}</small>
+                        </p>
+                        <span class="badge bg-info">
+                            {{ bodega.quimicos|length }} químicos
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- JavaScript para filtros -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filtroBodega = document.getElementById('filtroBodega');
+    const filtroTipo = document.getElementById('filtroTipo');
+    const buscarQuimico = document.getElementById('buscarQuimico');
+    const tabla = document.getElementById('tablaQuimicos');
+    
+    if (!tabla) return; // Si no hay tabla, no ejecutar el script
+    
+    const filas = tabla.querySelectorAll('tbody tr');
+    
+    // Llenar filtro de tipos dinámicamente
+    const tipos = new Set();
+    filas.forEach(fila => {
+        const tipo = fila.getAttribute('data-tipo');
+        if (tipo && tipo.trim() !== '') {
+            tipos.add(tipo);
+        }
+    });
+    
+    tipos.forEach(tipo => {
+        const option = document.createElement('option');
+        option.value = tipo;
+        option.textContent = tipo;
+        filtroTipo.appendChild(option);
+    });
+    
+    // Función para filtrar
+    function filtrarTabla() {
+        const bodegaSeleccionada = filtroBodega.value;
+        const tipoSeleccionado = filtroTipo.value;
+        const textoBusqueda = buscarQuimico.value.toLowerCase();
+        
+        filas.forEach(fila => {
+            const bodegaId = fila.getAttribute('data-bodega-id');
+            const tipo = fila.getAttribute('data-tipo');
+            const nombre = fila.cells[0].textContent.toLowerCase();
+            
+            const cumpleBodega = !bodegaSeleccionada || bodegaId === bodegaSeleccionada;
+            const cumpleTipo = !tipoSeleccionado || tipo === tipoSeleccionado;
+            const cumpleBusqueda = !textoBusqueda || nombre.includes(textoBusqueda);
+            
+            if (cumpleBodega && cumpleTipo && cumpleBusqueda) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+    
+    // Event listeners
+    filtroBodega.addEventListener('change', filtrarTabla);
+    filtroTipo.addEventListener('change', filtrarTabla);
+    buscarQuimico.addEventListener('input', filtrarTabla);
+});
+</script>
+{% endblock %}

@@ -1,108 +1,113 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}SiembraLOG{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Iconos Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- DataTables -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favi.svg') }}">
+  <meta charset="UTF-8">
+  <title>{% block title %}AgroDESK{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-    
-    <style>
+  <!-- Bootstrap 5 + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- DataTables (opcional si lo usas) -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+
+  <!-- Leaflet (opcional si lo usas) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favi.svg') }}">
+
+  {% block extra_head %}{% endblock %}
+
+  <style>
+    /* Botón flotante AgroBot */
+    .agrobot-fab{
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      z-index: 1030;
+      box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+    }
+
+    /* KPIs */
+    .kpi .display-6 { font-weight: 600; }
+
+    /* Badges sutiles (si no usas Bootstrap 5.3) */
+    .bg-success-subtle { background:#e6f4ea !important; color:#1e7e34 !important; }
+    .text-success-emphasis { color:#1e7e34 !important; }
+    .bg-warning-subtle { background:#fff4df !important; color:#b58100 !important; }
+    .text-warning-emphasis { color:#b58100 !important; }
+    .bg-secondary-subtle { background:#f0f2f4 !important; color:#5c636a !important; }
+
+    /* Hover cards */
+    .card { transition: transform .15s ease-in-out; }
+    .card:hover { transform: translateY(-2px); }
+
+    /* Responsive suave */
+    @media (max-width: 576px){
+      .btn { width: 100%; }
+    }
+
+    /* Tema general */
     html, body { height: 100%; }
     body {
-        /* Gradiente azul petróleo a gris humo */
-        background: linear-gradient(120deg, #e7ecef 55%, #b3c1c9 85%, #104a57 100%);
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
+      background: linear-gradient(120deg, #e7ecef 55%, #b3c1c9 85%, #104a57 100%);
+      min-height: 100vh;
+      display: flex;
+      background-attachment: fixed;
+      flex-direction: column;
     }
-    main {
-        flex: 1 0 auto;
-    }
+    main { flex: 1 0 auto; }
+
     .navbar-agro {
-        background-color: #104a57; /* Azul petróleo */
-        border-bottom: 3px solid #c4b95f; /* Amarillo oro */
-        box-shadow: 0 2px 12px #104a5733;
+      background-color: #104a57;
+      border-bottom: 3px solid #c4b95f;
+      box-shadow: 0 2px 12px #104a5733;
     }
     .navbar-agro .nav-link,
     .navbar-agro .navbar-brand {
-        color: #fffefa !important;
-        font-weight: 600;
+      color: #fffefa !important;
+      font-weight: 600;
     }
     .navbar-agro .nav-link.active, .navbar-agro .nav-link:hover {
-        color: #c4b95f !important; /* Amarillo oro */
-        text-shadow: 0 1px 2px #104a5733;
+      color: #c4b95f !important;
+      text-shadow: 0 1px 2px #104a5733;
     }
     .btn-agro {
-        background-color: #c4b95f; /* Amarillo oro */
-        color: #104a57;
-        border: none;
-        box-shadow: 0 2px 8px #c4b95f44;
-        font-weight: 500;
+      background-color: #c4b95f;
+      color: #104a57;
+      border: none;
+      box-shadow: 0 2px 8px #c4b95f44;
+      font-weight: 500;
     }
-    .btn-agro:hover {
-        background-color: #104a57;
-        color: #c4b95f;
-    }
+    .btn-agro:hover { background-color: #104a57; color: #c4b95f; }
     .card {
-        border-radius: 14px;
-        box-shadow: 0 2px 16px #104a5730;
-        border: 1px solid #b3c1c9;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px #104a5730;
+      border: 1px solid #b3c1c9;
     }
-    .card-header {
-        background-color: #e7ecef;
-        color: #104a57;
-        font-weight: 600;
-    }
-    .bg-success, .badge.bg-success {
-        background-color: #7b904b !important; /* Verde oliva */
-        color: #fff !important;
-    }
-    .bg-warning, .badge.bg-warning {
-        background-color: #c4b95f !important; /* Amarillo oro */
-        color: #104a57 !important;
-    }
-    .bg-info, .badge.bg-info {
-        background-color: #b3c1c9 !important; /* Gris humo */
-        color: #104a57 !important;
-    }
-    .bg-petroleo {
-        background-color: #104a57 !important;
-        color: #fffefa !important;
-    }
+    .card-header { background-color: #e7ecef; color: #104a57; font-weight: 600; }
+    .bg-success, .badge.bg-success { background-color: #7b904b !important; color: #fff !important; }
+    .bg-warning, .badge.bg-warning { background-color: #c4b95f !important; color: #104a57 !important; }
+    .bg-info, .badge.bg-info { background-color: #b3c1c9 !important; color: #104a57 !important; }
+    .bg-petroleo { background-color: #104a57 !important; color: #fffefa !important; }
+
     footer {
-        flex-shrink: 0;
-        background: #e7ecef;
-        border-top: 2px solid #104a57;
-        color: #104a57;
+      flex-shrink: 0;
+      background: #e7ecef;
+      border-top: 2px solid #104a57;
+      color: #104a57;
     }
-    /* Dark mode */
-    @media (prefers-color-scheme: dark) {
-        body { background: #141c1d; color: #dde5ea; }
-        .navbar-agro { background: #102c34; border-bottom: 3px solid #c4b95f; }
-        .card, .bg-light, footer { background: #1e2326 !important; color: #dde5ea; }
-        .btn-agro { background-color: #7b904b; color: #fffefa; }
-        .btn-agro:hover { background-color: #c4b95f; color: #102c34; }
-    }
-</style>
 
 
-    
-
+  </style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-agro sticky-top mb-4 shadow-sm">
   <div class="container-fluid">
     <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
-      <i class="bi bi-cloud-fill"></i> Siembra <span class="text-warning">LOG</span>
+      <i class="bi bi-cloud-fill"></i> Agro <span class="text-warning">DESK</span>
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
@@ -117,11 +122,14 @@
             <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.crear_bodega') }}"><i class="bi bi-box-seam"></i> Crear Bodega</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.listar_bodegas') }}"><i class="bi bi-archive"></i> Ver Bodegas</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.recomendar') }}"><i class="bi bi-chat-dots"></i> Recomendaciones</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('geo.mapa') }}"><i class="bi bi-map"></i> Georreferenciación</a></li>
           {% elif current_user.role == 'tecnico' %}
             <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.tecnico_dashboard') }}"><i class="bi bi-speedometer2"></i> Técnico</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.mis_huertos') }}"><i class="bi bi-tree"></i> Mis Huertos</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.mis_bodegas') }}"><i class="bi bi-archive"></i> Mis Bodegas</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.todos_los_quimicos') }}"><i class="bi bi-droplet-fill"></i> Ver Químicos</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.ver_recomendaciones') }}"><i class="bi bi-chat-dots"></i> Recomendaciones</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('geo.mapa') }}"><i class="bi bi-map"></i> Georreferenciación</a></li>
           {% endif %}
         {% endif %}
       </ul>
@@ -164,12 +172,11 @@
   </div>
 </main>
 
-<!-- Footer mejorado, sticky abajo -->
 <footer class="bg-light border-top py-3 mt-5 shadow-sm">
   <div class="container text-center d-flex flex-column flex-md-row justify-content-between align-items-center">
     <div class="mb-2 mb-md-0">
-      <span class="text-success fw-bold"><i class="bi bi-leaf"></i> AgroSMART</span>
-      <span class="text-muted ms-2">&copy; {{ current_year or "2025" }} — Todos los derechos reservados LEUCODE.IA </span>
+      <span class="text-success fw-bold"><i class="bi bi-leaf"></i> AgroDESK</span>
+      <span class="text-muted ms-2">&copy; {{ current_year or "2025" }} — Todos los derechos reservados LEUCODE.IA</span>
     </div>
     <div>
       <a href="mailto:contacto@agrosmart.cl" class="text-decoration-none text-success me-3" title="Contáctanos">
@@ -185,7 +192,58 @@
   </div>
 </footer>
 
-<!-- Bootstrap JS (para alertas, menú móvil, etc.) -->
+<!-- JS core -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- (Opcional) DataTables + jQuery si realmente lo usas en alguna vista -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- Leaflet (opcional) -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+<!-- AgroBot show/hide: seguro y tolerante -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const STORAGE_KEY = 'agrobotHidden';
+
+  const card = document.getElementById('agrobotCard');        // Panel con el robot
+  const hideBtn = document.getElementById('hideAgrobotBtn');  // Botón para ocultar
+  const fab = document.getElementById('showAgrobotBtn');      // Botón flotante para volver a mostrar
+
+  // Si la vista no tiene AgroBot, no hacemos nada (no rompe otras páginas)
+  if (!card || !fab) return;
+
+  function apply(hidden) {
+    if (hidden) {
+      card.setAttribute('hidden','');
+      fab.removeAttribute('hidden');
+    } else {
+      card.removeAttribute('hidden');
+      fab.setAttribute('hidden','');
+    }
+  }
+
+  // Estado inicial desde localStorage
+  const startHidden = localStorage.getItem(STORAGE_KEY) === 'true';
+  apply(startHidden);
+
+  hideBtn && hideBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    localStorage.setItem(STORAGE_KEY, 'true');
+    apply(true);
+  });
+
+  fab.addEventListener('click', function () {
+    localStorage.setItem(STORAGE_KEY, 'false');
+    apply(false);
+  });
+});
+</script>
+
+{% block scripts %}{% endblock %}
 </body>
 </html>

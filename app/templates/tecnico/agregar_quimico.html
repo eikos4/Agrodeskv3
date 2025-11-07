@@ -1,65 +1,149 @@
 {% extends "base.html" %}
-
 {% block title %}Agregar Químico a {{ bodega.nombre }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
+  <!-- AgroBot banner -->
+  <div id="agrobot-banner" class="card shadow-sm border-0 mb-4">
+    <div class="card-body d-flex flex-wrap align-items-start gap-3">
+      <i class="bi bi-robot fs-1 text-success"></i>
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <h5 class="mb-1">AgroBot — Alta de Químicos</h5>
+            <p class="mb-2 text-muted small">Consejos rápidos para un registro limpio y trazable.</p>
+          </div>
+          <button id="agrobot-hide" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-eye-slash"></i> Ocultar
+          </button>
+        </div>
+        <ul class="small mb-0">
+          <li>Usa <b>tipo</b> correcto (insecticida, fungicida, etc.) para filtrar reportes.</li>
+          <li>Ingresa <b>fecha de ingreso</b> real; por defecto proponemos <b>hoy</b>.</li>
+          <li><b>Cantidad (L)</b> acepta decimales; usa punto. Ej: <code>12.5</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Encabezado bodega -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div class="d-flex align-items-center gap-3">
+      <h4 class="mb-0">
+        <i class="bi bi-plus-circle-fill text-success me-2"></i>
+        Agregar químico a <span class="text-success">{{ bodega.nombre }}</span>
+      </h4>
+      <span class="badge text-bg-light border">
+        <i class="bi bi-tree-fill text-success"></i>
+        {{ bodega.huerto.nombre if bodega.huerto else '—' }}
+      </span>
+      <span class="badge text-bg-light border">
+        <i class="bi bi-person-badge text-success"></i>
+        {{ bodega.responsable.name if bodega.responsable else 'Sin responsable' }}
+      </span>
+    </div>
+    <a href="{{ url_for('admin.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left-circle"></i> Volver a Químicos
+    </a>
+  </div>
+
   <div class="row justify-content-center">
     <div class="col-lg-8">
       <div class="card shadow">
-        <div class="card-header bg-success text-white">
-          <h4 class="mb-0"><i class="bi bi-plus-circle-fill me-2"></i> Agregar Químico a {{ bodega.nombre }}</h4>
-        </div>
         <div class="card-body">
+          <!-- Flash -->
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, msg in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                  {{ msg }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
 
-          <form method="POST" autocomplete="off">
+          <form id="formQuimico" method="POST" autocomplete="off" novalidate>
             {{ form.hidden_tag() }}
 
+            <!-- Nombre -->
             <div class="mb-3">
-              {{ form.nombre.label(class="form-label") }}
-              {{ form.nombre(class="form-control", placeholder="Ej: Glifosato") }}
+              <label class="form-label d-flex justify-content-between">
+                <span>{{ form.nombre.label.text }}</span>
+                <small class="text-muted"><span id="nombreCount">0</span>/100</small>
+              </label>
+              {{ form.nombre(class="form-control", placeholder="Ej: Glifosato 48% SL", maxlength="100") }}
               {% if form.nombre.errors %}
                 <div class="text-danger small">{{ form.nombre.errors[0] }}</div>
               {% endif %}
             </div>
 
+            <!-- Tipo con chips rápidos -->
             <div class="mb-3">
               {{ form.tipo.label(class="form-label") }}
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <button type="button" class="btn btn-sm btn-outline-success tipo-chip" data-value="herbicida">Herbicida</button>
+                <button type="button" class="btn btn-sm btn-outline-success tipo-chip" data-value="fungicida">Fungicida</button>
+                <button type="button" class="btn btn-sm btn-outline-success tipo-chip" data-value="insecticida">Insecticida</button>
+                <button type="button" class="btn btn-sm btn-outline-success tipo-chip" data-value="fertilizante">Fertilizante</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary tipo-chip" data-value="otro">Otro</button>
+              </div>
               {{ form.tipo(class="form-select") }}
               {% if form.tipo.errors %}
                 <div class="text-danger small">{{ form.tipo.errors[0] }}</div>
               {% endif %}
             </div>
 
+            <!-- Descripción -->
             <div class="mb-3">
               {{ form.descripcion.label(class="form-label") }}
-              {{ form.descripcion(class="form-control", rows=3, placeholder="Descripción o instrucciones de uso") }}
+              {{ form.descripcion(class="form-control", rows=3, placeholder="Descripción, formulación, precauciones o instrucciones de uso…") }}
               {% if form.descripcion.errors %}
                 <div class="text-danger small">{{ form.descripcion.errors[0] }}</div>
               {% endif %}
+              <div class="form-text">
+                Sugerencia: especifica concentración (p.ej. “48% SL”) y <em>intervalo de seguridad</em>.
+              </div>
             </div>
 
-            <div class="mb-3">
-              {{ form.cantidad_litros.label(class="form-label") }}
-              {{ form.cantidad_litros(class="form-control", placeholder="Ej: 10.50") }}
-              {% if form.cantidad_litros.errors %}
-                <div class="text-danger small">{{ form.cantidad_litros.errors[0] }}</div>
-              {% endif %}
+            <!-- Cantidad + Fecha -->
+            <div class="row g-3">
+              <div class="col-md-6">
+                {{ form.cantidad_litros.label(class="form-label") }}
+                <div class="input-group">
+                  {{ form.cantidad_litros(class="form-control", placeholder="Ej: 10.5", step="0.01", min="0") }}
+                  <span class="input-group-text">L</span>
+                </div>
+                {% if form.cantidad_litros.errors %}
+                  <div class="text-danger small">{{ form.cantidad_litros.errors[0] }}</div>
+                {% endif %}
+                <div class="form-text">Usa punto para decimales.</div>
+              </div>
+              <div class="col-md-6">
+                {{ form.fecha_ingreso.label(class="form-label") }}
+                {{ form.fecha_ingreso(class="form-control", type="date", id="fechaIngreso") }}
+                {% if form.fecha_ingreso.errors %}
+                  <div class="text-danger small">{{ form.fecha_ingreso.errors[0] }}</div>
+                {% endif %}
+              </div>
             </div>
 
-            <div class="mb-3">
-              {{ form.fecha_ingreso.label(class="form-label") }}
-              {{ form.fecha_ingreso(class="form-control", type="date") }}
-              {% if form.fecha_ingreso.errors %}
-                <div class="text-danger small">{{ form.fecha_ingreso.errors[0] }}</div>
-              {% endif %}
-            </div>
-
-            <div class="d-flex justify-content-between">
-              <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-secondary">
-                <i class="bi bi-arrow-left-circle"></i> Cancelar
-              </a>
-              {{ form.submit(class="btn btn-success") }}
+            <!-- Botonera -->
+            <div class="d-flex flex-wrap justify-content-between mt-4 gap-2">
+              <div class="small text-muted">
+                <i class="bi bi-lightning-charge"></i> Atajo: <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> para guardar
+              </div>
+              <div class="d-flex gap-2">
+                <a href="{{ url_for('admin.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-secondary">
+                  <i class="bi bi-x-circle"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-success" id="btnGuardar">
+                  <i class="bi bi-check2-circle"></i> Guardar
+                </button>
+                <button type="submit" class="btn btn-success" id="btnGuardarOtro" name="seguir" value="1">
+                  <i class="bi bi-plus-circle"></i> Guardar y agregar otro
+                </button>
+              </div>
             </div>
           </form>
 
@@ -68,4 +152,67 @@
     </div>
   </div>
 </div>
+
+<!-- FAB para reabrir AgroBot -->
+<button id="agrobot-reopen"
+        class="btn btn-success shadow position-fixed bottom-0 end-0 m-3 d-none"
+        title="Mostrar guía de AgroBot">
+  <i class="bi bi-robot"></i> AgroBot
+</button>
+
+<script>
+(function () {
+  // AgroBot persistencia
+  const key = 'agrobot_quimicos_hidden';
+  const banner = document.getElementById('agrobot-banner');
+  const hideBtn = document.getElementById('agrobot-hide');
+  const reopenBtn = document.getElementById('agrobot-reopen');
+
+  function applyState() {
+    const hidden = localStorage.getItem(key) === '1';
+    if (hidden) { banner.classList.add('d-none'); reopenBtn.classList.remove('d-none'); }
+    else { banner.classList.remove('d-none'); reopenBtn.classList.add('d-none'); }
+  }
+  hideBtn?.addEventListener('click', () => { localStorage.setItem(key, '1'); applyState(); });
+  reopenBtn?.addEventListener('click', () => { localStorage.setItem(key, '0'); applyState(); setTimeout(()=>banner.scrollIntoView({behavior:'smooth'}),50); });
+  applyState();
+
+  // Contador nombre
+  const nombre = document.getElementById('{{ form.nombre.id }}');
+  const nombreCount = document.getElementById('nombreCount');
+  function updCount(){ if(nombre && nombreCount){ nombreCount.textContent = (nombre.value||'').length; } }
+  nombre?.addEventListener('input', updCount); updCount();
+
+  // Chips tipo
+  const tipoSelect = document.getElementById('{{ form.tipo.id }}');
+  document.querySelectorAll('.tipo-chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ if(tipoSelect){ tipoSelect.value = btn.dataset.value; tipoSelect.dispatchEvent(new Event('change')); } });
+  });
+
+  // Fecha por defecto = hoy (si viene vacía)
+  const fecha = document.getElementById('fechaIngreso');
+  if(fecha && !fecha.value){
+    const d = new Date(); const m = String(d.getMonth()+1).padStart(2,'0'); const day = String(d.getDate()).padStart(2,'0');
+    fecha.value = `${d.getFullYear()}-${m}-${day}`;
+  }
+
+  // Atajo Ctrl/Cmd + Enter -> Guardar
+  document.addEventListener('keydown', (e)=>{
+    if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+      e.preventDefault();
+      document.getElementById('btnGuardar')?.click();
+    }
+  });
+
+  // Prevención doble submit
+  const form = document.getElementById('formQuimico');
+  let submitting = false;
+  form?.addEventListener('submit', ()=>{
+    if(submitting) return false;
+    submitting = true;
+    document.getElementById('btnGuardar')?.setAttribute('disabled','disabled');
+    document.getElementById('btnGuardarOtro')?.setAttribute('disabled','disabled');
+  });
+})();
+</script>
 {% endblock %}

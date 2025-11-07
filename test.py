@@ -5,9 +5,9 @@ from werkzeug.security import generate_password_hash
 app = create_app()  # CREA la app antes de todo
 
 with app.app_context():
-    email = "admin@demo.com"
+    email = "g.castilla@agrodesk.cl"
     password = "admin123"
-    nombre = "Administrador Principal"
+    nombre = "Guido Castilla Mora"
 
     # Verifica si ya existe
     existe = User.query.filter_by(email=email).first()

@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+{% block title %}Mapa — Georreferenciación{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  {# 🤖 AgroBot (ocultable con persistencia, mensaje según rol) #}
+  <div id="agrobotBox" class="card shadow-sm border-0 mb-3" role="region" aria-label="AgroBot - Georreferenciación">
+    <div class="card-body d-flex flex-wrap align-items-start gap-3">
+      <i class="bi bi-robot fs-1 text-success" aria-hidden="true"></i>
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <h5 class="mb-1">AgroBot — Módulo Georreferenciación</h5>
+            {% set role = (current_user.role if current_user is defined and current_user.is_authenticated else 'tecnico') %}
+            {% if role == 'admin' %}
+              <p class="mb-2 text-muted small">Admin: Diseña parcelas, configura estilos por actividad, controla permisos y audita rutas y labores en el mapa.</p>
+            {% else %}
+              <p class="mb-2 text-muted small">Técnico: Registra actividades con ubicación (ruta/área o punto), adjunta evidencia y consulta la bitácora por zona/fecha.</p>
+            {% endif %}
+          </div>
+          <button id="hideAgrobotBtn" type="button" class="btn btn-outline-secondary btn-sm"
+                  aria-controls="agrobotBox" aria-expanded="true">
+            <i class="bi bi-eye-slash"></i> Ocultar
+          </button>
+        </div>
+
+        <div class="row g-3 small">
+          <div class="col-12 col-md-7">
+            <ul class="mb-0">
+              <li><b>Parcelas:</b> dibuja/edita polígonos y guarda <code>geom_geojson</code>.</li>
+              <li><b>Actividades:</b> traza <b>rutas/áreas</b> (<code>ruta_geojson</code>) o usa punto (lat/lng).</li>
+              <li><b>Mediciones:</b> área (ha), perímetro y distancias para planificar.</li>
+              <li><b>Capas/estilos:</b> colores/íconos por tipo (riego, poda, plagas, etc.).</li>
+              <li><b>Exportar/Importar:</b> GeoJSON/KML para compartir y respaldar.</li>
+            </ul>
+          </div>
+          <div class="col-12 col-md-5">
+            <div class="bg-success-subtle rounded p-3 h-100">
+              <div class="fw-semibold mb-2">Flujo rápido</div>
+              <ol class="mb-0">
+                <li>Filtra por <b>huerto</b> (y <b>parcela</b>).</li>
+                <li>Crea <b>parcela</b> o <b>actividad</b> desde los botones.</li>
+                <li>Revisa <b>panel de resultados</b> y <b>leyenda</b>.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  {# Botón flotante para reabrir AgroBot (aparece cuando lo ocultas) #}
+  <button id="showAgrobotBtn" type="button"
+          class="btn btn-success agrobot-fab d-none"
+          aria-controls="agrobotBox" aria-expanded="false" aria-label="Mostrar AgroBot">
+    <i class="bi bi-robot"></i> AgroBot
+  </button>
+
+  {# ======= Barra de acciones + filtros ======= #}
+  <div class="card shadow-sm border-0 mb-3">
+    <div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h2 class="text-success mb-0 d-flex align-items-center gap-2">
+          <i class="bi bi-geo-alt-fill"></i>
+          <span>Mapa de Huertos y Actividades</span>
+        </h2>
+
+        <div class="d-flex flex-wrap gap-2">
+          {% if role == 'admin' %}
+            <a href="{{ url_for('geo_admin.parcela_nueva') }}" class="btn btn-outline-success">
+              <i class="bi bi-bounding-box"></i> Nueva parcela
+            </a>
+            <a href="{{ url_for('geo_types.tipos_list') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-palette"></i> Estilos
+            </a>
+            <button class="btn btn-outline-secondary" id="btnImportar" type="button">
+              <i class="bi bi-box-arrow-in-down"></i> Importar
+            </button>
+            <button class="btn btn-outline-secondary" id="btnExportar" type="button">
+              <i class="bi bi-box-arrow-up"></i> Exportar
+            </button>
+          {% endif %}
+          <a href="{{ url_for('geo.nueva_actividad') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Nueva actividad
+          </a>
+        </div>
+      </div>
+
+      {# Filtros #}
+      <div class="row g-3 mt-2">
+        <div class="col-12 col-md-3">
+          <label class="form-label small mb-1">Huerto</label>
+          <select id="filtroHuerto" class="form-select"></select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label small mb-1">Parcela</label>
+          <select id="filtroParcela" class="form-select" disabled></select>
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label small mb-1">Desde</label>
+          <input type="date" id="filtroDesde" class="form-control">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label small mb-1">Hasta</label>
+          <input type="date" id="filtroHasta" class="form-control">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label small mb-1">Tipo</label>
+          <select id="filtroTipo" class="form-select">
+            <option value="">Todos</option>
+            <option value="riego">Riego</option>
+            <option value="poda">Poda</option>
+            <option value="fertilizacion">Fertilización</option>
+            <option value="cosecha">Cosecha</option>
+            <option value="control_plagas">Control de Plagas</option>
+            <option value="otra">Otra</option>
+          </select>
+        </div>
+      </div>
+
+      {% if role == 'admin' %}
+      <div class="row g-3 mt-2">
+        <div class="col-12 col-md-3">
+          <label class="form-label small mb-1">Responsable</label>
+          <input id="filtroResponsable" class="form-control" placeholder="Nombre técnico…">
+        </div>
+        <div class="col-12 col-md-9 d-flex align-items-end justify-content-end gap-2">
+          <button id="btnLimpiar" class="btn btn-outline-secondary"><i class="bi bi-eraser"></i> Limpiar</button>
+          <button id="btnAplicar" class="btn btn-success"><i class="bi bi-funnel"></i> Aplicar filtros</button>
+        </div>
+      </div>
+      {% else %}
+      <div class="d-flex justify-content-end gap-2 mt-3">
+        <button id="btnLimpiar" class="btn btn-outline-secondary"><i class="bi bi-eraser"></i> Limpiar</button>
+        <button id="btnAplicar" class="btn btn-success"><i class="bi bi-funnel"></i> Aplicar</button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ======= Contenedor mapa + panel lateral ======= #}
+  <div class="row g-3">
+    <div class="col-12 col-xl-8">
+      <div class="position-relative">
+        <div id="map" class="rounded shadow-sm" style="height: 70vh; overflow:hidden;"></div>
+
+        {# Herramientas overlay (map tools) #}
+        <div class="map-tools card shadow-sm p-2">
+          <div class="d-flex flex-column gap-2">
+            <button id="btnLocate" class="btn btn-light btn-sm" title="Mi ubicación">
+              <i class="bi bi-geo"></i>
+            </button>
+            <button id="btnFull" class="btn btn-light btn-sm" title="Pantalla completa">
+              <i class="bi bi-arrows-fullscreen"></i>
+            </button>
+            <button id="btnToggleLegend" class="btn btn-light btn-sm" title="Leyenda">
+              <i class="bi bi-list-ul"></i>
+            </button>
+            <div class="form-check form-switch mt-2">
+              <input class="form-check-input" type="checkbox" id="chkParcelas" checked>
+              <label class="form-check-label small" for="chkParcelas">Parcelas</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="chkActividades" checked>
+              <label class="form-check-label small" for="chkActividades">Actividades</label>
+            </div>
+          </div>
+        </div>
+
+        {# Leyenda (toggle) #}
+        <div id="legendBox" class="card shadow-sm legend-panel d-none">
+          <div class="card-body p-2">
+            <div class="fw-semibold small mb-2">Actividades</div>
+            <div id="legendContent" class="small">
+              {# Tu JS construye con window.__ACTIVITY_STYLES__ #}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Panel lateral (resultados) #}
+    <div class="col-12 col-xl-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-light d-flex align-items-center justify-content-between">
+          <div class="fw-semibold"><i class="bi bi-list-ul me-1"></i> Resultados</div>
+          <div class="d-flex gap-2">
+            <button id="btnRefrescar" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-repeat"></i> Refrescar</button>
+            <button id="btnCentrar" class="btn btn-outline-secondary btn-sm"><i class="bi bi-aspect-ratio"></i> Ajustar vista</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <ul class="nav nav-pills mb-3" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabActividades" type="button" role="tab"><i class="bi bi-activity"></i> Actividades</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabParcelas" type="button" role="tab"><i class="bi bi-bounding-box"></i> Parcelas</button></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane fade show active" id="tabActividades" role="tabpanel">
+              <div id="listActividades" class="list-group list-group-flush small">
+                {# JS inyecta tarjetas de actividades aquí #}
+              </div>
+            </div>
+            <div class="tab-pane fade" id="tabParcelas" role="tabpanel">
+              <div id="listParcelas" class="list-group list-group-flush small">
+                {# JS inyecta tarjetas de parcelas aquí #}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-white">
+          <div class="d-flex justify-content-between small text-muted">
+            <span id="statsActividades">0 actividades</span>
+            <span id="statsParcelas">0 parcelas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/geo_map.js') }}"></script>
+
+<script>
+  // Datos de contexto (con fallback para evitar Undefined -> JSON serializable)
+  window.__MAP_CENTER__ = {{ center
+    |default({'lat': -36.82, 'lng': -73.05, 'zoom': 8})
+    |tojson
+  }};
+  window.__ACTIVITY_STYLES__ = {{ activity_styles
+    |default({})
+    |tojson
+  }};
+  window.__USER_ROLE__ = {{ (current_user.role if current_user.is_authenticated else 'tecnico') | tojson }};
+</script>
+
+<script>
+  // Persistencia AgroBot
+  (function(){
+    const STORAGE_KEY = 'agrobotHidden:geo_map';
+    const banner = document.getElementById('agrobotBox');
+    const hideBtn = document.getElementById('hideAgrobotBtn');
+    const showBtn = document.getElementById('showAgrobotBtn');
+
+    function setHidden(hidden){
+      if (!banner || !showBtn) return;
+      if (hidden){
+        banner.classList.add('d-none');
+        showBtn.classList.remove('d-none');
+        showBtn.setAttribute('aria-expanded','true');
+      } else {
+        banner.classList.remove('d-none');
+        showBtn.classList.add('d-none');
+        showBtn.setAttribute('aria-expanded','false');
+      }
+    }
+    function applyInitial(){ setHidden(localStorage.getItem(STORAGE_KEY) === 'true'); }
+    hideBtn?.addEventListener('click', ()=>{ localStorage.setItem(STORAGE_KEY,'true'); setHidden(true); });
+    showBtn?.addEventListener('click', ()=>{ localStorage.setItem(STORAGE_KEY,'false'); setHidden(false); try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){}; });
+    applyInitial();
+  })();
+
+  // Hooks mínimos que tu geo_map.js puede usar
+  window.__GEO_UI__ = {
+    getFilters: () => ({
+      huerto_id: document.getElementById('filtroHuerto')?.value || '',
+      parcela_id: document.getElementById('filtroParcela')?.value || '',
+      desde: document.getElementById('filtroDesde')?.value || '',
+      hasta: document.getElementById('filtroHasta')?.value || '',
+      tipo: document.getElementById('filtroTipo')?.value || '',
+      responsable: document.getElementById('filtroResponsable')?.value || ''
+    }),
+    onApply: (cb) => document.getElementById('btnAplicar')?.addEventListener('click', cb),
+    onClear: (cb) => document.getElementById('btnLimpiar')?.addEventListener('click', cb),
+    onRefresh: (cb) => document.getElementById('btnRefrescar')?.addEventListener('click', cb),
+    onFit: (cb) => document.getElementById('btnCentrar')?.addEventListener('click', cb),
+    onToggleLegend: (cb) => document.getElementById('btnToggleLegend')?.addEventListener('click', cb),
+    setHuertos: (opts) => {
+      const sel = document.getElementById('filtroHuerto'); if (!sel) return;
+      sel.innerHTML = '<option value="">Todos</option>' + opts.map(o=>`<option value="${o.id}">${o.nombre}</option>`).join('');
+    },
+    setParcelas: (opts) => {
+      const sel = document.getElementById('filtroParcela'); if (!sel) return;
+      sel.disabled = false;
+      sel.innerHTML = '<option value="">Todas</option>' + opts.map(o=>`<option value="${o.id}">${o.nombre}</option>`).join('');
+    },
+    setStats: (acts, parc) => {
+      const a = document.getElementById('statsActividades'); if (a) a.textContent = `${acts} actividades`;
+      const p = document.getElementById('statsParcelas'); if (p) p.textContent = `${parc} parcelas`;
+    },
+    ui: {
+      legendBox: document.getElementById('legendBox'),
+      legendContent: document.getElementById('legendContent'),
+      chkParcelas: document.getElementById('chkParcelas'),
+      chkActividades: document.getElementById('chkActividades'),
+      listActividades: document.getElementById('listActividades'),
+      listParcelas: document.getElementById('listParcelas'),
+      btnLocate: document.getElementById('btnLocate'),
+      btnFull: document.getElementById('btnFull')
+    }
+  };
+</script>
+
+<style>
+/* Botón flotante AgroBot: aparece cuando el banner está oculto */
+.agrobot-fab{
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1050;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+}
+
+/* Herramientas sobre el mapa */
+.map-tools{
+  position: absolute;
+  top: .75rem;
+  left: .75rem;
+  z-index: 1000;
+  border-radius: .5rem;
+}
+.map-tools .btn{ width: 38px; height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+
+/* Leyenda */
+.legend-panel{
+  position: absolute;
+  bottom: .75rem;
+  left: .75rem;
+  z-index: 1000;
+  border-radius: .5rem;
+  max-width: 260px;
+}
+
+/* Responsive: mapa ocupa toda la fila en móviles */
+@media (max-width: 991.98px){
+  #map{ height: 60vh !important; }
+}
+</style>
+{% endblock %}

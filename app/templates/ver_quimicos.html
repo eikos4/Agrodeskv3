@@ -4,7 +4,7 @@
 {% block content %}
 <div class="container py-4">
   <h2 class="mb-4 text-success">
-    <i class="bi bi-flask"></i> Químicos en Bodega <strong>{{ bodega.nombre }}</strong>
+    <i class="bi bi-flask"></i>Químicos en Bodega <strong>{{ bodega.nombre }}</strong>
   </h2>
   <p class="mb-3"><i class="bi bi-geo-alt"></i> <strong>Ubicación:</strong> {{ bodega.ubicacion or "—" }}</p>
   <p class="mb-3"><i class="bi bi-house-door"></i> <strong>Huerto:</strong> {{ bodega.huerto.nombre }}</p>
@@ -34,7 +34,11 @@
             <td>
               <a href="{{ url_for('admin.editar_quimico', quimico_id=q.id) }}" class="btn btn-outline-info btn-sm">Editar</a>
               <!-- Puedes agregar eliminar, etc -->
+
             </td>
+
+  
+
           {% endif %}
         </tr>
         {% else %}

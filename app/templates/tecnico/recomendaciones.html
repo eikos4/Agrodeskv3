@@ -1,11 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Mis Recomendaciones{% endblock %}
+
 {% block content %}
 <div class="container py-4">
-  <h2 class="mb-4 text-success"><i class="bi bi-chat-dots"></i> Mis Recomendaciones Técnicas</h2>
+
+  <!-- Intro clara con robot -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body d-flex gap-3 align-items-start">
+      <div class="display-6 text-success" aria-hidden="true">
+        <i class="bi bi-robot"></i>
+      </div>
+      <div>
+        <h2 class="h4 text-success mb-2">Esto te recomienda tu ingeniero agrónomo</h2>
+        <p class="mb-0 text-dark fs-6">
+          Aquí verás las tareas y sugerencias priorizadas para tus huertos.
+          <span class="text-muted">Las “Pendientes” son para realizar; las “Completadas” te ayudan a llevar el historial.</span>
+        </p>
+      </div>
+    </div>
+  </div>
 
   <!-- PENDIENTES -->
-  <h4 class="text-primary mb-3"><i class="bi bi-hourglass-split"></i> Pendientes</h4>
+  <h3 class="h5 text-primary mb-3"><i class="bi bi-hourglass-split"></i> Pendientes</h3>
   <div class="row g-4">
     {% for r in recomendaciones_pendientes %}
     <div class="col-12 col-md-6 col-lg-4">
@@ -19,21 +35,34 @@
               <span class="badge bg-info text-dark">{{ r.categoria }}</span>
             {% endif %}
           </div>
+
+          <!-- Autor bien visible -->
           <div class="mb-2">
-            <i class="bi bi-person-circle text-success"></i>
-            <strong>{{ r.autor.name if r.autor else 'Admin' }}</strong>
+            <i class="bi bi-person-badge text-success"></i>
+            <strong>Recomendado por Ing. Agrónomo:</strong>
+            <span class="text-dark">{{ r.autor.name if r.autor else 'Equipo Técnico' }}</span>
           </div>
+
           <div class="mb-2">
             <span class="text-dark">{{ r.contenido }}</span>
           </div>
+
+          {% if r.adjunto %}
+          <div class="mt-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('docs.view', doc_id=r.adjunto) }}" target="_blank">
+              <i class="bi bi-file-earmark-text"></i> Ver adjunto
+            </a>
+          </div>
+          {% endif %}
+
           <form method="POST" action="{{ url_for('tecnico.completar_recomendacion', reco_id=r.id) }}">
-            <button type="submit" class="btn btn-success btn-sm mt-2">
+            <button type="submit" class="btn btn-success btn-sm mt-3 w-100">
               <i class="bi bi-check2-circle"></i> Marcar como hecha
             </button>
           </form>
         </div>
         <div class="card-footer bg-light">
-          <span>
+          <span class="small">
             <i class="bi bi-flag"></i> <span class="badge bg-primary">Pendiente</span>
           </span>
         </div>
@@ -49,7 +78,7 @@
   </div>
 
   <!-- COMPLETADAS -->
-  <h4 class="text-success mt-5 mb-3"><i class="bi bi-check2-circle"></i> Completadas</h4>
+  <h3 class="h5 text-success mt-5 mb-3"><i class="bi bi-check2-circle"></i> Completadas</h3>
   <div class="row g-4">
     {% for r in recomendaciones_completadas %}
     <div class="col-12 col-md-6 col-lg-4">
@@ -63,16 +92,28 @@
               <span class="badge bg-info text-dark">{{ r.categoria }}</span>
             {% endif %}
           </div>
+
+          <!-- Autor bien visible -->
           <div class="mb-2">
-            <i class="bi bi-person-circle text-success"></i>
-            <strong>{{ r.autor.name if r.autor else 'Admin' }}</strong>
+            <i class="bi bi-person-badge text-success"></i>
+            <strong>Recomendado por Ing. Agrónomo:</strong>
+            <span class="text-dark">{{ r.autor.name if r.autor else 'Equipo Técnico' }}</span>
           </div>
+
           <div class="mb-2">
             <span class="text-dark">{{ r.contenido }}</span>
           </div>
+
+          {% if r.adjunto %}
+          <div class="mt-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('docs.view', doc_id=r.adjunto) }}" target="_blank">
+              <i class="bi bi-file-earmark-text"></i> Ver adjunto
+            </a>
+          </div>
+          {% endif %}
         </div>
         <div class="card-footer bg-light">
-          <span>
+          <span class="small">
             <i class="bi bi-flag"></i> <span class="badge bg-success">Completada</span>
           </span>
         </div>
@@ -86,5 +127,20 @@
     </div>
     {% endfor %}
   </div>
+
 </div>
+
+<style>
+/* Texto un poco más grande y alto de línea cómodo */
+.card p, .card span, .card .small { font-size: 1rem; line-height: 1.5; }
+
+/* Botón grande y claro en móviles */
+@media (max-width: 576px) {
+  .btn { font-size: 0.95rem; }
+}
+
+/* Sutil elevación */
+.card { transition: transform .15s ease-in-out; }
+.card:hover { transform: translateY(-2px); }
+</style>
 {% endblock %}

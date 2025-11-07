@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% block title %}Nueva Actividad{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  {# ===================== AgroBot (ocultable, con persistencia) ===================== #}
+  <div id="agrobotBox" class="card shadow-sm border-0 mb-3" role="region" aria-label="AgroBot - Nueva Actividad">
+    <div class="card-body d-flex flex-wrap align-items-start gap-3">
+      <i class="bi bi-robot fs-1 text-success" aria-hidden="true"></i>
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <h5 class="mb-1">AgroBot — Registrar Actividad en el Huerto</h5>
+            <p class="mb-2 text-muted small">
+              Registra <b>qué</b> hiciste, <b>dónde</b> (punto, ruta o área) y <b>cuándo</b>. Esto alimenta la bitácora y el mapa para trazabilidad.
+              <br><span class="text-success">Tip:</span> si fue recorrido/aplicación, usa <b>Ruta/Área</b>. Si es una visita puntual, usa <b>Punto</b>.
+            </p>
+          </div>
+          <button id="hideAgrobotBtn" type="button" class="btn btn-outline-secondary btn-sm" aria-controls="agrobotBox" aria-expanded="true">
+            <i class="bi bi-eye-slash"></i> Ocultar
+          </button>
+        </div>
+        <div class="row g-3 small">
+          <div class="col-12 col-md-7">
+            <ul class="mb-0">
+              <li>Selecciona <b>huerto</b> y (opcional) <b>parcela</b> para ubicar la labor.</li>
+              <li>Elige el <b>tipo</b> (colores/iconos del mapa se aplican automáticamente).</li>
+              <li>Captura <b>Punto (lat/lng)</b> o <b>Ruta/Área</b> dibujando en el mapa.</li>
+              <li>Usa <b>Mi ubicación</b> si estás en terreno para autocompletar el punto.</li>
+            </ul>
+          </div>
+          <div class="col-12 col-md-5">
+            <div class="bg-success-subtle rounded p-3 h-100">
+              <div class="fw-semibold mb-2">Checklist rápido</div>
+              <ol class="mb-0">
+                <li>Huerto ➜ Parcela (opcional)</li>
+                <li>Tipo ➜ Descripción</li>
+                <li>Punto o Ruta/Área</li>
+                <li>Guardar ✅</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Botón flotante para reabrir AgroBot #}
+  <button id="showAgrobotBtn" type="button" class="btn btn-success agrobot-fab d-none"
+          aria-controls="agrobotBox" aria-expanded="false" aria-label="Mostrar AgroBot">
+    <i class="bi bi-robot"></i> AgroBot
+  </button>
+
+  {# ===================== Formulario principal ===================== #}
+  <div class="card shadow border-0">
+    <div class="card-header bg-success text-white d-flex align-items-center">
+      <i class="bi bi-plus-circle-fill me-2 fs-5"></i>
+      <h4 class="mb-0">Registrar Actividad</h4>
+    </div>
+    <div class="card-body">
+      <form method="POST" autocomplete="off" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            {{ form.huerto_id.label(class="form-label fw-semibold small") }}
+            {{ form.huerto_id(class="form-select", id="huerto_id") }}
+            {% if form.huerto_id.errors %}<div class="invalid-feedback d-block">{{ form.huerto_id.errors[0] }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            {{ form.parcela_id.label(class="form-label fw-semibold small") }}
+            {{ form.parcela_id(class="form-select", id="parcela_id", disabled=True) }}
+            {% if form.parcela_id.errors %}<div class="invalid-feedback d-block">{{ form.parcela_id.errors[0] }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small d-flex align-items-center gap-2">
+              {{ form.tipo.label.text }}
+              <span id="tipoSwatch" class="rounded-pill px-2 py-1 small bg-light text-muted">—</span>
+            </label>
+            {{ form.tipo(class="form-select", id="tipo") }}
+            {% if form.tipo.errors %}<div class="invalid-feedback d-block">{{ form.tipo.errors[0] }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="mt-3">
+          {{ form.descripcion.label(class="form-label fw-semibold small") }}
+          {{ form.descripcion(class="form-control", rows="2", placeholder="Describe brevemente la actividad...") }}
+          {% if form.descripcion.errors %}<div class="invalid-feedback d-block">{{ form.descripcion.errors[0] }}</div>{% endif %}
+        </div>
+
+        {# ===== Modo de captura: Punto vs Ruta/Área ===== #}
+        <div class="row g-3 mt-2">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small">Modo de captura</label>
+            <div class="d-flex flex-wrap gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="modo" id="modoPunto" value="punto" checked>
+                <label class="form-check-label" for="modoPunto">Punto (lat/lng)</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="modo" id="modoRuta" value="ruta">
+                <label class="form-check-label" for="modoRuta">Ruta/Área (GeoJSON)</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <div id="grupoPunto" class="row g-3">
+              <div class="col-md-4">
+                {{ form.lat.label(class="form-label fw-semibold small") }}
+                {{ form.lat(class="form-control", step="any", placeholder="-35.670000", id=form.lat.id) }}
+              </div>
+              <div class="col-md-4">
+                {{ form.lng.label(class="form-label fw-semibold small") }}
+                {{ form.lng(class="form-control", step="any", placeholder="-71.540000", id=form.lng.id) }}
+              </div>
+              <div class="col-md-4">
+                {{ form.duracion_min.label(class="form-label fw-semibold small") }}
+                {{ form.duracion_min(class="form-control", min="0") }}
+              </div>
+              <div class="col-12 d-flex gap-2">
+                <button type="button" id="btnMiUbicacion" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-geo-alt"></i> Mi ubicación
+                </button>
+                <button type="button" id="btnLimpiarPunto" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-x-circle"></i> Limpiar punto
+                </button>
+              </div>
+            </div>
+
+            <div id="grupoRuta" class="d-none">
+              <div class="alert alert-info small mb-2">
+                Dibuja una <b>línea</b> (recorrido) o <b>polígono</b> (área intervenida) en el mapa.
+              </div>
+              {{ form.ruta_geojson(id="ruta_geojson") }}
+              <div class="d-flex gap-2">
+                <button type="button" id="btnLimpiarRuta" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-x-circle"></i> Limpiar ruta/área
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# ===================== Mapa de captura ===================== #}
+        <div class="mt-3 position-relative">
+          <div id="mapAct" class="rounded shadow-sm" style="height: 52vh; overflow: hidden;"></div>
+
+          <div class="map-tools card shadow-sm p-2">
+            <div class="d-flex flex-column gap-2">
+              <button type="button" id="mapLocate" class="btn btn-light btn-sm" title="Centrar en mi ubicación">
+                <i class="bi bi-geo"></i>
+              </button>
+              <button type="button" id="mapFit" class="btn btn-light btn-sm" title="Ajustar a geometría">
+                <i class="bi bi-aspect-ratio"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4 justify-content-end">
+          <a href="{{ url_for('geo.map_view') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Cancelar
+          </a>
+          <button class="btn btn-success px-4">
+            <i class="bi bi-check-circle"></i> Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+{# Leaflet.Draw (si no lo cargas global en base.html) #}
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+<script>
+  // Contexto desde backend con fallback para evitar Undefined -> JSON
+  window.__ACTIVITY_STYLES__ = {{ activity_styles | default({}) | tojson }};
+</script>
+
+<script>
+(function(){
+  // ===== Persistencia AgroBot =====
+  const STORAGE_KEY = 'agrobotHidden:nueva_actividad';
+  const banner = document.getElementById('agrobotBox');
+  const hideBtn = document.getElementById('hideAgrobotBtn');
+  const showBtn = document.getElementById('showAgrobotBtn');
+  function setHidden(h){
+    if(!banner||!showBtn) return;
+    if(h){ banner.classList.add('d-none'); showBtn.classList.remove('d-none'); }
+    else { banner.classList.remove('d-none'); showBtn.classList.add('d-none'); }
+  }
+  setHidden(localStorage.getItem(STORAGE_KEY)==='true');
+  hideBtn?.addEventListener('click', ()=>{ localStorage.setItem(STORAGE_KEY,'true'); setHidden(true); });
+  showBtn?.addEventListener('click', ()=>{ localStorage.setItem(STORAGE_KEY,'false'); setHidden(false); try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){}; });
+
+  // ===== Select dependiente: Parcela por Huerto =====
+  const selHuerto = document.getElementById('huerto_id');
+  const selParcela = document.getElementById('parcela_id');
+  async function cargarParcelas(huertoId){
+    if(!selParcela) return;
+    selParcela.innerHTML = '<option value="">(todas)</option>';
+    selParcela.disabled = true;
+    if(!huertoId) return;
+    try{
+      const r = await fetch(`/geo/api/huerto/${huertoId}/parcelas`);
+      const data = await r.json();
+      selParcela.innerHTML = '<option value="">(todas)</option>' + data.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+      selParcela.disabled = false;
+    }catch(e){ /* noop */ }
+  }
+  selHuerto?.addEventListener('change', e=>cargarParcelas(e.target.value));
+  if(selHuerto?.value){ cargarParcelas(selHuerto.value); }
+
+  // ===== Swatch de tipo (color/icono) =====
+  const selTipo = document.getElementById('tipo');
+  const swatch = document.getElementById('tipoSwatch');
+  function applyTipoSwatch(){
+    const t = selTipo?.value || 'otra';
+    const s = (window.__ACTIVITY_STYLES__ && window.__ACTIVITY_STYLES__[t]) || window.__ACTIVITY_STYLES__?.otra || {color:'#6c757d', fill:'#6c757d33', icon:'bi-geo'};
+    if(swatch){
+      swatch.style.background = s.fill || (s.color+'33');
+      swatch.style.color = s.color;
+      swatch.innerHTML = `<i class="bi ${s.icon}"></i> ${t}`;
+    }
+    // también podemos recolorear el dibujo actual si existe
+    if(window.__drawnLayer__){
+      const style = {color: s.color, weight: 3, opacity: .9, fillColor: s.fill || s.color, fillOpacity: .2};
+      try{ window.__drawnLayer__.setStyle(style); }catch(_){}
+    }
+    if(window.__marker__){
+      try{ window.__marker__.setIcon(new L.DivIcon({className:'', html:`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${s.color};border:2px solid #fff;box-shadow:0 0 0 2px ${s.color}"></span>`})); }catch(_){}
+    }
+  }
+  selTipo?.addEventListener('change', applyTipoSwatch);
+  applyTipoSwatch();
+
+  // ===== Modo de captura =====
+  const modoPunto = document.getElementById('modoPunto');
+  const modoRuta  = document.getElementById('modoRuta');
+  const grupoPunto = document.getElementById('grupoPunto');
+  const grupoRuta  = document.getElementById('grupoRuta');
+  function setModo(){
+    if(modoPunto.checked){
+      grupoPunto.classList.remove('d-none');
+      grupoRuta.classList.add('d-none');
+    }else{
+      grupoRuta.classList.remove('d-none');
+      grupoPunto.classList.add('d-none');
+    }
+  }
+  modoPunto?.addEventListener('change', setModo);
+  modoRuta?.addEventListener('change', setModo);
+  setModo();
+
+  // ===== Mapa (Leaflet + Draw) =====
+  const map = L.map('mapAct').setView([-35.6751, -71.5430], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom: 19, attribution: '&copy; OpenStreetMap'}).addTo(map);
+
+  // Estilo por tipo
+  function currentStyle(){
+    const t = selTipo?.value || 'otra';
+    const s = (window.__ACTIVITY_STYLES__ && window.__ACTIVITY_STYLES__[t]) || window.__ACTIVITY_STYLES__?.otra || {color:'#6c757d'};
+    return { color: s.color, weight: 3, opacity: .9, fillColor: s.fill || s.color, fillOpacity: .2 };
+  }
+
+  // Punto por click
+  const latInput = document.getElementById('{{ form.lat.id }}');
+  const lngInput = document.getElementById('{{ form.lng.id }}');
+  function setPoint(latlng){
+    if(!latInput || !lngInput) return;
+    latInput.value = latlng.lat.toFixed(6);
+    lngInput.value = latlng.lng.toFixed(6);
+    if(window.__marker__) map.removeLayer(window.__marker__);
+    window.__marker__ = L.circleMarker(latlng, currentStyle()).addTo(map);
+  }
+  map.on('click', (e)=>{ if(modoPunto.checked) setPoint(e.latlng); });
+
+  document.getElementById('btnMiUbicacion')?.addEventListener('click', ()=>{
+    if(!navigator.geolocation){ return; }
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const latlng = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+      map.setView(latlng, 17); setPoint(latlng);
+    });
+  });
+  document.getElementById('btnLimpiarPunto')?.addEventListener('click', ()=>{
+    if(latInput) latInput.value = ''; if(lngInput) lngInput.value = '';
+    if(window.__marker__){ map.removeLayer(window.__marker__); window.__marker__ = null; }
+  });
+
+  // Dibujo de ruta/área
+  const drawnItems = new L.FeatureGroup().addTo(map);
+  const drawControl = new L.Control.Draw({
+    draw: { polyline: true, polygon: true, rectangle: false, circle: false, marker: false, circlemarker: false },
+    edit: { featureGroup: drawnItems }
+  });
+  map.addControl(drawControl);
+
+  const rutaInput = document.getElementById('ruta_geojson');
+
+  function updateRutaInputFromLayer(layer){
+    const gj = layer.toGeoJSON();
+    rutaInput.value = JSON.stringify(gj.geometry);
+  }
+
+  map.on(L.Draw.Event.CREATED, function (e) {
+    if(!modoRuta.checked) return;
+    drawnItems.clearLayers();
+    window.__drawnLayer__ = e.layer;
+    drawnItems.addLayer(window.__drawnLayer__);
+    try{ window.__drawnLayer__.setStyle(currentStyle()); }catch(_){}
+    updateRutaInputFromLayer(window.__drawnLayer__);
+  });
+
+  map.on(L.Draw.Event.EDITED, function (e) {
+    const layers = e.layers;
+    layers.eachLayer(function (layer) {
+      window.__drawnLayer__ = layer;
+      updateRutaInputFromLayer(layer);
+    });
+  });
+
+  document.getElementById('btnLimpiarRuta')?.addEventListener('click', ()=>{
+    drawnItems.clearLayers();
+    window.__drawnLayer__ = null;
+    if(rutaInput) rutaInput.value = '';
+  });
+
+  // Herramientas del mapa
+  document.getElementById('mapLocate')?.addEventListener('click', ()=>{
+    if(!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(pos=>{
+      map.setView([pos.coords.latitude, pos.coords.longitude], 17);
+    });
+  });
+  document.getElementById('mapFit')?.addEventListener('click', ()=>{
+    try{
+      if(window.__drawnLayer__){ map.fitBounds(window.__drawnLayer__.getBounds(), {padding:[20,20]}); }
+      else if(window.__marker__){ map.setView(window.__marker__.getLatLng(), 17); }
+    }catch(_){}
+  });
+
+  // Recolorear cuando cambia el tipo
+  selTipo?.addEventListener('change', ()=>{
+    if(window.__drawnLayer__){
+      try{ window.__drawnLayer__.setStyle(currentStyle()); }catch(_){}
+    }
+    if(window.__marker__){
+      try{ window.__marker__.setStyle(currentStyle()); }catch(_){}
+    }
+  });
+})();
+</script>
+
+<style>
+.agrobot-fab{
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1050;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+}
+.map-tools{
+  position: absolute;
+  top: .75rem;
+  left: .75rem;
+  z-index: 1000;
+  border-radius: .5rem;
+}
+.map-tools .btn{ width: 38px; height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+@media (max-width: 991.98px){
+  #mapAct{ height: 50vh !important; }
+}
+</style>
+{% endblock %}

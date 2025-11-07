@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Editar Técnico | AgroDESK{% endblock %}
+
+{% block content %}
+<div class="container py-5 fade-in">
+  <div class="alert alert-success shadow-sm mb-4">
+    🤖 <strong>AgroBot:</strong> Si cambias la <b>contraseña</b>, recuerda notificar al técnico en terreno para evitar bloqueos en su acceso móvil.
+  </div>
+
+  <div class="card shadow border-0">
+    <div class="card-header bg-success text-white d-flex align-items-center">
+      <i class="bi bi-person-gear me-2"></i> Editar Técnico
+    </div>
+
+    <div class="card-body">
+      <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            {{ form.name.label(class="form-label") }}
+            {{ form.name(class="form-control") }}
+          </div>
+          <div class="col-md-6">
+            {{ form.email.label(class="form-label") }}
+            {{ form.email(class="form-control") }}
+          </div>
+        </div>
+
+        <div class="row g-3 mt-2">
+          <div class="col-md-6">
+            {{ form.password.label(class="form-label") }}
+            {{ form.password(class="form-control", placeholder="Deja en blanco si no deseas cambiarla") }}
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+          </a>
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-save"></i> Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.fade-in { animation: fadeIn .6s ease both; }
+@keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: none;} }
+</style>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Nueva Parcela{% endblock %}
+{% block content %}
+<div class="container py-3">
+  <h3 class="mb-3">Crear Parcela</h3>
+  <form method="POST">
+    {{ form.csrf_token }}
+    <div class="mb-3">
+      {{ form.nombre.label }} {{ form.nombre(class="form-control", placeholder="Ej: Lote 1") }}
+    </div>
+    <div class="mb-3">
+      {{ form.huerto_id.label }} {{ form.huerto_id(class="form-select") }}
+    </div>
+
+    <!-- Mapa para dibujar polígono -->
+    <p class="text-muted">Dibuja la parcela sobre el mapa y guarda.</p>
+    <div id="mapParcela" style="height: 50vh; border-radius: 10px;" class="mb-3"></div>
+    {{ form.geom_geojson(id="geom_geojson") }}
+
+    <button class="btn btn-success">Guardar</button>
+  </form>
+</div>
+
+<script>
+  // Mapa simple para dibujar (usa Leaflet Draw si lo agregaste)
+  const mapP = L.map('mapParcela').setView([-35.6751, -71.5430], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(mapP);
+
+  let drawn;
+  <!-- placeholder para Jinja eliminado -->
+
+  // Si usas Leaflet.Draw:
+  const drawnItems = new L.FeatureGroup().addTo(mapP);
+  const drawControl = new L.Control.Draw({
+    draw: { polygon: true, rectangle: true, polyline: false, circle: false, marker: false, circlemarker: false },
+    edit: { featureGroup: drawnItems }
+  });
+  mapP.addControl(drawControl);
+
+  mapP.on(L.Draw.Event.CREATED, function (e) {
+    drawnItems.clearLayers();
+    drawn = e.layer;
+    drawnItems.addLayer(drawn);
+    const geojson = drawn.toGeoJSON();
+    document.getElementById('geom_geojson').value = JSON.stringify(geojson.geometry);
+  });
+
+  mapP.on('draw:edited', function (e) {
+    const layers = e.layers;
+    layers.eachLayer(function(layer) {
+      const geojson = layer.toGeoJSON();
+      document.getElementById('geom_geojson').value = JSON.stringify(geojson.geometry);
+    });
+  });
+</script>
+{% endblock %}

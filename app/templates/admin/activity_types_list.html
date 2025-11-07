@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Tipos de Actividad{% endblock %}
+{% block content %}
+<div class="container py-4">
+
+  <div id="agrobotBox" class="card shadow-sm border-0 mb-3">
+    <div class="card-body d-flex gap-3 align-items-start">
+      <i class="bi bi-robot fs-1 text-success"></i>
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between">
+          <h5 class="mb-1">AgroBot — Estilos por tipo de actividad</h5>
+          <button id="hideAgrobotBtn" class="btn btn-outline-secondary btn-sm">Ocultar</button>
+        </div>
+        <p class="small text-muted mb-2">Configura color, relleno e ícono (Bootstrap Icons) para cada tipo.</p>
+        <a href="{{ url_for('geo_types.tipo_nuevo') }}" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Nuevo tipo</a>
+      </div>
+    </div>
+  </div>
+  <button id="showAgrobotBtn" class="btn btn-success agrobot-fab d-none"><i class="bi bi-robot"></i> AgroBot</button>
+
+  {% if tipos %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-success"><tr><th>Clave</th><th>Nombre</th><th>Color</th><th>Icono</th><th class="text-end">Acciones</th></tr></thead>
+      <tbody>
+        {% for t in tipos %}
+        <tr>
+          <td><code>{{ t.key }}</code></td>
+          <td>{{ t.nombre }}</td>
+          <td>
+            <span class="badge" style="background: {{ t.color }}22; color: {{ t.color }};">{{ t.color }}</span>
+            {% if t.fill_color %}<span class="badge bg-light text-muted">fill: {{ t.fill_color }}</span>{% endif %}
+          </td>
+          <td><i class="bi {{ t.icon }}"></i> {{ t.icon }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('geo_types.tipo_editar', tipo_id=t.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
+            <form class="d-inline" method="POST" action="{{ url_for('geo_types.tipo_eliminar', tipo_id=t.id) }}"
+                  onsubmit="return confirm('Eliminar {{ t.nombre }}?');">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="text-muted">Aún no hay tipos configurados.</p>
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  const key='agrobot:activity_types';const b=document.getElementById('agrobotBox');
+  const h=document.getElementById('hideAgrobotBtn');const s=document.getElementById('showAgrobotBtn');
+  function set(v){ if(v){b.classList.add('d-none');s.classList.remove('d-none');}
+                   else{b.classList.remove('d-none');s.classList.add('d-none');} }
+  set(localStorage.getItem(key)==='1'); h?.addEventListener('click',()=>{localStorage.setItem(key,'1');set(true);});
+  s?.addEventListener('click',()=>{localStorage.setItem(key,'0');set(false);window.scrollTo({top:0,behavior:'smooth'});});
+})();
+</script>
+<style>.agrobot-fab{position:fixed;right:1rem;bottom:1rem;z-index:1050;box-shadow:0 .5rem 1rem rgba(0,0,0,.15);}</style>
+{% endblock %}

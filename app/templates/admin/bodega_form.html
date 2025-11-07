@@ -1,14 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Nueva Bodega{% endblock %}
+{% block title %}Editar Bodega{% endblock %}
 
 {% block content %}
 <div class="container py-4">
+
+  {# ===== AgroBot: cabecera (ocultable con persistencia) ===== #}
+  <div id="agrobotBox" class="card shadow-sm border-0 mb-4">
+    <div class="card-body d-flex flex-wrap align-items-start gap-3">
+      <i class="bi bi-robot fs-1 text-success" aria-hidden="true"></i>
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <h5 class="mb-1">AgroBot — Editar Bodegas de Almacenamiento de Quimicos </h5>
+            <p class="mb-2 text-muted small">¿Para qué sirve este módulo?</p>
+          </div>
+          <button id="hideAgrobotBtn" type="button" class="btn btn-outline-secondary btn-sm"
+                  aria-controls="agrobotBox" aria-expanded="true">
+            <i class="bi bi-eye-slash"></i> Ocultar
+          </button>
+        </div>
+
+        <ul class="mb-3 small">
+          <li><b>Asocia</b> la bodega a su <b>Huerto</b> para trazabilidad.</li>
+          <li><b>Define un responsable</b> (técnico) para control de stock y uso.</li>
+          <li>Luego podrás <b>cargar químicos</b> y mantener existencias.</li>
+        </ul>
+
+        <a href="{{ url_for('admin.ver_quimicos', bodega_id=bodega.id) if bodega else '#' }}"
+           class="btn btn-success">
+          <i class="bi bi-beaker"></i> Gestionar Químicos
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {# Botón flotante único para reabrir AgroBot #}
+  <button id="showAgrobotBtn" type="button" class="btn btn-success agrobot-fab d-none"
+          aria-controls="agrobotBox" aria-expanded="false" title="Mostrar guía de AgroBot">
+    <i class="bi bi-robot"></i> AgroBot
+  </button>
+
   <div class="row justify-content-center">
     <div class="col-lg-7">
 
       <div class="card shadow border-0">
-        <div class="card-header bg-success text-white">
-          <h4 class="mb-0"><i class="bi bi-box-seam me-2"></i> Registrar Nueva Bodega</h4>
+        <div class="card-header bg-warning text-dark">
+          <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Editar Bodega</h4>
         </div>
         <div class="card-body">
 
@@ -17,58 +54,128 @@
               {% for category, msg in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                   {{ msg }}
-                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
                 </div>
               {% endfor %}
             {% endif %}
           {% endwith %}
 
-          <form method="POST" autocomplete="off">
+          <form method="POST" autocomplete="off" novalidate>
             {{ form.hidden_tag() }}
 
             <div class="mb-3">
-              {{ form.nombre.label(class="form-label") }}
-              {{ form.nombre(class="form-control", placeholder="Nombre de la bodega") }}
+              {{ form.nombre.label(class_="form-label") }}
+              {{ form.nombre(class_="form-control", placeholder="Nombre de la bodega", autofocus=True) }}
               {% if form.nombre.errors %}
                 <div class="text-danger small">{{ form.nombre.errors[0] }}</div>
               {% endif %}
             </div>
 
             <div class="mb-3">
-              {{ form.ubicacion.label(class="form-label") }}
-              {{ form.ubicacion(class="form-control", placeholder="Ubicación física o referencia") }}
+              {{ form.ubicacion.label(class_="form-label") }}
+              {{ form.ubicacion(class_="form-control", placeholder="Ubicación física o referencia") }}
               {% if form.ubicacion.errors %}
                 <div class="text-danger small">{{ form.ubicacion.errors[0] }}</div>
               {% endif %}
             </div>
 
             <div class="mb-3">
-              {{ form.huerto_id.label(class="form-label") }}
-              {{ form.huerto_id(class="form-select") }}
+              {{ form.huerto_id.label(class_="form-label") }}
+              {{ form.huerto_id(class_="form-select") }}
               {% if form.huerto_id.errors %}
                 <div class="text-danger small">{{ form.huerto_id.errors[0] }}</div>
               {% endif %}
+              <div class="form-text">Selecciona el huerto al que pertenece esta bodega.</div>
             </div>
 
             <div class="mb-3">
-              {{ form.responsable_id.label(class="form-label") }}
-              {{ form.responsable_id(class="form-select") }}
+              {{ form.responsable_id.label(class_="form-label") }}
+              {{ form.responsable_id(class_="form-select") }}
               {% if form.responsable_id.errors %}
                 <div class="text-danger small">{{ form.responsable_id.errors[0] }}</div>
               {% endif %}
+              <div class="form-text">Técnico en terreno que administrará los químicos.</div>
             </div>
 
             <div class="d-flex justify-content-end gap-2">
               <a href="{{ url_for('admin.listar_bodegas') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Cancelar
               </a>
-              {{ form.submit(class="btn btn-success px-4") }}
+              {{ form.submit(class_="btn btn-warning px-4") }}
             </div>
           </form>
         </div>
       </div>
-      
+
+      <p class="text-muted small mt-3">
+        <i class="bi bi-info-circle"></i>
+        Consejo: después de guardar, entra a <strong>Químicos</strong> para cargar stock inicial
+        o envía una recomendación al técnico responsable.
+      </p>
+
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function(){
+  // Mostrar/Ocultar AgroBot con persistencia
+  const STORAGE_KEY = 'agrobotHidden_bodega_edit';
+  const banner = document.getElementById('agrobotBox');
+  const hideBtn = document.getElementById('hideAgrobotBtn');
+  const showBtn = document.getElementById('showAgrobotBtn');
+
+  function setHidden(hidden){
+    if (!banner || !showBtn) return;
+    if (hidden){
+      banner.classList.add('d-none');
+      showBtn.classList.remove('d-none');
+      showBtn.setAttribute('aria-expanded','true');
+    } else {
+      banner.classList.remove('d-none');
+      showBtn.classList.add('d-none');
+      showBtn.setAttribute('aria-expanded','false');
+    }
+  }
+
+  function applyInitial(){
+    const hidden = localStorage.getItem(STORAGE_KEY) === 'true';
+    setHidden(hidden);
+  }
+
+  hideBtn?.addEventListener('click', ()=>{
+    localStorage.setItem(STORAGE_KEY, 'true');
+    setHidden(true);
+  });
+
+  showBtn?.addEventListener('click', ()=>{
+    localStorage.setItem(STORAGE_KEY, 'false');
+    setHidden(false);
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){}
+  });
+
+  applyInitial();
+})();
+</script>
+
+<style>
+/* Botón flotante AgroBot */
+.agrobot-fab{
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1030;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+}
+
+/* Responsive: tamaños cómodos en móviles */
+@media (max-width: 576px){
+  .card-body .fs-1{ font-size: 2rem !important; }
+  .card-body h5{ font-size: 1.05rem; }
+  .card-body p, .card-body li{ font-size: .95rem; }
+}
+</style>
 {% endblock %}

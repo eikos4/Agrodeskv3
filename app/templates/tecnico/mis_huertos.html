@@ -3,9 +3,26 @@
 
 {% block content %}
 <div class="container py-4">
-  <h2 class="mb-4 text-success">
+   <h2 class="mb-4 text-success">
     <i class="bi bi-tree-fill"></i> Mis Huertos
   </h2>
+  <!-- Introducción explicativa -->
+  <div class="alert alert-success shadow-sm p-4 mb-5">
+    <div class="d-flex align-items-start">
+      <div class="me-3 fs-1">🤖</div>
+      <div>
+        <h4 class="fw-bold mb-2">Esto te recomienda tu asistente AgroBot</h4>
+        <p class="mb-0">
+          Un <strong>huerto</strong> es el área de cultivo donde gestionas tus plantas o frutales.
+          Aquí podrás llevar un <strong>histórico de actividades</strong> como siembras, riegos, fertilizaciones
+          y controles, además de ver las bodegas y químicos asociados.  
+          Esta información es clave para mejorar la productividad y cuidar la salud de tu campo.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  
 
   {% if huertos|length == 1 %}
     {% set h = huertos[0] %}

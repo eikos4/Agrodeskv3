@@ -2,149 +2,548 @@
 {% block title %}Panel Técnico{% endblock %}
 
 {% block content %}
+
+<!-- ===== Hero / Presentación ===== -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+    <div class="flex-grow-1">
+      <h2 class="text-success mb-1"><i class="bi bi-clipboard2-pulse"></i> Bienvenido a AgroDESK</h2>
+      <p class="text-muted mb-0">
+        Administra tus <strong>huertos</strong>, <strong>bodegas y químicos</strong>, registra <strong>actividades</strong> y consulta <strong>recomendaciones</strong> técnicas.
+      </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{{ url_for('tecnico.registrar_actividad') }}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Registrar actividad
+      </a>
+      <a href="{{ url_for('geo.mapa') }}" class="btn btn-outline-success">
+        <i class="bi bi-geo"></i> Ver mapa
+      </a>
+      <a href="{{ url_for('tecnico.ver_recomendaciones') }}" class="btn btn-outline-primary">
+        <i class="bi bi-chat-dots"></i> Recomendaciones
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AgroBot (visible por defecto) ===== -->
+<div id="agrobotBox" class="alert alert-success shadow-sm p-4 mb-4">
+  <div class="d-flex align-items-start gap-3">
+    <div class="fs-1" aria-hidden="true">🤖</div>
+    <div class="flex-grow-1">
+      <h4 class="fw-bold mb-2">Esto te recomienda tu asistente <span class="text-success">AgroBot</span></h4>
+      <p class="mb-2">
+        Con AgroDESK puedes llevar el <strong>histórico del campo</strong>: siembras, riegos, fertilizaciones y controles.
+        También verás tus <strong>bodegas</strong> con químicos y documentos que el administrador comparte contigo.
+      </p>
+      <ul class="mb-3 ps-3">
+        <li>Registra actividades y revisa la <strong>bitácora</strong> del huerto.</li>
+        <li>Consulta <strong>recomendaciones</strong> y marca las realizadas.</li>
+        <li>Descarga e imprime <strong>documentos</strong> del campo.</li>
+      </ul>
+    </div>
+    <button id="hideAgrobotBtn" type="button" class="btn btn-outline-success btn-sm ms-auto" aria-label="Ocultar AgroBot">
+      <i class="bi bi-x-lg"></i> Ocultar
+    </button>
+  </div>
+</div>
+
+<!-- ===== Botón flotante para volver a mostrar AgroBot ===== -->
+<button id="showAgrobotBtn" type="button" class="btn btn-success agrobot-fab" style="display:none;" aria-label="Mostrar AgroBot">
+  🤖 AgroBot
+</button>
+
 <div class="container py-4">
 
-  <!-- Título y bienvenida -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3">
     <div>
       <h2 class="text-success mb-1"><i class="bi bi-person-circle"></i> Hola, {{ current_user.name }}</h2>
       <div class="text-muted">Panel Técnico — <strong>{{ current_user.role|capitalize }}</strong></div>
     </div>
-    <div>
-      <!-- Acción rápida a recomendaciones -->
-      <a href="{{ url_for('tecnico.ver_recomendaciones') }}" class="btn btn-outline-success">
+    <div class="d-flex flex-wrap gap-2 w-100 w-md-auto">
+      <a href="{{ url_for('tecnico.ver_recomendaciones') }}" class="btn btn-outline-success w-100 w-sm-auto">
         <i class="bi bi-chat-dots"></i> Ver Recomendaciones
+      </a>
+      <a href="{{ url_for('tecnico.registrar_actividad') }}" class="btn btn-success w-100 w-sm-auto">
+        <i class="bi bi-plus-circle"></i> Registrar actividad
       </a>
     </div>
   </div>
 
-  <!-- Indicadores resumen -->
-  <div class="row mb-4">
-    <div class="col-6 col-md-3 mb-2">
-      <div class="card text-white bg-success shadow">
-        <div class="card-body d-flex align-items-center">
-          <i class="bi bi-tree-fill fs-2 me-3"></i>
-          <div>
-            <h4 class="mb-0">{{ huertos|length }}</h4>
-            <small>Huertos</small>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3 mb-2">
-      <div class="card text-white bg-info shadow">
-        <div class="card-body d-flex align-items-center">
-          <i class="bi bi-box-seam fs-2 me-3"></i>
-          <div>
-            <h4 class="mb-0">{{ bodegas|length }}</h4>
-            <small>Bodegas</small>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3 mb-2">
-      <div class="card text-white bg-secondary shadow">
-        <div class="card-body d-flex align-items-center">
-          <i class="bi bi-clipboard-check fs-2 me-3"></i>
-          <div>
-            <h4 class="mb-0">{{ recomendaciones|length }}</h4>
-            <small>Recomendaciones</small>
-          </div>
-        </div>
-      </div>
-    </div>
+  <!-- Chips resumen -->
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <span class="badge bg-success-subtle text-success-emphasis px-3 py-2">
+      <i class="bi bi-tree-fill me-1"></i> {{ huertos|length }} huerto(s)
+    </span>
+    <span class="badge bg-warning-subtle text-warning-emphasis px-3 py-2">
+      <i class="bi bi-box-seam me-1"></i> {{ bodegas|length }} bodega(s)
+    </span>
+    <span class="badge bg-info-subtle text-info-emphasis px-3 py-2">
+      <i class="bi bi-clipboard-check me-1"></i> {{ recomendaciones|length }} recomendación(es)
+    </span>
+    {% if notificaciones and notificaciones|length %}
+    <span class="badge bg-secondary-subtle text-secondary-emphasis px-3 py-2">
+      <i class="bi bi-bell me-1"></i> {{ notificaciones|length }} notificación(es)
+    </span>
+    {% endif %}
   </div>
 
-  <!-- Notificaciones -->
-  {% if notificaciones %}
-  <div class="alert alert-light border-start border-4 border-success shadow-sm mb-4">
-    <h5><i class="bi bi-bell-fill text-success"></i> Notificaciones</h5>
-    <ul class="mb-0 ps-3">
-      {% for n in notificaciones %}
-        <li><strong>{{ n.titulo }}</strong> — {{ n.mensaje }} <small class="text-muted">({{ n.fecha.strftime('%d-%m-%Y') }})</small></li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
+  <!-- Tabs -->
+  <ul class="nav nav-tabs no-print" id="techTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tab-huertos" data-bs-toggle="tab" data-bs-target="#pane-huertos" type="button" role="tab">Huertos</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-bodegas" data-bs-toggle="tab" data-bs-target="#pane-bodegas" type="button" role="tab">Bodegas</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-recos" data-bs-toggle="tab" data-bs-target="#pane-recos" type="button" role="tab">Recomendaciones</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-docs" data-bs-toggle="tab" data-bs-target="#pane-docs" type="button" role="tab">Documentos</button>
+    </li>
+    <li class="nav-item ms-auto" role="presentation">
+      <button class="nav-link" id="tab-activity" data-bs-toggle="tab" data-bs-target="#pane-activity" type="button" role="tab">
+        Actividad reciente
+      </button>
+    </li>
+  </ul>
 
-  <!-- HUERTOS -->
-  <h4 class="text-success mb-3 mt-4"><i class="bi bi-tree"></i> Mis Huertos</h4>
-  <div class="row g-4">
-    {% for h in huertos %}
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card border-success shadow h-100">
-        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-          <span><i class="bi bi-tree-fill"></i> {{ h.nombre }}</span>
-          <span class="badge bg-light text-success">ID {{ h.id }}</span>
+  <div class="tab-content mt-3">
+
+    <!-- ===== HUERTOS ===== -->
+    <div class="tab-pane fade show active" id="pane-huertos" role="tabpanel" aria-labelledby="tab-huertos">
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body row g-2 align-items-end">
+          <div class="col-12 col-sm-7 col-md-6">
+            <label class="form-label small mb-1">Buscar huerto</label>
+            <input id="qHuertos" type="search" class="form-control" placeholder="Nombre, ubicación o cultivo">
+          </div>
+          <div class="col-6 col-sm-5 col-md-3">
+            <label class="form-label small mb-1">Ordenar por</label>
+            <select id="sortHuertos" class="form-select">
+              <option value="nombre">Nombre (A–Z)</option>
+              <option value="superficie">Superficie (↓)</option>
+            </select>
+          </div>
+          <div class="col-6 col-sm-12 col-md-3">
+            <label class="form-label small mb-1">Acciones</label>
+            <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-outline-secondary flex-grow-1" href="{{ url_for('tecnico.tecnico_dashboard') }}">Limpiar</a>
+              <a class="btn btn-outline-success flex-grow-1" href="{{ url_for('geo.mapa') }}?focus=my">
+                <i class="bi bi-geo"></i> Ver mapa
+              </a>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- Grid Huertos -->
+      <div class="row g-4" id="gridHuertos">
+        {% for h in huertos %}
+        <div class="col-12 col-md-6 col-lg-4 card-huerto"
+             data-name="{{ (h.nombre or '')|lower }}"
+             data-ubic="{{ (h.ubicacion or '')|lower }}"
+             data-cult="{{ (h.tipo_cultivo or '')|lower }}"
+             data-sup="{{ h.superficie_ha or 0 }}">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <div class="fw-semibold"><i class="bi bi-tree-fill text-success"></i> {{ h.nombre }}</div>
+              <div class="d-flex gap-2 align-items-center">
+                {% if not h.center_lat or not h.center_lng %}
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis">Sin centro</span>
+                {% endif %}
+                <span class="badge bg-light text-success">ID {{ h.id }}</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> {{ h.ubicacion or "—" }}</div>
+              <div class="row g-2 small">
+                <div class="col-6"><strong>Cultivo:</strong> {{ h.tipo_cultivo or "—" }}</div>
+                <div class="col-6"><strong>Superficie:</strong> {{ '%.2f'|format(h.superficie_ha or 0) }} ha</div>
+                <div class="col-12">
+                  <strong>Técnico:</strong>
+                  <span class="badge {{ 'bg-success-subtle text-success-emphasis' if h.responsable else 'bg-warning-subtle text-warning-emphasis' }}">
+                    {{ h.responsable.name if h.responsable else 'Sin asignar' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-between">
+              <span class="small text-muted"><i class="bi bi-archive"></i> Bodegas: <strong>{{ h.bodegas|length }}</strong></span>
+              <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-sm btn-outline-primary d-inline-flex align-items-center"
+                href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" title="Bitácora">
+                <i class="bi bi-journal-text me-1"></i><span>Bitácora</span>
+              </a>
+
+              <a class="btn btn-sm btn-outline-info d-inline-flex align-items-center"
+                href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" title="Nueva actividad">
+                <i class="bi bi-plus-lg me-1"></i><span>Nueva actividad</span>
+              </a>
+
+              <a class="btn btn-sm btn-outline-success d-inline-flex align-items-center"
+                href="{{ url_for('geo.mapa') }}?focus=huerto:{{ h.id }}" title="Ver en mapa">
+                <i class="bi bi-geo-alt me-1"></i><span>Ver en mapa</span>
+              </a>
+
+              <a class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center"
+                href="{{ url_for('docs.admin_panel', huerto_id=h.id, next=request.full_path) }}" title="Documentos">
+                <i class="bi bi-file-earmark-text me-1"></i><span>Documentos</span>
+              </a>
+            </div>
+
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+          <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i> No tienes huertos asignados aún.
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if huertos_paginados and huertos_paginados.pages > 1 %}
+      <nav aria-label="Paginación de huertos" class="mt-4">
+        <ul class="pagination justify-content-center">
+          {% if huertos_paginados.has_prev %}
+          <li class="page-item"><a class="page-link text-success" href="{{ url_for('tecnico.tecnico_dashboard', page=1) }}">&laquo;&laquo;</a></li>
+          <li class="page-item"><a class="page-link text-success" href="{{ url_for('tecnico.tecnico_dashboard', page=huertos_paginados.prev_num) }}">&laquo;</a></li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">&laquo;&laquo;</span></li>
+          <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+          {% endif %}
+
+          {% for page_num in huertos_paginados.iter_pages() %}
+            {% if page_num %}
+              {% if page_num != huertos_paginados.page %}
+                <li class="page-item"><a class="page-link text-success" href="{{ url_for('tecnico.tecnico_dashboard', page=page_num) }}">{{ page_num }}</a></li>
+              {% else %}
+                <li class="page-item active"><span class="page-link bg-success border-success">{{ page_num }}</span></li>
+              {% endif %}
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+          {% endfor %}
+
+          {% if huertos_paginados.has_next %}
+          <li class="page-item"><a class="page-link text-success" href="{{ url_for('tecnico.tecnico_dashboard', page=huertos_paginados.next_num) }}">&raquo;</a></li>
+          <li class="page-item"><a class="page-link text-success" href="{{ url_for('tecnico.tecnico_dashboard', page=huertos_paginados.pages) }}">&raquo;&raquo;</a></li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+          <li class="page-item disabled"><span class="page-link">&raquo;&raquo;</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+
+    <!-- ===== BODEGAS ===== -->
+    <div class="tab-pane fade" id="pane-bodegas" role="tabpanel" aria-labelledby="tab-bodegas">
+      <div class="card shadow-sm border-0 mb-3">
         <div class="card-body">
-          <p><i class="bi bi-geo-alt-fill text-success"></i> <strong>Ubicación:</strong> {{ h.ubicacion or "—" }}</p>
-          <p><i class="bi bi-flower2 text-success"></i> <strong>Cultivo:</strong> {{ h.tipo_cultivo or "—" }}</p>
-          <p><i class="bi bi-rulers text-success"></i> <strong>Superficie:</strong> {{ h.superficie_ha }} ha</p>
-          <p><i class="bi bi-calendar-check text-success"></i> <strong>Siembra:</strong> {{ h.fecha_siembra.strftime('%d-%m-%Y') if h.fecha_siembra else "—" }}</p>
-        </div>
-        <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-end">
-          <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" class="btn btn-outline-success btn-sm">
-            <i class="bi bi-journal-text"></i> Bitácora
-          </a>
-          <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn btn-outline-info btn-sm">
-            <i class="bi bi-plus-lg"></i> Nueva Actividad
-          </a>
+          <label class="form-label small mb-1">Buscar bodega</label>
+          <input id="qBodegas" type="search" class="form-control" placeholder="Nombre o ubicación">
         </div>
       </div>
-    </div>
-    {% else %}
-    <div class="col-12">
-      <div class="alert alert-info text-center">
-        <i class="bi bi-info-circle"></i> No tienes huertos asignados aún.
-      </div>
-    </div>
-    {% endfor %}
-  </div>
 
-  <!-- RECOMENDACIONES -->
-  <h4 class="text-success mb-3 mt-5"><i class="bi bi-clipboard-check"></i> Recomendaciones Recientes</h4>
-  <div class="list-group shadow-sm">
-    {% for r in recomendaciones %}
-    <div class="list-group-item list-group-item-action border-start border-success border-4">
-      <div class="d-flex w-100 justify-content-between">
-        <h6 class="mb-1"><i class="bi bi-calendar-event text-success"></i> {{ r.fecha.strftime('%d-%m-%Y') }}</h6>
-        {% if r.autor %}<small class="text-muted">Por: {{ r.autor.name }}</small>{% endif %}
-      </div>
-      <p class="mb-1">📌 {{ r.contenido }}</p>
-    </div>
-    {% else %}
-    <div class="list-group-item text-muted text-center">No tienes recomendaciones aún.</div>
-    {% endfor %}
-  </div>
-
-  <!-- BODEGAS -->
-  <h4 class="text-info mb-3 mt-5"><i class="bi bi-box-seam"></i> Mis Bodegas</h4>
-  <div class="row g-4">
-    {% for bodega in bodegas %}
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card border-info shadow h-100">
-        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-          <span><i class="bi bi-house-door-fill"></i> {{ bodega.nombre }}</span>
-          <span class="badge bg-light text-info">Huerto: {{ bodega.huerto.nombre }}</span>
+      <div class="row g-4" id="gridBodegas">
+        {% for b in bodegas %}
+        <div class="col-12 col-md-6 col-lg-4 card-bodega"
+             data-name="{{ (b.nombre or '')|lower }}"
+             data-ubic="{{ (b.ubicacion or '')|lower }}"
+             data-huerto="{{ (b.huerto.nombre if b.huerto else '')|lower }}">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <strong><i class="bi bi-house-door-fill text-success"></i> {{ b.nombre }}</strong>
+              <span class="badge bg-light text-success">ID {{ b.id }}</span>
+            </div>
+            <div class="card-body">
+              <div class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> {{ b.ubicacion or "No especificada" }}</div>
+              <div class="small"><strong>Huerto:</strong> {{ b.huerto.nombre if b.huerto else "—" }}</div>
+              <div class="small"><strong>Responsable:</strong> {{ b.responsable.name if b.responsable else "—" }}</div>
+              <div class="mt-2 small"><i class="bi bi-flask"></i> Químicos: <span class="badge bg-info">{{ b.quimicos|length }}</span></div>
+            </div>
+            <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-end">
+              <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=b.id) }}" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-flask"></i> Ver Químicos
+              </a>
+              <a href="{{ url_for('tecnico.agregar_quimico', bodega_id=b.id) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-plus-circle"></i> Agregar
+              </a>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <p><i class="bi bi-geo-alt-fill text-info"></i> <strong>Ubicación:</strong> {{ bodega.ubicacion or "No especificada" }}</p>
-          <p><i class="bi bi-person-circle text-info"></i> <strong>Responsable:</strong> {{ bodega.responsable.name if bodega.responsable else 'Sin asignar' }}</p>
-          <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-info btn-sm mt-2">
-            <i class="bi bi-flask"></i> Ver químicos
-          </a>
+        {% else %}
+        <div class="col-12">
+          <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i> No tienes bodegas asignadas aún.
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ===== RECOMENDACIONES ===== -->
+    <div class="tab-pane fade" id="pane-recos" role="tabpanel" aria-labelledby="tab-recos">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white">
+          <strong><i class="bi bi-clipboard-check"></i> Recomendaciones recientes</strong>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for r in recomendaciones %}
+          <div class="list-group-item list-group-item-action border-start border-success border-4">
+            <div class="d-flex w-100 justify-content-between">
+              <h6 class="mb-1"><i class="bi bi-calendar-event text-success"></i> {{ r.fecha.strftime('%d-%m-%Y') }}</h6>
+              {% if r.autor %}<small class="text-muted">Por: {{ r.autor.name }}</small>{% endif %}
+            </div>
+            <p class="mb-1">📌 {{ r.contenido }}</p>
+          </div>
+          {% else %}
+          <div class="list-group-item text-muted text-center">No tienes recomendaciones aún.</div>
+          {% endfor %}
         </div>
       </div>
     </div>
-    {% else %}
-    <div class="col-12">
-      <div class="alert alert-info text-center">
-        <i class="bi bi-info-circle"></i> No tienes bodegas asignadas aún.
+
+    <!-- ===== DOCUMENTOS ===== -->
+    <div class="tab-pane fade" id="pane-docs" role="tabpanel" aria-labelledby="tab-docs">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white d-flex gap-2 align-items-center">
+          <strong><i class="bi bi-file-earmark-text"></i> Documentos</strong>
+          <div class="ms-auto d-flex gap-2">
+            <input id="qDocs" type="search" class="form-control form-control-sm" placeholder="Buscar título o categoría">
+            <button id="btnReloadDocs" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Refrescar</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0" id="docsTable">
+            <thead><tr><th>Título</th><th>Categoría</th><th>Fecha</th><th class="text-end">Acciones</th></tr></thead>
+            <tbody id="docsBody"><tr><td colspan="4" class="text-muted p-3">Cargando…</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
-    {% endfor %}
-  </div>
 
+    <!-- ===== ACTIVIDAD RECIENTE ===== -->
+    <div class="tab-pane fade" id="pane-activity" role="tabpanel" aria-labelledby="tab-activity">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white"><strong><i class="bi bi-activity"></i> Últimas actividades en tus huertos</strong></div>
+        <div class="list-group list-group-flush">
+          {% for a in ult_actividades %}
+          <div class="list-group-item">
+            <div class="d-flex justify-content-between small text-muted">
+              <span><i class="bi bi-tree"></i> {{ a.huerto.nombre if a.huerto else '—' }}</span>
+              <span><i class="bi bi-calendar-event"></i> {{ a.fecha.strftime('%d-%m-%Y') }}</span>
+            </div>
+            <div class="fw-semibold text-capitalize">{{ a.tipo|replace('_',' ') }}</div>
+            <div class="small">{{ a.descripcion|default('—') }}</div>
+          </div>
+          {% else %}
+          <div class="list-group-item text-muted text-center">Sin actividad reciente.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- /tab-content -->
 </div>
+
+<style>
+/* Tabs scrolleables en móvil */
+@media (max-width: 576px) {
+  #techTabs { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; gap: .25rem; }
+  #techTabs .nav-link { white-space: nowrap; }
+}
+
+/* badges “subtle” si no usas Bootstrap 5.3 */
+.bg-success-subtle { background:#e6f4ea !important; color:#1e7e34 !important; }
+.text-success-emphasis { color:#1e7e34 !important; }
+.bg-warning-subtle { background:#fff4df !important; color:#b58100 !important; }
+.text-warning-emphasis { color:#b58100 !important; }
+.bg-info-subtle { background:#e7f5ff !important; color:#095aba !important; }
+.text-info-emphasis { color:#095aba !important; }
+.bg-secondary-subtle { background:#f0f2f4 !important; color:#5c636a !important; }
+.text-secondary-emphasis { color:#5c636a !important; }
+
+/* Tabla de documentos apilada en XS */
+@media (max-width: 576px) {
+  #docsTable thead { display: none; }
+  #docsTable tbody tr {
+    display: block;
+    margin-bottom: .75rem;
+    border: 1px solid #e9ecef;
+    border-radius: .5rem;
+    padding: .5rem .75rem;
+  }
+  #docsTable tbody td {
+    display: flex;
+    justify-content: space-between;
+    gap: .5rem;
+    border: 0 !important;
+    padding: .25rem 0 !important;
+  }
+  #docsTable tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6c757d;
+  }
+  #docsTable tbody td:last-child { justify-content: flex-start; flex-wrap: wrap; gap: .5rem; }
+  #docsTable .btn { padding: .25rem .5rem; }
+}
+
+/* Botón flotante AgroBot */
+.agrobot-fab{
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1030;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+}
+
+/* Efecto hover tarjetas */
+.card { transition: transform .15s ease-in-out; }
+.card:hover { transform: translateY(-2px); }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function(){
+  // ===== HUERTOS: búsqueda y orden =====
+  const qHuertos = document.getElementById('qHuertos');
+  const sortHuertos = document.getElementById('sortHuertos');
+  const gridHuertos = document.getElementById('gridHuertos');
+  const huertoCards = Array.from(document.querySelectorAll('.card-huerto'));
+
+  function filterHuertos(){
+    const term = (qHuertos?.value || '').trim().toLowerCase();
+    huertoCards.forEach(c => {
+      const hit = [c.dataset.name, c.dataset.ubic, c.dataset.cult].some(v => (v||'').includes(term));
+      c.style.display = (!term || hit) ? '' : 'none';
+    });
+  }
+  function sortHuertosFn(){
+    if(!gridHuertos) return;
+    const mode = sortHuertos?.value || 'nombre';
+    const visible = huertoCards.filter(c => c.style.display !== 'none');
+    visible.sort((a,b)=>{
+      if(mode==='superficie'){
+        return (parseFloat(b.dataset.sup||0) - parseFloat(a.dataset.sup||0));
+      } else {
+        return (a.dataset.name||'').localeCompare(b.dataset.name||'');
+      }
+    });
+    visible.forEach(el => gridHuertos.appendChild(el));
+  }
+  qHuertos?.addEventListener('input', ()=>{ filterHuertos(); sortHuertosFn(); });
+  sortHuertos?.addEventListener('change', sortHuertosFn);
+
+  // ===== BODEGAS: búsqueda =====
+  const qBodegas = document.getElementById('qBodegas');
+  const bodegaCards = Array.from(document.querySelectorAll('.card-bodega'));
+  qBodegas?.addEventListener('input', ()=>{
+    const t = qBodegas.value.trim().toLowerCase();
+    bodegaCards.forEach(c=>{
+      const hit = [c.dataset.name, c.dataset.ubic, c.dataset.huerto].some(v => (v||'').includes(t));
+      c.style.display = (!t || hit) ? '' : 'none';
+    });
+  });
+
+  // ===== DOCUMENTOS: carga para huertos del técnico =====
+  const docsBody = document.getElementById('docsBody');
+  const qDocs = document.getElementById('qDocs');
+  const btnReloadDocs = document.getElementById('btnReloadDocs');
+
+  async function loadDocs(){
+    try {
+      const ids = {{ huertos|map(attribute='id')|list|tojson }};
+      docsBody.innerHTML = `<tr><td colspan="4" class="text-muted p-3">Cargando…</td></tr>`;
+      let items = [];
+      for (const hid of ids){
+        const r = await fetch(`/docs/list?huerto_id=${hid}`);
+        const ct = r.headers.get('content-type') || '';
+        if(!r.ok) throw new Error(`HTTP ${r.status}`);
+        if(!ct.includes('application/json')) throw new Error('Respuesta no JSON');
+        const data = await r.json();
+        if (data?.items?.length) items = items.concat(data.items);
+      }
+      items.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+      if (!items.length){
+        docsBody.innerHTML = `<tr><td colspan="4" class="text-muted p-3">No hay documentos.</td></tr>`;
+        return;
+      }
+      docsBody.innerHTML = items.map(d => `
+        <tr data-title="${(d.titulo||'').toLowerCase()}" data-cat="${(d.categoria||'').toLowerCase()}">
+          <td data-label="Título">${d.titulo}</td>
+          <td data-label="Categoría">${d.categoria || '—'}</td>
+          <td data-label="Fecha">${d.fecha || ''}</td>
+          <td data-label="Acciones" class="text-end text-md-end">
+            <a class="btn btn-sm btn-outline-primary" href="/docs/view/${d.id}" target="_blank">Ver</a>
+            <a class="btn btn-sm btn-outline-secondary" href="/docs/download/${d.id}">Descargar</a>
+            <button class="btn btn-sm btn-outline-dark" onclick="(function(w){w=window.open('/docs/view/${d.id}','_blank'); setTimeout(()=>{try{w.print()}catch(e){}},600)})()">Imprimir</button>
+          </td>
+        </tr>
+      `).join('');
+      applyDocSearch();
+    } catch (err){
+      console.error('Load docs error:', err);
+      docsBody.innerHTML = `<tr><td colspan="4" class="text-danger p-3">Error cargando documentos: ${err.message}</td></tr>`;
+    }
+  }
+  function applyDocSearch(){
+    const q = (qDocs?.value||'').trim().toLowerCase();
+    const rows = docsBody.querySelectorAll('tr');
+    let shown = 0;
+    rows.forEach(tr=>{
+      const ok = !q || (tr.dataset.title||'').includes(q) || (tr.dataset.cat||'').includes(q);
+      tr.style.display = ok ? '' : 'none';
+      if(ok) shown++;
+    });
+    if(!shown){
+      docsBody.innerHTML = `<tr><td colspan="4" class="text-muted p-3">Sin coincidencias.</td></tr>`;
+    }
+  }
+  qDocs?.addEventListener('input', applyDocSearch);
+  btnReloadDocs?.addEventListener('click', loadDocs);
+  document.getElementById('tab-docs')?.addEventListener('shown.bs.tab', loadDocs);
+
+  // ===== AgroBot: persistir estado con localStorage =====
+  const BOX_ID = 'agrobotBox';
+  const SHOW_BTN_ID = 'showAgrobotBtn';
+  const HIDE_BTN_ID = 'hideAgrobotBtn';
+  const STORAGE_KEY = 'agrobotHidden'; // "true" | "false"
+
+  const box = document.getElementById(BOX_ID);
+  const showBtn = document.getElementById(SHOW_BTN_ID);
+  const hideBtn = document.getElementById(HIDE_BTN_ID);
+
+  function applyState(hidden) {
+    if (!box || !showBtn) return;
+    if (hidden) {
+      box.style.display = 'none';
+      showBtn.style.display = 'inline-flex';
+    } else {
+      box.style.display = 'block';
+      showBtn.style.display = 'none';
+    }
+  }
+  const isHidden = localStorage.getItem(STORAGE_KEY) === 'true';
+  applyState(isHidden);
+
+  hideBtn?.addEventListener('click', () => {
+    localStorage.setItem(STORAGE_KEY, 'true');
+    applyState(true);
+  });
+
+  showBtn?.addEventListener('click', () => {
+    localStorage.setItem(STORAGE_KEY, 'false');
+    applyState(false);
+  });
+})();
+</script>
 {% endblock %}

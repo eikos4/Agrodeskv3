@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% block title %}Documentos — Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- AgroBot fijo con toggle -->
+  <div id="agrobotBox" class="alert alert-success shadow-sm p-4 mb-4">
+    <div class="d-flex align-items-start gap-3">
+      <div class="fs-1" aria-hidden="true">🤖</div>
+      <div class="flex-grow-1">
+        <h4 class="fw-bold mb-2">Bienvenido a <span class="text-success">AgroDESK</span></h4>
+        <p class="mb-2">
+          Desde aquí puedes <strong>subir</strong>, <strong>compartir</strong> y <strong>organizar</strong> documentos
+          por huerto (instructivos, recetas, reportes). Todo queda disponible para los técnicos.
+        </p>
+        <ul class="mb-0 ps-3">
+          <li>Sube PDF/Docs con <strong>título</strong> y <strong>categoría</strong>.</li>
+          <li>Filtra y busca rápidamente por <strong>título</strong> o <strong>categoría</strong>.</li>
+          <li>Ve el historial en una <strong>línea de tiempo</strong> que se actualiza sola.</li>
+        </ul>
+      </div>
+      <button id="hideAgrobotBtn" type="button" class="btn btn-outline-success btn-sm ms-auto">
+        <i class="bi bi-x-lg"></i> Ocultar
+      </button>
+    </div>
+  </div>
+  <button id="showAgrobotBtn" type="button" class="btn btn-success agrobot-fab" style="display:none;">
+    🤖 AgroBot
+  </button>
+
+  <h2 class="mb-3"><i class="bi bi-file-earmark-text"></i> Documentos compartidos</h2>
+
+  <!-- Filtros rápidos -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body row g-3">
+      <div class="col-12 col-md-6">
+        <label class="form-label small">Buscar</label>
+        <input id="qDocs" type="search" class="form-control" placeholder="T&iacute;tulo o categor&iacute;a">
+      </div>
+      <div class="col-12 col-md-6 d-flex align-items-end justify-content-md-end">
+        <small class="text-muted me-2">Consejo: escribe para filtrar al instante</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form subir -->
+  <form method="POST" enctype="multipart/form-data" class="card p-3 mb-4 shadow-sm border-0">
+    {{ form.csrf_token }}
+    <div class="row g-3">
+      <div class="col-md-4">
+        {{ form.titulo.label }} {{ form.titulo(class="form-control", placeholder="Título legible") }}
+      </div>
+      <div class="col-md-3">
+        {{ form.categoria.label }} {{ form.categoria(class="form-control", placeholder="Instructivo / Receta") }}
+      </div>
+      <div class="col-md-3">
+        {{ form.huerto_id.label }} {{ form.huerto_id(class="form-select") }}
+      </div>
+      <div class="col-md-2">
+        {{ form.archivo.label }} {{ form.archivo(class="form-control") }}
+      </div>
+    </div>
+    <div class="mt-3">
+      <button class="btn btn-success"><i class="bi bi-upload"></i> Subir</button>
+    </div>
+  </form>
+
+  <!-- Tabla -->
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white d-flex align-items-center justify-content-between">
+      <strong>Listado</strong>
+      <small class="text-muted">Click en “Ver” para abrir en otra pesta&ntilde;a</small>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle" id="docsTable">
+          <thead>
+            <tr>
+              <th>Título</th><th>Categoría</th><th>Huerto</th><th>Fecha</th><th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="docsBody">
+            {% for d in documentos %}
+            <tr data-title="{{ (d.titulo or '')|lower }}" data-cat="{{ (d.categoria or '')|lower }}">
+              <td data-label="Título">{{ d.titulo }}</td>
+              <td data-label="Categoría">{{ d.categoria or "—" }}</td>
+              <td data-label="Huerto">{{ d.huerto.nombre if d.huerto else "General" }}</td>
+              <td data-label="Fecha">{{ d.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td data-label="Acciones" class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('docs.view', doc_id=d.id) }}" target="_blank">
+                  <i class="bi bi-eye"></i> Ver
+                </a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('docs.download', doc_id=d.id) }}">
+                  <i class="bi bi-download"></i> Descargar
+                </a>
+                <form action="{{ url_for('docs.delete', doc_id=d.id) }}" method="POST" class="d-inline">
+                  {{ form.csrf_token }}
+                  <button class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar documento?')">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-muted">Sin documentos a&uacute;n.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Línea de tiempo (tiempo real) -->
+  <div class="card mt-4 shadow-sm border-0">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong><i class="bi bi-clock-history"></i> Línea de tiempo de documentos</strong>
+      <small class="text-muted">Se actualiza automáticamente</small>
+    </div>
+    <div class="card-body">
+      {% if documentos %}
+      <ul class="doc-timeline list-unstyled m-0" id="docTimeline">
+        {% for d in documentos %}
+        <li class="doc-tl-item d-flex" data-doc-id="{{ d.id }}">
+          <div class="doc-tl-dot"><i class="bi bi-file-earmark-text"></i></div>
+          <div class="doc-tl-content card flex-fill shadow-sm border-0">
+            <div class="card-body py-2 px-3">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="me-3">
+                  <div class="fw-semibold">{{ d.titulo }}</div>
+                  <div class="small text-muted">
+                    {{ d.categoria or "General" }} · {{ d.huerto.nombre if d.huerto else "Todos los huertos" }}
+                  </div>
+                </div>
+                <div class="text-nowrap small text-muted">
+                  <i class="bi bi-clock"></i> {{ d.created_at.strftime('%Y-%m-%d %H:%M') }}
+                </div>
+              </div>
+              <div class="mt-2 d-flex gap-2">
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('docs.view', doc_id=d.id) }}" target="_blank">
+                  <i class="bi bi-eye"></i> Ver
+                </a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('docs.download', doc_id=d.id) }}">
+                  <i class="bi bi-download"></i> Descargar
+                </a>
+                <form action="{{ url_for('docs.delete', doc_id=d.id) }}" method="POST" class="d-inline">
+                  {{ form.csrf_token }}
+                  <button class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar documento?')">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+        <div id="docTimelineEmpty" class="text-muted">A&uacute;n no hay documentos para mostrar.</div>
+        <ul class="doc-timeline list-unstyled m-0" id="docTimeline" style="display:none;"></ul>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- JS: AgroBot toggle + filtro tabla + tiempo real -->
+<script>
+(function(){
+  // ===== AgroBot persistente =====
+  const BOX_ID='agrobotBox', SHOW_ID='showAgrobotBtn', HIDE_ID='hideAgrobotBtn', KEY='agrobotHiddenAdmin';
+  const box=document.getElementById(BOX_ID), showBtn=document.getElementById(SHOW_ID), hideBtn=document.getElementById(HIDE_ID);
+  function applyState(hidden){ if(!box||!showBtn) return; box.style.display = hidden?'none':'block'; showBtn.style.display=hidden?'inline-flex':'none'; }
+  applyState(localStorage.getItem(KEY)==='true');
+  hideBtn?.addEventListener('click', ()=>{localStorage.setItem(KEY,'true'); applyState(true);});
+  showBtn?.addEventListener('click', ()=>{localStorage.setItem(KEY,'false'); applyState(false);});
+
+  // ===== Filtro rápido de tabla =====
+  const q = document.getElementById('qDocs');
+  const body = document.getElementById('docsBody');
+  function filterRows(){
+    if(!body) return;
+    const term = (q?.value||'').trim().toLowerCase();
+    const rows = Array.from(body.querySelectorAll('tr'));
+    let shown = 0;
+    rows.forEach(tr=>{
+      const ok = !term ||
+        (tr.dataset.title||'').includes(term) ||
+        (tr.dataset.cat||'').includes(term);
+      tr.style.display = ok ? '' : 'none';
+      if(ok) shown++;
+    });
+    if(!shown && rows.length){
+      rows.forEach(tr=>tr.style.display='none');
+      const empty = document.createElement('tr');
+      empty.innerHTML = '<td colspan="5" class="text-muted">Sin coincidencias.</td>';
+      body.appendChild(empty);
+    }
+  }
+  q?.addEventListener('input', filterRows);
+
+  // ===== Línea de tiempo en tiempo real =====
+  const tl = document.getElementById('docTimeline');
+  const emptyState = document.getElementById('docTimelineEmpty');
+
+  function buildTimelineItem(doc){
+    const li = document.createElement('li');
+    li.className='doc-tl-item d-flex';
+    li.setAttribute('data-doc-id', doc.id);
+    li.innerHTML = `
+      <div class="doc-tl-dot"><i class="bi bi-file-earmark-text"></i></div>
+      <div class="doc-tl-content card flex-fill shadow-sm border-0">
+        <div class="card-body py-2 px-3">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="me-3">
+              <div class="fw-semibold">${doc.titulo}</div>
+              <div class="small text-muted">${doc.categoria || 'General'} · ${doc.huerto_nombre || 'Todos los huertos'}</div>
+            </div>
+            <div class="text-nowrap small text-muted">
+              <i class="bi bi-clock"></i> ${doc.fecha}
+            </div>
+          </div>
+          <div class="mt-2 d-flex gap-2">
+            <a class="btn btn-sm btn-outline-primary" href="/docs/view/${doc.id}" target="_blank">
+              <i class="bi bi-eye"></i> Ver
+            </a>
+            <a class="btn btn-sm btn-outline-secondary" href="/docs/download/${doc.id}">
+              <i class="bi bi-download"></i> Descargar
+            </a>
+            <form action="/docs/delete/${doc.id}" method="POST" class="d-inline">
+              {{ form.csrf_token }}
+              <button class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar documento?')">
+                <i class="bi bi-trash"></i> Eliminar
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>`;
+    return li;
+  }
+
+  function prependIfNew(doc){
+    if(!tl || !doc || !doc.id) return;
+    if (emptyState) { emptyState.style.display='none'; tl.style.display=''; }
+    if (tl.querySelector('[data-doc-id="'+doc.id+'"]')) return; // ya está
+    tl.prepend(buildTimelineItem(doc));
+  }
+
+  // SSE
+  let sseOk = false;
+  try {
+    if ('EventSource' in window) {
+      const es = new EventSource('/docs/stream');
+      es.onmessage = (e)=>{
+        sseOk = true;
+        try {
+          const data = JSON.parse(e.data); // {id, titulo, categoria, huerto_nombre, fecha}
+          prependIfNew(data);
+        } catch(err){ console.warn('SSE parse error', err); }
+      };
+      es.onerror = ()=>{ /* si falla, polling hará el trabajo */ };
+    }
+  } catch(_) {}
+
+  // Fallback polling cada 30s
+  async function pollDocs(){
+    try{
+      const r = await fetch('/docs/list?admin=1'); // Devuelve {items:[{id,titulo,categoria,huerto_nombre,fecha}]}
+      if(!r.ok) return;
+      const data = await r.json();
+      (data.items||[]).slice(0,10).forEach(prependIfNew); // últimas 10
+    }catch(_){}
+  }
+  // arrancar polling siempre; si SSE funciona, no hace daño (ya estarán presentes por el guard)
+  pollDocs();
+  setInterval(pollDocs, 30000);
+})();
+</script>
+
+<style>
+/* FAB AgroBot */
+.agrobot-fab{
+  position: fixed; right: 1rem; bottom: 1rem;
+  z-index: 1030; box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+}
+
+/* Tabla apilada en XS */
+@media (max-width: 576px) {
+  #docsTable thead { display: none; }
+  #docsTable tbody tr {
+    display: block; margin-bottom: .75rem;
+    border: 1px solid #e9ecef; border-radius: .5rem; padding: .5rem .75rem;
+  }
+  #docsTable tbody td {
+    display: flex; justify-content: space-between; gap: .5rem;
+    border: 0 !important; padding: .25rem 0 !important;
+  }
+  #docsTable tbody td::before {
+    content: attr(data-label); font-weight: 600; color: #6c757d;
+  }
+  #docsTable tbody td:last-child { justify-content: flex-start; flex-wrap: wrap; gap: .5rem; }
+  #docsTable .btn { padding: .25rem .5rem; }
+}
+
+/* Timeline */
+.doc-timeline { position: relative; padding-left: 1.75rem; }
+.doc-timeline::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 12px;
+  width: 2px; background: rgba(76, 175, 80, .35); border-radius: 1px;
+}
+.doc-tl-item { position: relative; margin-bottom: 1rem; }
+.doc-tl-dot {
+  position: absolute; left: -2px; top: 6px; width: 28px; height: 28px; border-radius: 50%;
+  background: #fff; border: 3px solid #43a047; display: flex; align-items: center; justify-content: center;
+  color: #43a047; z-index: 1;
+}
+.doc-tl-content { margin-left: 1rem; }
+@media print { .doc-tl-dot, .doc-timeline::before { display:none; } .card { box-shadow: none !important; } }
+</style>
+{% endblock %}

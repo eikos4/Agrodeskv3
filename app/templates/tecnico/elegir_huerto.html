@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Elegir huerto{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3 text-success"><i class="bi bi-plus-circle"></i> Registrar actividad</h3>
+  <form onsubmit="event.preventDefault(); go();" class="card p-3 shadow-sm">
+    <label class="form-label">Selecciona el huerto</label>
+    <select id="huertoId" class="form-select" required>
+      <option value="" selected disabled>— Elegir —</option>
+      {% for h in huertos %}
+        <option value="{{ h.id }}">{{ h.nombre }}</option>
+      {% endfor %}
+    </select>
+    <div class="mt-3">
+      <button class="btn btn-success">Continuar</button>
+      <a href="{{ url_for('tecnico.tecnico_dashboard') }}" class="btn btn-outline-secondary">Volver</a>
+    </div>
+  </form>
+</div>
+<script>
+function go(){
+  const id = document.getElementById('huertoId').value;
+  if(!id) return;
+  window.location.href = "{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=0) }}".replace('0', id);
+}
+</script>
+{% endblock %}

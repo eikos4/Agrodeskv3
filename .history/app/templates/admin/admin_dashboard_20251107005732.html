@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% block title %}Panel Administrativo{% endblock %}
+
+{% block content %}
+<style>
+  .kpi .card-body{ padding:1rem 1.1rem }
+  .kpi .display-6{ font-size:1.9rem }
+  .agrobot-fab{ position:fixed; bottom:1rem; right:1rem; z-index:1050 }
+  .btn-responsive span{ display:none } @media (min-width:520px){ .btn-responsive span{display:inline} }
+  .huerto-card .card-header{ border-bottom:0; }
+  .tag { font-size:.8rem; padding:.2rem .45rem; border-radius:.5rem; border:1px solid rgba(0,0,0,.08); }
+</style>
+
+<div class="container py-4">
+
+  {# ===== AgroBot: Bienvenida ===== #}
+  <div id="agrobotBox" class="alert alert-success shadow-sm p-4 mb-4">
+    <div class="d-flex align-items-start gap-3">
+      <div class="fs-1" aria-hidden="true">🤖</div>
+      <div class="flex-grow-1">
+        <h4 class="fw-bold mb-2">Bienvenido a <span class="text-success">AgroDESK</span></h4>
+        <p class="mb-2">
+          Como admin: crea/edita <b>huertos</b>, gestiona <b>bodegas y químicos</b>, y envía <b>recomendaciones</b>.
+          Usa los KPI y filtros para detectar brechas y actuar rápido.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-success btn-sm" href="{{ url_for('admin.crear_huerto') }}"><i class="bi bi-tree-fill"></i> Nuevo huerto</a>
+          <a class="btn btn-warning btn-sm" href="{{ url_for('admin.crear_bodega') }}"><i class="bi bi-plus-circle"></i> Nueva bodega</a>
+          <a class="btn btn-info text-white btn-sm" href="{{ url_for('admin.recomendar') }}"><i class="bi bi-chat-dots"></i> Recomendación</a>
+        </div>
+      </div>
+      <button id="hideAgrobotBtn" type="button" class="btn btn-outline-success btn-sm ms-auto">
+        <i class="bi bi-x-lg"></i> Ocultar
+      </button>
+    </div>
+  </div>
+  <button id="showAgrobotBtn" type="button" class="btn btn-success agrobot-fab" style="display:none;">
+    🤖 AgroBot
+  </button>
+
+  {# ===== Encabezado ===== #}
+  <div class="d-flex flex-column flex-md-row flex-wrap align-items-start align-items-md-center gap-2 mb-3">
+    <div>
+      <h2 class="mb-1 text-success"><i class="bi bi-person-circle"></i> Hola, {{ current_user.name }}</h2>
+      <div class="text-muted small">Rol: <strong>{{ current_user.role|capitalize }}</strong></div>
+    </div>
+    
+  </div>
+
+  {# ===== KPIs ===== #}
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="card kpi h-100 shadow-sm border-0" title="Cantidad total de huertos">
+        <div class="card-body">
+          <div class="text-muted small">Huertos</div>
+          <div class="display-6">{{ huertos_paginados.total if huertos_paginados else (huertos|length) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card kpi h-100 shadow-sm border-0" title="Suma de superficies declaradas">
+        <div class="card-body">
+          <div class="text-muted small">Superficie total (ha)</div>
+          <div class="display-6">{{ '%.2f'|format(total_superficie or 0) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card kpi h-100 shadow-sm border-0" title="Huertos sin técnico responsable">
+        <div class="card-body">
+          <div class="text-muted small">Sin responsable</div>
+          <div class="display-6">{{ huertos_sin_responsable or 0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card kpi h-100 shadow-sm border-0" title="Huertos sin centro lat/lng">
+        <div class="card-body">
+          <div class="text-muted small">Sin centro geográfico</div>
+          <div class="display-6">{{ huertos_sin_center or 0 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ===== Filtros ===== #}
+  <div class="card shadow-sm border-0 mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+          <label class="form-label small">Buscar (instantáneo)</label>
+          <input id="qLocal" type="search" class="form-control" placeholder="Nombre / ubicación / cultivo">
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label small">Técnico</label>
+          <select name="tecnico_id" class="form-select">
+            <option value="">Todos</option>
+            {% for t in tecnicos %}
+              <option value="{{ t.id }}" {% if (request.args.get('tecnico_id')|int) == t.id %}selected{% endif %}>
+
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label small">Cultivo</label>
+          <input class="form-control" name="cultivo" value="{{ request.args.get('cultivo','') }}" placeholder="Ej: Manzano">
+        </div>
+        <div class="col-6 col-md-2">
+          <div class="form-check mt-4">
+            <input class="form-check-input" type="checkbox" name="sin_responsable" value="1"
+  {% if (request.args.get('sin_responsable')|int) == 1 %}checked{% endif %}>
+
+            <label class="form-check-label small">Sin responsable</label>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 mt-2">
+          <label class="form-label small">Orden</label>
+          <select id="orderSelect" class="form-select">
+            <option value="nombre-asc">Nombre (A–Z)</option>
+            <option value="nombre-desc">Nombre (Z–A)</option>
+            <option value="ha-desc">Superficie (↓)</option>
+            <option value="ha-asc">Superficie (↑)</option>
+            <option value="bodegas-desc">Bodegas (↓)</option>
+            <option value="bodegas-asc">Bodegas (↑)</option>
+          </select>
+        </div>
+        <div class="col-12 d-flex gap-2 mt-2">
+          <button class="btn btn-success"><i class="bi bi-filter"></i> Filtrar</button>
+          <a class="btn btn-outline-secondary" href="{{ url_for('admin.admin_dashboard') }}">Limpiar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {# ===== Encabezado listado ===== #}
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h4 class="text-success mb-0"><i class="bi bi-tree"></i> Huertos</h4>
+    {% if huertos_paginados and huertos_paginados.total > huertos_paginados.per_page %}
+      <div class="text-muted small">
+        Mostrando {{ huertos_paginados.per_page * (huertos_paginados.page - 1) + 1 }} –
+        {{ huertos_paginados.per_page * (huertos_paginados.page - 1) + huertos_paginados.items|length }}
+        de {{ huertos_paginados.total }}
+      </div>
+    {% endif %}
+  </div>
+
+  {# ===== Grid de huertos ===== #}
+  <div class="row g-4" id="huertosGrid">
+    {% for h in huertos %}
+    <div class="col-12 col-md-6 col-lg-4 huerto-card"
+         data-name="{{ (h.nombre or '')|lower }}"
+         data-ubic="{{ (h.ubicacion or '')|lower }}"
+         data-cult="{{ (h.tipo_cultivo or '')|lower }}"
+         data-ha="{{ h.superficie_ha or 0 }}"
+         data-bod="{{ h.bodegas|length }}">
+      <div class="card shadow-sm h-100 border-0">
+        <div class="card-header bg-white d-flex align-items-center justify-content-between">
+          <div class="fw-semibold">
+            <i class="bi bi-tree-fill text-success"></i> {{ h.nombre }}
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            {% if not h.responsable %}
+              <span class="badge bg-warning-subtle text-warning-emphasis" title="Sin técnico asignado">Sin técnico</span>
+            {% endif %}
+            {% if not h.center_lat or not h.center_lng %}
+              <span class="badge bg-secondary-subtle text-secondary-emphasis" title="Sin centro geo">Sin centro</span>
+            {% endif %}
+            <span class="badge bg-light text-success">ID {{ h.id }}</span>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="small text-muted mb-2">
+            <i class="bi bi-geo-alt"></i> {{ h.ubicacion or "—" }}
+          </div>
+          <div class="row g-2 small mb-2">
+            <div class="col-6"><strong>Superficie:</strong> {{ '%.2f'|format(h.superficie_ha or 0) }} ha</div>
+            <div class="col-6"><strong>Cultivo:</strong> {{ h.tipo_cultivo or "—" }}</div>
+          </div>
+          <div class="small">
+            <strong>Técnico:</strong>
+            {% if h.responsable %}
+              <span class="badge bg-success-subtle text-success-emphasis">{{ h.responsable.name }}</span>
+            {% else %}
+              <span class="badge bg-warning-subtle text-warning-emphasis">Sin asignar</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-footer bg-light">
+          <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2">
+            <span class="small text-muted">
+              <i class="bi bi-archive"></i> Bodegas: <strong>{{ h.bodegas|length }}</strong>
+            </span>
+
+            <div class="d-flex flex-wrap gap-2 w-100 w-sm-auto">
+              <a href="{{ url_for('admin.bitacora_huerto', huerto_id=h.id) }}"
+                 class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 btn-responsive"
+                 title="Bitácora">
+                <i class="bi bi-clock-history"></i><span>Bitácora</span>
+              </a>
+
+              <a href="{{ url_for('admin.registrar_actividad_huerto', huerto_id=h.id) }}"
+                 class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 btn-responsive"
+                 title="Nueva actividad">
+                <i class="bi bi-plus-lg"></i><span>Nueva</span>
+              </a>
+
+              <a href="{{ url_for('geo.mapa') }}?focus=huerto:{{ h.id }}"
+                 class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 btn-responsive"
+                 title="Ver en mapa">
+                <i class="bi bi-geo-alt"></i><span>Mapa</span>
+              </a>
+
+              <a href="{{ url_for('docs.admin_panel', huerto_id=h.id, next=request.full_path) }}"
+                 class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 btn-responsive"
+                 title="Documentos">
+                <i class="bi bi-file-earmark-text"></i><span>Docs</span>
+              </a>
+
+              {# Asignar técnico (modal) #}
+              <button class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 btn-responsive"
+                      data-bs-toggle="modal" data-bs-target="#asignarModal"
+                      data-huerto="{{ h.id }}" data-nombre="{{ h.nombre }}">
+                <i class="bi bi-person-check"></i><span>Asignar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ===== Paginación ===== #}
+  {% if huertos_paginados and huertos_paginados.pages > 1 %}
+  <nav aria-label="Paginación de huertos" class="mt-4">
+    <ul class="pagination justify-content-center">
+      {% if huertos_paginados.has_prev %}
+        <li class="page-item"><a class="page-link text-success" href="{{ url_for('admin.admin_dashboard', page=1) }}">&laquo;&laquo;</a></li>
+        <li class="page-item"><a class="page-link text-success" href="{{ url_for('admin.admin_dashboard', page=huertos_paginados.prev_num) }}">&laquo;</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo;&laquo;</span></li>
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+      {% endif %}
+
+      {% for page_num in huertos_paginados.iter_pages() %}
+        {% if page_num %}
+          {% if page_num != huertos_paginados.page %}
+            <li class="page-item"><a class="page-link text-success" href="{{ url_for('admin.admin_dashboard', page=page_num) }}">{{ page_num }}</a></li>
+          {% else %}
+            <li class="page-item active"><span class="page-link bg-success border-success">{{ page_num }}</span></li>
+          {% endif %}
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+      {% endfor %}
+
+      {% if huertos_paginados.has_next %}
+        <li class="page-item"><a class="page-link text-success" href="{{ url_for('admin.admin_dashboard', page=huertos_paginados.next_num) }}">&raquo;</a></li>
+        <li class="page-item"><a class="page-link text-success" href="{{ url_for('admin.admin_dashboard', page=huertos_paginados.pages) }}">&raquo;&raquo;</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+        <li class="page-item disabled"><span class="page-link">&raquo;&raquo;</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+  {# ===== Laterales (opcional) ===== #}
+  <div class="row g-4 mt-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white"><i class="bi bi-people"></i> Técnicos</div>
+        <div class="card-body p-0">
+          {% if tecnicos %}
+            <table class="table mb-0 align-middle">
+              <tbody>
+              {% for t in tecnicos %}
+                <tr>
+                  <td><i class="bi bi-person"></i> {{ t.name or t.email }}</td>
+                  <td class="text-muted small d-none d-sm-table-cell">{{ t.email }}</td>
+                  <td class="text-end">
+                    <a href="{{ url_for('admin.reset_password', tecnico_id=t.id, next=request.full_path) }}"
+                       class="btn btn-sm btn-outline-warning">
+                      <i class="bi bi-shield-lock"></i> Resetear
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="text-muted p-3">No hay técnicos.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-warning"><i class="bi bi-box-seam"></i> Bodegas</div>
+        <ul class="list-group list-group-flush">
+          {% for b in bodegas %}
+          <li class="list-group-item d-flex flex-wrap gap-2 justify-content-between align-items-center">
+            <span class="me-auto"><i class="bi bi-house-door-fill"></i> {{ b.nombre }}</span>
+            <span class="text-muted small">{{ b.ubicacion or "—" }}</span>
+            <a href="{{ url_for('admin.ver_quimicos', bodega_id=b.id) }}" class="btn btn-sm btn-outline-success">Químicos</a>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">No hay bodegas.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  {# ===== Recomendaciones ===== #}
+  <div class="row mt-4">
+    <div class="col-12 col-md-8 mx-auto">
+      <div class="card shadow border-info">
+        <div class="card-header bg-info text-white">
+          <i class="bi bi-list-check me-2"></i> Recomendaciones recientes
+        </div>
+        <div class="card-body p-2" style="max-height: 250px; overflow-y: auto;">
+          {% if ultimas_recomendaciones %}
+            <ul class="list-group list-group-flush">
+              {% for r in ultimas_recomendaciones %}
+              <li class="list-group-item small">
+                <span class="text-primary">{{ r.tecnico.name }}</span>:
+                {{ r.contenido | truncate(60) }}
+                <br>
+                <span class="text-muted">
+                  <i class="bi bi-calendar-event"></i> {{ r.fecha.strftime('%d-%m-%Y') }}
+                </span>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted text-center">Sin recomendaciones aún.</div>
+          {% endif %}
+          <div class="text-center mt-2">
+            <a href="{{ url_for('admin.recomendar') }}" class="btn btn-info btn-sm">Agregar Recomendación</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{# ===== Modal Asignar Técnico ===== #}
+<div class="modal fade" id="asignarModal" tabindex="-1" aria-labelledby="asignarLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="POST" action="" id="formAsignar">
+      {{ csrf_token() if csrf_token }}
+      <div class="modal-header">
+        <h5 class="modal-title" id="asignarLabel">Asignar técnico</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2 small text-muted">Huerto: <b id="huertoNombre"></b></div>
+        <div class="mb-3">
+          <label class="form-label">Técnico</label>
+          <select name="tecnico_id" class="form-select" required>
+            <option value="">Selecciona…</option>
+            {% for t in tecnicos %}
+              <option value="{{ t.id }}">{{ t.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success" type="submit"><i class="bi bi-person-check"></i> Asignar</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="ms-md-auto d-flex flex-wrap w-100 w-md-auto gap-2">
+      <a class="btn btn-outline-secondary w-100 w-sm-auto" id="btnExportCsv"><i class="bi bi-filetype-csv"></i> Exportar CSV</a>
+    </div>
+<script>
+(function(){
+  // ---- Búsqueda local
+  const q = document.getElementById('qLocal');
+  const grid = document.getElementById('huertosGrid');
+  const cards = Array.from(document.querySelectorAll('.huerto-card'));
+  function applyFilter(){
+    const term = (q?.value||'').trim().toLowerCase();
+    cards.forEach(c => {
+      const hit = [c.dataset.name, c.dataset.ubic, c.dataset.cult].some(v => (v||'').includes(term));
+      c.style.display = (!term || hit) ? '' : 'none';
+    });
+  }
+  q?.addEventListener('input', applyFilter);
+
+  // ---- Orden local
+  const order = document.getElementById('orderSelect');
+  function applySort(){
+    const mode = order?.value || 'nombre-asc';
+    const arr = cards.filter(c => c.style.display !== 'none').map(c => ({
+      el:c,
+      name:(c.dataset.name||''),
+      ha:parseFloat(c.dataset.ha||'0'),
+      bod:parseInt(c.dataset.bod||'0',10)
+    }));
+    const cmp = {
+      "nombre-asc": (a,b)=>a.name.localeCompare(b.name),
+      "nombre-desc": (a,b)=>b.name.localeCompare(a.name),
+      "ha-asc": (a,b)=>a.ha-b.ha,
+      "ha-desc": (a,b)=>b.ha-a.ha,
+      "bodegas-asc": (a,b)=>a.bod-b.bod,
+      "bodegas-desc": (a,b)=>b.bod-a.bod
+    }[mode] || ((a,b)=>0);
+    arr.sort(cmp);
+    const frag = document.createDocumentFragment();
+    arr.forEach(x => frag.appendChild(x.el));
+    grid?.appendChild(frag);
+  }
+  order?.addEventListener('change', applySort);
+
+  // init
+  applyFilter(); applySort();
+
+  // ---- AgroBot persistencia
+  const BOX_ID='agrobotBox', SHOW_BTN_ID='showAgrobotBtn', HIDE_BTN_ID='hideAgrobotBtn', KEY='agrobotHiddenAdmin';
+  const box=document.getElementById(BOX_ID), showBtn=document.getElementById(SHOW_BTN_ID), hideBtn=document.getElementById(HIDE_BTN_ID);
+  function applyAgrobot(hidden){ if(!box||!showBtn) return; box.style.display= hidden?'none':'block'; showBtn.style.display= hidden?'inline-flex':'none'; }
+  applyAgrobot(localStorage.getItem(KEY)==='true');
+  hideBtn?.addEventListener('click', ()=>{localStorage.setItem(KEY,'true'); applyAgrobot(true);});
+  showBtn?.addEventListener('click', ()=>{localStorage.setItem(KEY,'false'); applyAgrobot(false);});
+
+  // ---- Modal Asignar técnico
+  const modal = document.getElementById('asignarModal');
+  modal?.addEventListener('show.bs.modal', (ev)=>{
+    const btn = ev.relatedTarget;
+    const huertoId = btn?.getAttribute('data-huerto');
+    const nombre = btn?.getAttribute('data-nombre') || '';
+    document.getElementById('huertoNombre').textContent = nombre;
+    const form = document.getElementById('formAsignar');
+    // ruta existente: /admin/huerto/<id>/asignar
+    form.action = "{{ url_for('admin.asignar_responsable_huerto', huerto_id=0) }}".replace('/0/','/'+huertoId+'/');
+  });
+
+  // ---- Export CSV (con filtro aplicado)
+  document.getElementById('btnExportCsv')?.addEventListener('click', ()=>{
+    const visible = cards.filter(c=>c.style.display!=='none');
+    let csv = 'ID,Nombre,Ubicación,Cultivo,Superficie ha,Bodegas\n';
+    visible.forEach(c=>{
+      const id = c.querySelector('.badge.bg-light')?.textContent.replace('ID ','').trim() || '';
+      const nombre = c.querySelector('.card-header .fw-semibold')?.textContent.trim() || '';
+      const ubic = c.dataset.ubic || '';
+      const cult = c.dataset.cult || '';
+      const ha = c.dataset.ha || '0';
+      const bod = c.dataset.bod || '0';
+      csv += `"${id}","${nombre}","${ubic}","${cult}",${ha},${bod}\n`;
+    });
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'huertos.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+})();
+</script>
+{% endblock %}

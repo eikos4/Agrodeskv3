@@ -1,45 +1,170 @@
 {% extends "base.html" %}
-{% block title %}Listado de Bodegas{% endblock %}
+{% block title %}Bodegas{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-  <h2 class="text-success mb-4">
-    <i class="bi bi-box-seam"></i> Bodegas Registradas
-  </h2>
 
-  {% if bodegas %}
-  <div class="row row-cols-1 row-cols-md-2 g-4">
-    {% for bodega in bodegas %}
-    <div class="col">
-      <div class="card border-success shadow-sm h-100">
-        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-          <strong><i class="bi bi-house-door-fill me-1"></i> {{ bodega.nombre }}</strong>
-          <small><i class="bi bi-tree-fill me-1"></i> {{ bodega.huerto.nombre if bodega.huerto else "Sin huerto" }}</small>
-        </div>
-        <div class="card-body">
-          <p><i class="bi bi-geo-alt-fill text-success me-1"></i> <strong>Ubicación:</strong> {{ bodega.ubicacion or "No especificada" }}</p>
-          <p><i class="bi bi-person-circle text-success me-1"></i> <strong>Responsable:</strong> {{ bodega.responsable.name if bodega.responsable else 'Sin asignar' }}</p>
-
-          <div class="d-flex flex-wrap gap-2 mt-3">
-            <a href="{{ url_for('admin.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-success btn-sm">
-              <i class="bi bi-eye"></i> Ver químicos
-            </a>
-           
+  {# CABECERA: AgroBot arriba (ocultable) #}
+  <div id="agrobot-banner" class="card shadow-sm border-0 mb-4">
+    <div class="card-body d-flex flex-wrap align-items-start gap-3">
+      <i class="bi bi-robot fs-1 text-success"></i>
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <h5 class="mb-1">AgroBot — Módulo Bodegas</h5>
+            <p class="mb-2 text-muted small">¿Para qué sirve este módulo para el administrador?</p>
           </div>
+          <button id="agrobot-hide" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-eye-slash"></i> Ocultar
+          </button>
         </div>
-        {% if bodega.quimicos|length > 0 %}
-        <div class="card-footer bg-light">
-          <small><i class="bi bi-flask-fill"></i> Químicos registrados: {{ bodega.quimicos|length }}</small>
-        </div>
-        {% endif %}
+
+        <ul class="mb-3 small">
+          <li><b>Registrar y mantener</b> bodegas por huerto/campo.</li>
+          <li><b>Asignar responsables</b> y ordenar la gestión.</li>
+          <li><b>Vincular</b> cada bodega a su huerto para trazabilidad.</li>
+          <li><b>Gestionar químicos</b> asociados y controlar stock.</li>
+          <li>Apoyar <b>auditoría</b> y <b>responsabilidad operacional</b>.</li>
+        </ul>
+
+        <a href="{{ url_for('admin.crear_bodega') }}" class="btn btn-success">
+          <i class="bi bi-plus-lg"></i> Nueva Bodega
+        </a>
       </div>
     </div>
-    {% endfor %}
   </div>
-  {% else %}
-  <div class="alert alert-info text-center mt-4">
-    <i class="bi bi-info-circle-fill"></i> No hay bodegas registradas aún.
+
+  {# ALERTAS #}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  
+  {# TABLA #}
+  <div class="card shadow border-0">
+    <div class="card-header bg-success-subtle">
+      <h6 class="mb-0 text-success"><i class="bi bi-building me-2"></i>Listado de Bodegas</h6>
+    </div>
+    <div class="card-body">
+      {% if bodegas %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle" id="tabla-bodegas">
+            <thead class="table-success">
+              <tr>
+                <th>Nombre</th>
+                <th>Huerto</th>
+                <th>Responsable</th>
+                <th class="d-none d-sm-table-cell">Ubicación</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for bodega in bodegas %}
+                <tr>
+                  <td class="fw-medium">{{ bodega.nombre }}</td>
+                  <td>{{ bodega.huerto.nombre if bodega.huerto else '—' }}</td>
+                  <td>
+                    {% if bodega.responsable %}
+                      {{ bodega.responsable.name or bodega.responsable.username }}
+                    {% else %}—{% endif %}
+                  </td>
+                  <td class="d-none d-sm-table-cell">{{ bodega.ubicacion or '—' }}</td>
+                  <td class="text-end">
+                    <div class="d-inline-flex gap-2">
+                      <a href="{{ url_for('admin.editar_bodega', bodega_id=bodega.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Editar
+                      </a>
+                      <form action="{{ url_for('admin.eliminar_bodega', bodega_id=bodega.id) }}" method="POST"
+                            onsubmit="return confirm('¿Eliminar la bodega {{ bodega.nombre }}?');" class="m-0">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                          <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                      </form>
+                      <a href="{{ url_for('admin.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-beaker"></i> Químicos
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">Aún no hay bodegas registradas.</p>
+      {% endif %}
+    </div>
   </div>
-  {% endif %}
 </div>
+
+{# BOTÓN FLOTANTE ABAJO PARA MOSTRAR EL MENSAJE #}
+<button id="agrobot-reopen"
+        class="btn btn-success shadow position-fixed bottom-0 end-0 m-3 d-none"
+        title="Mostrar guía de AgroBot">
+  <i class="bi bi-robot"></i> AgroBot
+</button>
+
+<script>
+(function () {
+  const key = 'agrobot_bodegas_hidden';
+  const banner = document.getElementById('agrobot-banner');
+  const hideBtn = document.getElementById('agrobot-hide');
+  const reopenBtn = document.getElementById('agrobot-reopen');
+
+  function applyState() {
+    const hidden = localStorage.getItem(key) === '1';
+    if (hidden) {
+      banner.classList.add('d-none');
+      reopenBtn.classList.remove('d-none');
+    } else {
+      banner.classList.remove('d-none');
+      reopenBtn.classList.add('d-none');
+    }
+  }
+
+  if (hideBtn) {
+    hideBtn.addEventListener('click', function () {
+      localStorage.setItem(key, '1');
+      applyState();
+    });
+  }
+
+  if (reopenBtn) {
+    reopenBtn.addEventListener('click', function () {
+      localStorage.setItem(key, '0');
+      applyState();
+      // scroll suave hacia el banner
+      setTimeout(() => banner.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    });
+  }
+
+  // Estado inicial
+  applyState();
+})();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.jQuery && $.fn.DataTable) {
+    $('#tabla-bodegas').DataTable({
+      order: [[0, 'asc']],
+      pageLength: 10,
+      lengthChange: false,
+      responsive: true,
+      language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
+      columnDefs: [
+        { targets: [3], responsivePriority: 4 }, // Ubicación
+        { targets: [4], responsivePriority: 1 }  // Acciones
+      ]
+    });
+  }
+});
+</script>
 {% endblock %}
