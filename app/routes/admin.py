@@ -39,9 +39,10 @@ def admin_required(f):
 # Helpers (scoped por empresa)
 # ======================
 def cargar_tecnicos_choices():
+    # Solo técnicos asignados a este administrador
     tecnicos = (
         User.query
-        .filter_by(role="tecnico", empresa_id=current_user.empresa_id)
+        .filter_by(role="tecnico", empresa_id=current_user.empresa_id, created_by=current_user.id)
         .order_by(User.name.asc())
         .all()
     )
@@ -95,12 +96,50 @@ def admin_dashboard():
         .all()
     )
 
+    # Solo técnicos asignados a este administrador
     tecnicos = (
         User.query
-        .filter_by(role="tecnico", empresa_id=current_user.empresa_id)
+        .filter_by(role="tecnico", empresa_id=current_user.empresa_id, created_by=current_user.id)
         .order_by(User.name.asc())
         .all()
     )
+
+    # Estadísticas de huertos
+    total_huertos = Huerto.query.filter_by(empresa_id=current_user.empresa_id).count()
+    huertos_con_responsable = Huerto.query.filter_by(empresa_id=current_user.empresa_id).filter(Huerto.responsable_id.isnot(None)).count()
+    huertos_sin_responsable = total_huertos - huertos_con_responsable
+    
+    # Estadísticas de superficie por cultivo
+    superficie_por_cultivo = db.session.query(
+        Huerto.tipo_cultivo,
+        db.func.sum(Huerto.superficie_ha).label('total_superficie'),
+        db.func.count(Huerto.id).label('cantidad')
+    ).filter_by(empresa_id=current_user.empresa_id).group_by(Huerto.tipo_cultivo).all()
+    
+    # Calcular superficie total
+    total_superficie = sum(s.total_superficie or 0 for s in superficie_por_cultivo)
+    
+    # Estadísticas de técnicos
+    tecnicos_con_telefono = User.query.filter_by(
+        role="tecnico", 
+        empresa_id=current_user.empresa_id, 
+        created_by=current_user.id
+    ).filter(User.telefono.isnot(None)).count()
+    
+    # Actividades recientes (si existe el modelo)
+    actividades_recientes = []
+    try:
+        from app.models import ActividadHuerto
+        actividades_recientes = (
+            ActividadHuerto.query
+            .join(Huerto, ActividadHuerto.huerto_id == Huerto.id)
+            .filter(Huerto.empresa_id == current_user.empresa_id)
+            .order_by(ActividadHuerto.fecha.desc())
+            .limit(5)
+            .all()
+        )
+    except ImportError:
+        pass
 
     q_rec = (
         Recomendacion.query
@@ -117,12 +156,19 @@ def admin_dashboard():
     ultimas_recomendaciones = q_rec.limit(5).all()
 
     return render_template(
-        "admin/admin_dashboard.html",
+        "admin/admin_dashboard_responsive.html",
         huertos_paginados=huertos_paginados,
         huertos=huertos_paginados.items,
         bodegas=bodegas,
         tecnicos=tecnicos,
         ultimas_recomendaciones=ultimas_recomendaciones,
+        total_superficie=total_superficie,
+        superficie_por_cultivo=superficie_por_cultivo,
+        total_huertos=total_huertos,
+        huertos_con_responsable=huertos_con_responsable,
+        huertos_sin_responsable=huertos_sin_responsable,
+        tecnicos_con_telefono=tecnicos_con_telefono,
+        actividades_recientes=actividades_recientes,
     )
 
 # ======================
@@ -139,6 +185,7 @@ def crear_tecnico():
             new_user = User(
                 name=form.name.data.strip(),
                 email=form.email.data.strip().lower(),
+                telefono=form.telefono.data.strip() if form.telefono.data else None,
                 password=hashed_pw,
                 role="tecnico",
                 created_by=current_user.id,
@@ -158,7 +205,8 @@ def crear_tecnico():
 @login_required
 @admin_required
 def editar_tecnico(tecnico_id):
-    tecnico = User.query.get_or_404(tecnico_id)
+    # Solo puede editar técnicos que él creó
+    tecnico = User.query.filter_by(id=tecnico_id, role="tecnico", empresa_id=current_user.empresa_id, created_by=current_user.id).first_or_404()
     form = CreateTechnicianForm(obj=tecnico)  # Reutiliza el mismo formulario
 
     if form.validate_on_submit():
@@ -185,9 +233,10 @@ def editar_tecnico(tecnico_id):
 @login_required
 @admin_required
 def reset_password(tecnico_id):
+    # Solo puede resetear contraseñas de técnicos que él creó
     tecnico = (
         User.query
-        .filter_by(id=tecnico_id, role='tecnico', empresa_id=current_user.empresa_id)
+        .filter_by(id=tecnico_id, role='tecnico', empresa_id=current_user.empresa_id, created_by=current_user.id)
         .first_or_404()
     )
     form = ResetPasswordForm()
@@ -229,9 +278,11 @@ def recomendar():
         flash("Recomendación enviada con éxito.", "success")
         return redirect(url_for("admin.recomendar"))
 
-    # Listado (scoped)
+    # Listado (solo recomendaciones a técnicos del admin actual)
     q = (
         Recomendacion.query
+        .join(User, Recomendacion.tecnico_id == User.id)
+        .filter(User.created_by == current_user.id)
         .options(
             selectinload(Recomendacion.tecnico),
             selectinload(Recomendacion.huerto),

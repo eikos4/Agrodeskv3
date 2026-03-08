@@ -49,6 +49,7 @@ class User(db.Model, UserMixin, TenantMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(150), nullable=False, index=True)
+    telefono = db.Column(db.String(20))  # Nuevo campo de teléfono
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False, index=True)  # "admin" | "tecnico"
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"))

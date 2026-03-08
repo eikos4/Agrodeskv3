@@ -54,6 +54,7 @@ class LoginForm(FlaskForm):
 class CreateTechnicianForm(FlaskForm):
     name = StringField("Nombre", validators=[InputRequired()])
     email = StringField("Email", validators=[Email()])
+    telefono = StringField("Teléfono", validators=[Optional(), Length(max=20)])
     password = PasswordField("Contraseña", validators=[InputRequired(), Length(min=6)])
     submit = SubmitField("Crear Técnico")
 

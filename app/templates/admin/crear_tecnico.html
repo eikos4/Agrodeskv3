@@ -57,6 +57,10 @@
               {{ form.email(class="form-control", type="email", placeholder="correo@ejemplo.com") }}
             </div>
             <div class="mb-3">
+              {{ form.telefono.label(class="form-label") }}
+              {{ form.telefono(class="form-control", placeholder="+56 9 1234 5678") }}
+            </div>
+            <div class="mb-3">
               {{ form.password.label(class="form-label") }}
               {{ form.password(class="form-control", type="password", placeholder="Contraseña segura") }}
             </div>
