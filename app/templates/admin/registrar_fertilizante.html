@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}Aplicación de Fertilizantes - {{ huerto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Panel Admin</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.vista_global_huerto', huerto_id=huerto.id) }}">{{ huerto.nombre }}</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.actividades_fitosanitarias', huerto_id=huerto.id) }}">Actividades Fitosanitarias</a></li>
+          <li class="breadcrumb-item active">Aplicación de Fertilizantes</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header bg-light border-success py-4">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center me-3" 
+                 style="width: 60px; height: 60px;">
+              <i class="bi bi-flower1 text-success fs-2"></i>
+            </div>
+            <div>
+              <h4 class="mb-1 text-dark fw-bold">Aplicación de Fertilizantes</h4>
+              <p class="mb-0 text-muted">Huerto: <strong class="text-success">{{ huerto.nombre }}</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data" autocomplete="off">
+            {{ form.hidden_tag() }}
+
+            <!-- Información General -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                {{ form.fecha.label(class_="form-label") }}
+                {{ form.fecha(class_="form-control", type="date") }}
+                {% if form.fecha.errors %}
+                  <div class="invalid-feedback d-block">{{ form.fecha.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-3">
+                {{ form.responsable.label(class_="form-label") }}
+                {{ form.responsable(class_="form-control") }}
+                {% if form.responsable.errors %}
+                  <div class="invalid-feedback d-block">{{ form.responsable.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Tipo de Fertilización</label>
+                <select class="form-select" name="tipo_fertilizacion">
+                  <option value="">Seleccionar...</option>
+                  <option value="suelo">Al suelo</option>
+                  <option value="foliar">Foliar</option>
+                  <option value="fertirrigacion">Fertirrigación</option>
+                  <option value="localizada">Localizada</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Método de Aplicación</label>
+                <select class="form-select" name="metodo_aplicacion">
+                  <option value="">Seleccionar...</option>
+                  <option value="manual">Manual</option>
+                  <option value="mecanica">Mecánica</option>
+                  <option value="aspersión">Aspersión</option>
+                  <option value="goteo">Goteo</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Análisis de Suelo -->
+            <div class="card border-primary mb-4">
+              <div class="card-header bg-primary bg-opacity-10">
+                <h6 class="mb-0 text-primary"><i class="bi bi-thermometer me-2"></i>Análisis de Suelo</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">pH del Suelo</label>
+                    <input type="number" step="0.1" class="form-control" name="ph_suelo" placeholder="Ej: 6.5">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Materia Orgánica (%)</label>
+                    <input type="number" step="0.1" class="form-control" name="materia_organica" placeholder="Ej: 2.5">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Nitrógeno (N)</label>
+                    <input type="number" step="0.1" class="form-control" name="nitrogeno" placeholder="Ej: 25">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Fósforo (P)</label>
+                    <input type="number" step="0.1" class="form-control" name="fosforo" placeholder="Ej: 15">
+                  </div>
+                </div>
+                <div class="row g-3 mt-2">
+                  <div class="col-md-3">
+                    <label class="form-label">Potasio (K)</label>
+                    <input type="number" step="0.1" class="form-control" name="potasio" placeholder="Ej: 20">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Fecha de Análisis</label>
+                    <input type="date" class="form-control" name="fecha_analisis">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Recomendación del Análisis</label>
+                    <input type="text" class="form-control" name="recomendacion_analisis" placeholder="Ej: Aplicar 120 kg N/ha, 60 kg P₂O₅/ha">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información del Fertilizante -->
+            <div class="card border-success mb-4">
+              <div class="card-header bg-success bg-opacity-10">
+                <h6 class="mb-0 text-dark"><i class="bi bi-flower2 me-2"></i>Información del Fertilizante</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Producto Comercial</label>
+                    <input type="text" class="form-control" name="producto" placeholder="Ej: Urea, Superfosfato">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Fórmula</label>
+                    <input type="text" class="form-control" name="formula" placeholder="Ej: 46-0-0, 18-46-0">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Dosis</label>
+                    <input type="text" class="form-control" name="dosis" placeholder="Ej: 120 kg/ha">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">N° Lote</label>
+                    <input type="text" class="form-control" name="numero_lote" placeholder="Ej: F456">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Vencimiento</label>
+                    <input type="date" class="form-control" name="fecha_vencimiento">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Nutrientes Aplicados -->
+            <div class="card border-info mb-4">
+              <div class="card-header bg-info bg-opacity-10">
+                <h6 class="mb-0 text-dark"><i class="bi bi-pie-chart me-2"></i>Nutrientes Aplicados</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Nitrógeno (kg/ha)</label>
+                    <input type="number" step="0.1" class="form-control" name="n_aplicado" placeholder="Ej: 55.2">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Fósforo (kg/ha)</label>
+                    <input type="number" step="0.1" class="form-control" name="p_aplicado" placeholder="Ej: 27.6">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Potasio (kg/ha)</label>
+                    <input type="number" step="0.1" class="form-control" name="k_aplicado" placeholder="Ej: 0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Azufre (kg/ha)</label>
+                    <input type="number" step="0.1" class="form-control" name="s_aplicado" placeholder="Ej: 0">
+                  </div>
+                </div>
+                <div class="row g-3 mt-2">
+                  <div class="col-md-3">
+                    <label class="form-label">Calcio (kg/ha)</label>
+                    <input type="number" step="0.1" class="form-control" name="ca_aplicado" placeholder="Ej: 0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Magnesio (kg/ha)</label>
+                    <input type="number" step="0.1" class="form-control" name="mg_aplicado" placeholder="Ej: 0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Boro (kg/ha)</label>
+                    <input type="number" step="0.1" class="form-control" name="b_aplicado" placeholder="Ej: 0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Zinc (kg/ha)</label>
+                    <input type="number" step="0.1" class="form-control" name="zn_aplicado" placeholder="Ej: 0">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Condiciones de Aplicación -->
+            <div class="card border-warning mb-4">
+              <div class="card-header bg-warning bg-opacity-10">
+                <h6 class="mb-0 text-dark"><i class="bi bi-cloud-sun me-2"></i>Condiciones de Aplicación</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Superficie Tratada (ha)</label>
+                    <input type="number" step="0.1" class="form-control" name="superficie_tratada" placeholder="Ej: 8.5">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Etapa del Cultivo</label>
+                    <select class="form-select" name="etapa_cultivo">
+                      <option value="">Seleccionar...</option>
+                      <option value="siembra">Siembra</option>
+                      <option value="transplante">Transplante</option>
+                      <option value="inicial">Inicial</option>
+                      <option value="desarrollo">Desarrollo</option>
+                      <option value="floración">Floración</option>
+                      <option value="fructificación">Fructificación</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Temperatura (°C)</label>
+                    <input type="number" class="form-control" name="temperatura" placeholder="Ej: 18">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Hora de Aplicación</label>
+                    <input type="time" class="form-control" name="hora_aplicacion">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Observaciones y Evidencia -->
+            <div class="row g-3">
+              <div class="col-md-8">
+                {{ form.descripcion.label(class_="form-label") }}
+                {{ form.descripcion(class_="form-control", rows="3", placeholder="Describe la aplicación, estado del cultivo, objetivos, etc.") }}
+                {% if form.descripcion.errors %}
+                  <div class="invalid-feedback d-block">{{ form.descripcion.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                {{ form.fotos.label(class_="form-label") }}
+                {{ form.fotos(class_="form-control") }}
+                <div class="form-text">Adjunta fotos de la aplicación</div>
+                {% if form.fotos.errors %}
+                  <div class="invalid-feedback d-block">{{ form.fotos.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <a href="{{ url_for('admin.actividades_fitosanitarias', huerto_id=huerto.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+              </a>
+              <button type="submit" class="btn btn-success px-4">
+                <i class="bi bi-check2-circle"></i> Aplicar Fertilizante
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

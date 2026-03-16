@@ -46,14 +46,64 @@
     background: #f0fff8;
   }
 
-  /* ======== HUERTOS ======== */
-  .huerto-card {
-    border-left: 5px solid #00b47e33;
+  /* ======== HUERTOS MODERNOS ======== */
+  .huerto-modern-card {
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+    overflow: hidden;
   }
-  .huerto-card:hover {
-    border-left: 5px solid #00b47e;
+  .huerto-modern-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0,123,255,0.15) !important;
   }
-  .huerto-card .badge { font-size: .8rem; }
+  .huerto-modern-card .card-header {
+    border: none;
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+  }
+  .huerto-modern-card .btn {
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .huerto-modern-card .btn:hover {
+    transform: translateY(-2px);
+  }
+
+  /* ======== VARIANTES DE DISEÑO ======== */
+  .compact-card {
+    transition: all 0.3s ease;
+    border-radius: 1rem;
+  }
+  .compact-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+  
+  .icon-card {
+    transition: all 0.3s ease;
+    border-radius: 1rem;
+    border: 2px solid #e9ecef;
+  }
+  .icon-card:hover {
+    transform: translateY(-5px);
+    border-color: #28a745;
+    box-shadow: 0 12px 30px rgba(40,167,69,0.15);
+  }
+  
+  .side-card {
+    transition: all 0.3s ease;
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+  .side-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+  .side-card .col-4 {
+    transition: all 0.3s ease;
+  }
+  .side-card:hover .col-4 {
+    background: linear-gradient(135deg, #20c997, #28a745) !important;
+  }
 
   /* ======== BODEGAS ======== */
   .bodega-card {
@@ -87,6 +137,7 @@
           <a href="{{ url_for('admin.crear_huerto') }}" class="btn btn-success btn-sm"><i class="bi bi-tree"></i> Nuevo Huerto</a>
           <a href="{{ url_for('admin.crear_bodega') }}" class="btn btn-warning btn-sm"><i class="bi bi-box"></i> Nueva Bodega</a>
           <a href="{{ url_for('admin.crear_tecnico') }}" class="btn btn-info text-white btn-sm"><i class="bi bi-person-plus"></i> Nuevo Técnico</a>
+          <a href="{{ url_for('admin.crear_quimico') }}" class="btn btn-primary btn-sm"><i class="bi bi-droplet-fill"></i> Agregar Químico</a>
         </div>
       </div>
       <button id="hideAgrobotBtn" class="btn btn-outline-success btn-sm ms-auto">
@@ -113,43 +164,123 @@
   </div>
 
   <!-- ========= HUERTOS ========= -->
-  <h4 class="text-success mb-3"><i class="bi bi-tree-fill"></i> Huertos</h4>
-  <div class="d-flex flex-column gap-3 fade-in">
+  <h4 class="text-success mb-4"><i class="bi bi-tree-fill"></i> Huertos Registrados</h4>
+  <div class="row g-4">
     {% for h in huertos %}
-    <div class="card huerto-card p-3">
-      <div class="row align-items-center g-3">
-        <div class="col-md-1 text-center">
-          <div class="display-6 text-success"><i class="bi bi-tree"></i></div>
-          <span class="badge bg-light text-success">ID {{ h.id }}</span>
-        </div>
-        <div class="col-md-5">
-          <h5 class="fw-bold text-success mb-1">{{ h.nombre }}</h5>
-          <div class="small text-muted"><i class="bi bi-geo-alt"></i> {{ h.ubicacion or "—" }}</div>
-          <div class="row small mt-2">
-            <div class="col-6"><b>Cultivo:</b> {{ h.tipo_cultivo or "—" }}</div>
-            <div class="col-6"><b>Superficie:</b> {{ '%.2f'|format(h.superficie_ha or 0) }} ha</div>
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-lg huerto-modern-card">
+        <div class="card-header bg-gradient-success text-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-1 fw-bold"><i class="bi bi-tree-fill me-2"></i>{{ h.nombre }}</h5>
+              <small class="opacity-75">ID: {{ h.id }}</small>
+            </div>
+            <div class="text-end">
+              {% if h.responsable %}
+                <span class="badge bg-white text-success">{{ h.responsable.name }}</span>
+              {% else %}
+                <span class="badge bg-warning text-dark">Sin técnico</span>
+              {% endif %}
+            </div>
           </div>
-          <div class="mt-1 small"><b>Técnico:</b>
-            {% if h.responsable %}
-              <span class="badge bg-success-subtle text-success-emphasis">{{ h.responsable.name }}</span>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-6">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-geo-alt-fill text-success me-2"></i>
+                <div>
+                  <small class="text-muted d-block">Ubicación</small>
+                  <strong>{{ h.ubicacion or "—" }}</strong>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-flower1 text-success me-2"></i>
+                <div>
+                  <small class="text-muted d-block">Cultivo</small>
+                  <strong>{{ h.tipo_cultivo or "—" }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-6">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-rulers text-success me-2"></i>
+                <div>
+                  <small class="text-muted d-block">Superficie</small>
+                  <strong>{{ '%.2f'|format(h.superficie_ha or 0) }} ha</strong>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-house-door text-success me-2"></i>
+                <div>
+                  <small class="text-muted d-block">Bodegas</small>
+                  <strong>{{ h.bodegas|length }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {% if h.fecha_siembra %}
+          <div class="row mb-3">
+            <div class="col-12">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-calendar-check text-success me-2"></i>
+                <div>
+                  <small class="text-muted d-block">Fecha siembra</small>
+                  <strong>{{ h.fecha_siembra.strftime('%d-%m-%Y') }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          
+          <hr class="my-3">
+          <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('admin.vista_global_huerto', huerto_id=h.id) }}" class="btn btn-info btn-sm flex-fill">
+              <i class="bi bi-eye me-1"></i> Vista Global
+            </a>
+            <a href="{{ url_for('admin.editar_huerto', huerto_id=h.id) }}" class="btn btn-warning btn-sm flex-fill">
+              <i class="bi bi-pencil-square me-1"></i> Editar
+            </a>
+            <a href="{{ url_for('admin.bitacora_huerto', huerto_id=h.id) }}" class="btn btn-outline-primary btn-sm flex-fill">
+              <i class="bi bi-clock-history me-1"></i> Bitácora
+            </a>
+            <a href="{{ url_for('admin.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn btn-outline-info btn-sm flex-fill">
+              <i class="bi bi-plus me-1"></i> Nueva
+            </a>
+            <a href="{{ url_for('admin.actividades_fitosanitarias', huerto_id=h.id) }}" class="btn btn-success btn-sm flex-fill">
+              <i class="bi bi-shield-check me-1"></i> Fitosanitarias
+            </a>
+            <a href="{{ url_for('geo.mapa') }}?focus=huerto:{{ h.id }}" class="btn btn-outline-success btn-sm flex-fill">
+              <i class="bi bi-geo-alt me-1"></i> Mapa
+            </a>
+          </div>
+        </div>
+        <div class="card-footer bg-light py-2">
+          <small class="text-muted">
+            <i class="bi bi-clock"></i> 
+            {% if h.updated_at %}
+              Actualizado: {{ h.updated_at.strftime('%d-%m-%Y %H:%M') }}
             {% else %}
-              <span class="badge bg-warning-subtle text-warning-emphasis">Sin asignar</span>
+              Sin actualizaciones
             {% endif %}
-          </div>
-        </div>
-        <div class="col-md-3 text-center text-md-start border-start">
-          <div><b>Bodegas:</b> {{ h.bodegas|length }}</div>
-          <div class="small text-muted mt-2"><i class="bi bi-calendar-event"></i> {{ h.updated_at.strftime('%d-%m-%Y') if h.updated_at else '—' }}</div>
-        </div>
-        <div class="col-md-3 text-center text-md-end d-flex flex-wrap gap-2 justify-content-md-end">
-          <a href="{{ url_for('admin.bitacora_huerto', huerto_id=h.id) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-clock-history"></i> Bitácora</a>
-          <a href="{{ url_for('admin.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn btn-outline-info btn-sm"><i class="bi bi-plus"></i> Nueva</a>
-          <a href="{{ url_for('geo.mapa') }}?focus=huerto:{{ h.id }}" class="btn btn-outline-success btn-sm"><i class="bi bi-geo-alt"></i> Mapa</a>
+          </small>
         </div>
       </div>
     </div>
     {% endfor %}
   </div>
+
+
+
+ 
 
   <!-- ========= BODEGAS ========= -->
   <h4 class="text-warning mt-5 mb-3"><i class="bi bi-box-seam"></i> Bodegas</h4>

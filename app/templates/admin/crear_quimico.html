@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Agregar Químico{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Panel Admin</a></li>
+          <li class="breadcrumb-item active">Agregar Químico</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header bg-primary text-white py-3">
+          <h4 class="mb-0"><i class="bi bi-droplet-fill me-2"></i>Agregar Nuevo Químico</h4>
+        </div>
+        <div class="card-body">
+          <form method="POST" autocomplete="off">
+            {{ form.hidden_tag() }}
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                {{ form.nombre.label(class_="form-label") }}
+                {{ form.nombre(class_="form-control", placeholder="Ej: Glifosato") }}
+                {% if form.nombre.errors %}
+                  <div class="invalid-feedback d-block">{{ form.nombre.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                {{ form.tipo.label(class_="form-label") }}
+                {{ form.tipo(class_="form-control", placeholder="Ej: Herbicida") }}
+                {% if form.tipo.errors %}
+                  <div class="invalid-feedback d-block">{{ form.tipo.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+              <div class="col-md-4">
+                {{ form.cantidad_litros.label(class_="form-label") }}
+                {{ form.cantidad_litros(class_="form-control", placeholder="Ej: 10", step="0.1") }}
+                {% if form.cantidad_litros.errors %}
+                  <div class="invalid-feedback d-block">{{ form.cantidad_litros.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                {{ form.unidad.label(class_="form-label") }}
+                {{ form.unidad(class_="form-select") }}
+                <div class="form-text">Selecciona la unidad de medida (Litros, Kilos, etc.)</div>
+                {% if form.unidad.errors %}
+                  <div class="invalid-feedback d-block">{{ form.unidad.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                {{ form.fecha_ingreso.label(class_="form-label") }}
+                {{ form.fecha_ingreso(class_="form-control", type="date") }}
+                {% if form.fecha_ingreso.errors %}
+                  <div class="invalid-feedback d-block">{{ form.fecha_ingreso.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+              <div class="col-md-4">
+                {{ form.fecha_vencimiento.label(class_="form-label") }}
+                {{ form.fecha_vencimiento(class_="form-control", type="date") }}
+                {% if form.fecha_vencimiento.errors %}
+                  <div class="invalid-feedback d-block">{{ form.fecha_vencimiento.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                {{ form.bodega_id.label(class_="form-label") }}
+                {{ form.bodega_id(class_="form-select") }}
+                <div class="form-text">Selecciona la bodega donde se almacenará este químico.</div>
+                {% if form.bodega_id.errors %}
+                  <div class="invalid-feedback d-block">{{ form.bodega_id.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              {{ form.descripcion.label(class_="form-label") }}
+              {{ form.descripcion(class_="form-control", rows="3", placeholder="Describe el uso, precauciones, etc.") }}
+              {% if form.descripcion.errors %}
+                <div class="invalid-feedback d-block">{{ form.descripcion.errors[0] }}</div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end mt-4">
+              <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Cancelar
+              </a>
+              {{ form.submit(class_="btn btn-primary px-4") }}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Información adicional -->
+      <div class="alert alert-info">
+        <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Información importante</h5>
+        <ul class="mb-0">
+          <li>Registra correctamente las fechas de ingreso y vencimiento para control de stock.</li>
+          <li>La cantidad debe ser numérica (usa punto para decimales).</li>
+          <li>Selecciona la bodega correcta para organizar el inventario.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,25 +1,23 @@
-# passenger_wsgi.py
-
 import os
 import sys
+import logging
+from logging.handlers import RotatingFileHandler
 
-# 1) Añade la ruta raíz de tu proyecto al PYTHONPATH para que Python encuentre run.py
-project_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, project_dir)
+BASE_DIR = os.path.dirname(__file__)
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
-# 2) (Opcional) Asegura que Flask se ejecute en modo producción
-os.environ.setdefault('FLASK_ENV', 'production')
+os.environ.setdefault("FLASK_ENV", "production")
 
-# 3) Importa tu fábrica de aplicación
-#    Si en run.py defines:
-#      def create_app():
-#          ...
-#      if __name__ == '__main__':
-#          app = create_app()
-#          app.run(...)
-#
-#    Entonces aquí hacemos:
-from run import create_app
+log_path = os.path.join(BASE_DIR, "wsgi_error.log")
+handler = RotatingFileHandler(log_path, maxBytes=1_000_000, backupCount=3)
+handler.setLevel(logging.INFO)
+handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
 
-# 4) Llama a create_app() para obtener el objeto WSGI que Passenger usará
+from app import create_app
 application = create_app()
+
+if not application.logger.handlers:
+    application.logger.addHandler(handler)
+application.logger.setLevel(logging.INFO)
+application.logger.info("Passenger levantó AgroDesk")

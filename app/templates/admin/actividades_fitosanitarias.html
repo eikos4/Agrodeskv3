@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Actividades Fitosanitarias - {{ huerto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Panel Admin</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.vista_global_huerto', huerto_id=huerto.id) }}">{{ huerto.nombre }}</a></li>
+          <li class="breadcrumb-item active">Actividades Fitosanitarias</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header bg-gradient-success text-white py-3">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-shield-check me-3 fs-3"></i>
+            <div>
+              <h4 class="mb-1 text-dark">Actividades Fitosanitarias</h4>
+              <p class="mb-0 opacity-75 text-dark">Huerto: <strong class="text-dark">{{ huerto.nombre }}</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Selecciona el tipo de actividad</h5>
+            <p class="mb-0">Elige el tipo de actividad fitosanitaria que deseas registrar en el huerto. Cada formulario está adaptado para capturar la información específica de cada tratamiento.</p>
+          </div>
+
+          <!-- Botones de Actividades -->
+          <div class="row g-4 mt-3">
+            <!-- Control de Plagas -->
+            <div class="col-md-4">
+              <div class="card h-100 border-0 shadow-sm hover-card" style="border-top: 4px solid #dc3545 !important;">
+                <div class="card-body text-center">
+                  <div class="mb-3">
+                    <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                         style="width: 80px; height: 80px;">
+                      <i class="bi bi-bug-fill text-danger fs-1"></i>
+                    </div>
+                  </div>
+                  <h5 class="card-title text-danger mb-3">Control de Plagas</h5>
+                  <p class="card-text text-muted small mb-4">
+                    Registro de aplicaciones de insecticidas, acaricidas y otros productos para control de plagas y enfermedades.
+                  </p>
+                  <a href="{{ url_for('admin.registrar_control_plagas', huerto_id=huerto.id) }}" 
+                     class="btn btn-danger btn-sm px-4">
+                    <i class="bi bi-bug me-2"></i>Registrar Control
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Aplicación de Herbicidas -->
+            <div class="col-md-4">
+              <div class="card h-100 border-0 shadow-sm hover-card" style="border-top: 4px solid #fd7e14 !important;">
+                <div class="card-body text-center">
+                  <div class="mb-3">
+                    <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                         style="width: 80px; height: 80px;">
+                      <i class="bi bi-droplet-half text-warning fs-1"></i>
+                    </div>
+                  </div>
+                  <h5 class="card-title text-warning mb-3">Aplicación de Herbicidas</h5>
+                  <p class="card-text text-muted small mb-4">
+                    Registro de aplicaciones de herbicidas para control de malezas en el huerto.
+                  </p>
+                  <a href="{{ url_for('admin.registrar_herbicida', huerto_id=huerto.id) }}" 
+                     class="btn btn-warning btn-sm px-4">
+                    <i class="bi bi-droplet-half me-2"></i>Aplicar Herbicida
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Aplicación de Fertilizantes -->
+            <div class="col-md-4">
+              <div class="card h-100 border-0 shadow-sm hover-card" style="border-top: 4px solid #198754 !important;">
+                <div class="card-body text-center">
+                  <div class="mb-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                         style="width: 80px; height: 80px;">
+                      <i class="bi bi-flower1 text-success fs-1"></i>
+                    </div>
+                  </div>
+                  <h5 class="card-title text-success mb-3">Aplicación de Fertilizantes</h5>
+                  <p class="card-text text-muted small mb-4">
+                    Registro de aplicaciones de fertilizantes para nutrición y desarrollo del cultivo.
+                  </p>
+                  <a href="{{ url_for('admin.registrar_fertilizante', huerto_id=huerto.id) }}" 
+                     class="btn btn-success btn-sm px-4">
+                    <i class="bi bi-flower1 me-2"></i>Aplicar Fertilizante
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Otras opciones -->
+          <div class="text-center mt-4">
+            <a href="{{ url_for('admin.registrar_actividad_huerto', huerto_id=huerto.id) }}" 
+               class="btn btn-outline-secondary">
+              <i class="bi bi-journal-plus me-2"></i>Otra Actividad General
+            </a>
+            <a href="{{ url_for('admin.bitacora_huerto', huerto_id=huerto.id) }}" 
+               class="btn btn-outline-primary ms-2">
+              <i class="bi bi-clock-history me-2"></i>Ver Bitácora
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .hover-card {
+    transition: all 0.3s ease;
+  }
+  .hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15) !important;
+  }
+  .hover-card .btn {
+    transition: all 0.2s ease;
+  }
+  .hover-card:hover .btn {
+    transform: translateY(-2px);
+  }
+</style>
+{% endblock %}

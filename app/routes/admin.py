@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import extract
 
 from app.extensions import db  # 👈 usar extensions
-from app.models import User, Recomendacion, Huerto, Bodega, Quimico, ActividadHuerto
+from app.models import User, Recomendacion, Huerto, Bodega, Quimico, ActividadHuerto, Parcela, ActividadCampo, Documento
 
 from app.forms import (
     CreateTechnicianForm,
@@ -71,8 +71,10 @@ def cargar_huertos_choices():
 @login_required
 @admin_required
 def admin_dashboard():
-    page = request.args.get("page", 1, type=int)
-    per_page = 9
+    page_huertos = request.args.get("page_huertos", 1, type=int)
+    page_tecnicos = request.args.get("page_tecnicos", 1, type=int)
+    per_page_huertos = 9
+    per_page_tecnicos = 8
 
     # Huertos paginados (evitar N+1)
     huertos_paginados = (
@@ -82,7 +84,7 @@ def admin_dashboard():
             selectinload(Huerto.responsable),
         )
         .order_by(Huerto.nombre.asc())
-        .paginate(page=page, per_page=per_page, error_out=False)
+        .paginate(page=page_huertos, per_page=per_page_huertos, error_out=False)
     )
 
     # Bodegas + relaciones
@@ -96,12 +98,12 @@ def admin_dashboard():
         .all()
     )
 
-    # Solo técnicos asignados a este administrador
-    tecnicos = (
+    # Solo técnicos asignados a este administrador (paginados)
+    tecnicos_paginados = (
         User.query
         .filter_by(role="tecnico", empresa_id=current_user.empresa_id, created_by=current_user.id)
         .order_by(User.name.asc())
-        .all()
+        .paginate(page=page_tecnicos, per_page=per_page_tecnicos, error_out=False)
     )
 
     # Estadísticas de huertos
@@ -156,11 +158,12 @@ def admin_dashboard():
     ultimas_recomendaciones = q_rec.limit(5).all()
 
     return render_template(
-        "admin/admin_dashboard_responsive.html",
+        "admin/admin_dashboard.html",
         huertos_paginados=huertos_paginados,
         huertos=huertos_paginados.items,
         bodegas=bodegas,
-        tecnicos=tecnicos,
+        tecnicos_paginados=tecnicos_paginados,
+        tecnicos=tecnicos_paginados.items,
         ultimas_recomendaciones=ultimas_recomendaciones,
         total_superficie=total_superficie,
         superficie_por_cultivo=superficie_por_cultivo,
@@ -260,6 +263,9 @@ def recomendar():
     form = AsignarRecomendacionForm()
     # Cargar opciones del select de técnicos (scoped)
     form.tecnico_id.choices = cargar_tecnicos_choices()
+    
+    # Cargar huertos para el selector de actividades fitosanitarias
+    huertos = Huerto.query.filter_by(empresa_id=current_user.empresa_id).all()
 
     if form.validate_on_submit():
         # Construcción segura por si el modelo no tiene empresa_id
@@ -295,7 +301,7 @@ def recomendar():
 
     recomendaciones = q.limit(200).all()
 
-    return render_template("admin/recomendar.html", form=form, recomendaciones=recomendaciones)
+    return render_template("admin/recomendar.html", form=form, recomendaciones=recomendaciones, huertos=huertos)
 
 @admin_bp.route("/actualizar_recomendacion/<int:recomendacion_id>", methods=["POST"])
 @login_required
@@ -333,6 +339,21 @@ def crear_huerto():
                 fecha_siembra=form.fecha_siembra.data,
                 responsable_id=responsable_id,
                 empresa_id=current_user.empresa_id,  # 👈
+                # IDENTIFICACION GENERAL DEL PREDIO
+                propietario=form.propietario.data,
+                rut=form.rut.data,
+                codigo_productor=form.codigo_productor.data,
+                localidad=form.localidad.data,
+                comuna=form.comuna.data,
+                provincia=form.provincia.data,
+                region=form.region.data,
+                distrito_agroclimatico=form.distrito_agroclimatico.data,
+                telefono=form.telefono.data,
+                administrador=form.administrador.data,
+                encargado_huerto=form.encargado_huerto.data,
+                direccion=form.direccion.data,
+                empresas=form.empresas.data,
+                exportadoras=form.exportadoras.data,
             )
             db.session.add(h)
             db.session.commit()
@@ -344,6 +365,119 @@ def crear_huerto():
     elif request.method == "POST":
         flash("❌ Formulario inválido", "danger")
     return render_template("admin/crear_huerto.html", form=form)
+
+@admin_bp.route("/huerto/<int:huerto_id>/editar", methods=["GET", "POST"])
+@login_required
+@admin_required
+def editar_huerto(huerto_id):
+    huerto = Huerto.query.get_or_404(huerto_id)
+    
+    # Verificar que el huerto pertenezca a la empresa del usuario actual
+    if huerto.empresa_id != current_user.empresa_id:
+        flash("No tienes permiso para editar este huerto", "danger")
+        return redirect(url_for("admin.admin_dashboard"))
+    
+    form = CrearHuertoForm()
+    form.responsable_id.choices = [(0, "— Sin asignar —")] + cargar_tecnicos_choices()
+    
+    if request.method == "GET":
+        # Precargar el formulario con los datos actuales del huerto
+        form.nombre.data = huerto.nombre
+        form.ubicacion.data = huerto.ubicacion
+        form.superficie_ha.data = huerto.superficie_ha
+        form.tipo_cultivo.data = huerto.tipo_cultivo
+        form.fecha_siembra.data = huerto.fecha_siembra
+        form.responsable_id.data = huerto.responsable_id or 0
+        
+        # IDENTIFICACION GENERAL DEL PREDIO
+        form.propietario.data = huerto.propietario
+        form.rut.data = huerto.rut
+        form.codigo_productor.data = huerto.codigo_productor
+        form.localidad.data = huerto.localidad
+        form.comuna.data = huerto.comuna
+        form.provincia.data = huerto.provincia
+        form.region.data = huerto.region
+        form.distrito_agroclimatico.data = huerto.distrito_agroclimatico
+        form.telefono.data = huerto.telefono
+        form.administrador.data = huerto.administrador
+        form.encargado_huerto.data = huerto.encargado_huerto
+        form.direccion.data = huerto.direccion
+        form.empresas.data = huerto.empresas
+        form.exportadoras.data = huerto.exportadoras
+    
+    if form.validate_on_submit():
+        try:
+            responsable_id = form.responsable_id.data or None
+            if responsable_id == 0:
+                responsable_id = None
+                
+            # Actualizar datos del huerto
+            huerto.nombre = form.nombre.data
+            huerto.ubicacion = form.ubicacion.data
+            huerto.superficie_ha = form.superficie_ha.data
+            huerto.tipo_cultivo = form.tipo_cultivo.data
+            huerto.fecha_siembra = form.fecha_siembra.data
+            huerto.responsable_id = responsable_id
+            
+            # IDENTIFICACION GENERAL DEL PREDIO
+            huerto.propietario = form.propietario.data
+            huerto.rut = form.rut.data
+            huerto.codigo_productor = form.codigo_productor.data
+            huerto.localidad = form.localidad.data
+            huerto.comuna = form.comuna.data
+            huerto.provincia = form.provincia.data
+            huerto.region = form.region.data
+            huerto.distrito_agroclimatico = form.distrito_agroclimatico.data
+            huerto.telefono = form.telefono.data
+            huerto.administrador = form.administrador.data
+            huerto.encargado_huerto = form.encargado_huerto.data
+            huerto.direccion = form.direccion.data
+            huerto.empresas = form.empresas.data
+            huerto.exportadoras = form.exportadoras.data
+            
+            db.session.commit()
+            flash("✅ Huerto actualizado exitosamente", "success")
+            return redirect(url_for("admin.admin_dashboard"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error actualizando huerto: {e}", "danger")
+    elif request.method == "POST":
+        flash("❌ Formulario inválido", "danger")
+    
+    return render_template("admin/editar_huerto.html", form=form, huerto=huerto)
+
+@admin_bp.route("/huerto/<int:huerto_id>/vista-global")
+@login_required
+@admin_required
+def vista_global_huerto(huerto_id):
+    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    
+    # Obtener toda la información relacionada
+    actividades = ActividadHuerto.query.filter_by(huerto_id=huerto.id).order_by(ActividadHuerto.fecha.desc()).limit(10).all()
+    recomendaciones = Recomendacion.query.filter_by(huerto_id=huerto.id).order_by(Recomendacion.fecha.desc()).limit(10).all()
+    bodegas = Bodega.query.filter_by(huerto_id=huerto.id).all()
+    parcelas = Parcela.query.filter_by(huerto_id=huerto.id).all()
+    actividades_geo = ActividadCampo.query.filter_by(huerto_id=huerto.id).order_by(ActividadCampo.fecha.desc()).limit(5).all()
+    documentos = Documento.query.filter_by(huerto_id=huerto.id).order_by(Documento.created_at.desc()).limit(5).all()
+    
+    # Estadísticas
+    total_actividades = ActividadHuerto.query.filter_by(huerto_id=huerto.id).count()
+    total_recomendaciones = Recomendacion.query.filter_by(huerto_id=huerto.id).count()
+    total_quimicos = 0
+    for bodega in bodegas:
+        total_quimicos += len(bodega.quimicos)
+    
+    return render_template("admin/vista_global_huerto.html", 
+                         huerto=huerto,
+                         actividades=actividades,
+                         recomendaciones=recomendaciones,
+                         bodegas=bodegas,
+                         parcelas=parcelas,
+                         actividades_geo=actividades_geo,
+                         documentos=documentos,
+                         total_actividades=total_actividades,
+                         total_recomendaciones=total_recomendaciones,
+                         total_quimicos=total_quimicos)
 
 @admin_bp.route("/huerto/<int:huerto_id>/bitacora")
 @login_required
@@ -389,28 +523,125 @@ def registrar_actividad_huerto(huerto_id):
     if form.validate_on_submit():
         try:
             actividad = ActividadHuerto(
-                empresa_id=huerto.empresa_id or current_user.empresa_id,  # 👈 clave
-                huerto_id=huerto.id,
                 fecha=form.fecha.data,
                 tipo=form.tipo.data,
-                descripcion=form.descripcion.data or "",
-                responsable=(form.responsable.data.strip() if form.responsable.data else (current_user.name or current_user.email)),
-                producto=form.producto.data or "",
-                dosis=form.dosis.data or "",
-                plaga=form.plaga.data or "",
-                nivel_infestacion=form.nivel_infestacion.data or "",
-                resultado=form.resultado.data or "",
-                fotos="",  # TODO: gestionar uploads si corresponde
-                observaciones=form.observaciones.data or "",
+                descripcion=form.descripcion.data,
+                responsable=form.responsable.data,
+                observaciones=form.observaciones.data,
+                huerto_id=huerto.id,
+                empresa_id=current_user.empresa_id,
             )
+            # Campos específicos para control de plagas
+            if hasattr(form, 'plaga') and form.plaga.data:
+                actividad.plaga = form.plaga.data
+                actividad.nivel_infestacion = form.nivel_infestacion.data
+                actividad.producto = form.producto.data
+                actividad.dosis = form.dosis.data
+                actividad.resultado = form.resultado.data
             db.session.add(actividad)
             db.session.commit()
-            flash("✅ Actividad registrada exitosamente", "success")
+            flash(" Actividad registrada exitosamente", "success")
             return redirect(url_for("admin.bitacora_huerto", huerto_id=huerto.id))
         except Exception as e:
             db.session.rollback()
             flash(f"Error registrando actividad: {e}", "danger")
     return render_template("admin/registrar_actividad.html", form=form, huerto=huerto)
+
+@admin_bp.route("/huerto/<int:huerto_id>/actividades_fitosanitarias")
+@login_required
+@admin_required
+def actividades_fitosanitarias(huerto_id):
+    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    return render_template("admin/actividades_fitosanitarias.html", huerto=huerto)
+
+@admin_bp.route("/huerto/<int:huerto_id>/registrar_control_plagas", methods=["GET", "POST"])
+@login_required
+@admin_required
+def registrar_control_plagas(huerto_id):
+    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    form = RegistrarActividadForm()
+    if form.validate_on_submit():
+        try:
+            actividad = ActividadHuerto(
+                fecha=form.fecha.data,
+                tipo="control_plagas",
+                descripcion=form.descripcion.data,
+                responsable=form.responsable.data,
+                observaciones=form.observaciones.data,
+                huerto_id=huerto.id,
+                empresa_id=current_user.empresa_id,
+            )
+            # Guardar campos específicos del formulario
+            actividad.plaga = request.form.get('plaga')
+            actividad.nivel_infestacion = request.form.get('nivel_infestacion')
+            actividad.producto = request.form.get('producto')
+            actividad.dosis = request.form.get('dosis')
+            db.session.add(actividad)
+            db.session.commit()
+            flash(" Control de plagas registrado exitosamente", "success")
+            return redirect(url_for("admin.bitacora_huerto", huerto_id=huerto.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error registrando control de plagas: {e}", "danger")
+    return render_template("admin/registrar_control_plagas.html", form=form, huerto=huerto)
+
+@admin_bp.route("/huerto/<int:huerto_id>/registrar_herbicida", methods=["GET", "POST"])
+@login_required
+@admin_required
+def registrar_herbicida(huerto_id):
+    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    form = RegistrarActividadForm()
+    if form.validate_on_submit():
+        try:
+            actividad = ActividadHuerto(
+                fecha=form.fecha.data,
+                tipo="aplicacion_herbicida",
+                descripcion=form.descripcion.data,
+                responsable=form.responsable.data,
+                observaciones=form.observaciones.data,
+                huerto_id=huerto.id,
+                empresa_id=current_user.empresa_id,
+            )
+            # Guardar campos específicos del formulario
+            actividad.producto = request.form.get('producto')
+            actividad.dosis = request.form.get('dosis')
+            db.session.add(actividad)
+            db.session.commit()
+            flash(" Aplicación de herbicida registrada exitosamente", "success")
+            return redirect(url_for("admin.bitacora_huerto", huerto_id=huerto.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error registrando aplicación de herbicida: {e}", "danger")
+    return render_template("admin/registrar_herbicida.html", form=form, huerto=huerto)
+
+@admin_bp.route("/huerto/<int:huerto_id>/registrar_fertilizante", methods=["GET", "POST"])
+@login_required
+@admin_required
+def registrar_fertilizante(huerto_id):
+    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    form = RegistrarActividadForm()
+    if form.validate_on_submit():
+        try:
+            actividad = ActividadHuerto(
+                fecha=form.fecha.data,
+                tipo="aplicacion_fertilizante",
+                descripcion=form.descripcion.data,
+                responsable=form.responsable.data,
+                observaciones=form.observaciones.data,
+                huerto_id=huerto.id,
+                empresa_id=current_user.empresa_id,
+            )
+            # Guardar campos específicos del formulario
+            actividad.producto = request.form.get('producto')
+            actividad.dosis = request.form.get('dosis')
+            db.session.add(actividad)
+            db.session.commit()
+            flash(" Aplicación de fertilizante registrada exitosamente", "success")
+            return redirect(url_for("admin.bitacora_huerto", huerto_id=huerto.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error registrando aplicación de fertilizante: {e}", "danger")
+    return render_template("admin/registrar_fertilizante.html", form=form, huerto=huerto)
 
 
 # ======================
@@ -511,6 +742,37 @@ def ver_quimicos(bodega_id):
         .first_or_404()
     )
     return render_template("admin/quimicos_bodega.html", bodega=bodega, quimicos=bodega.quimicos)
+
+@admin_bp.route("/quimico/crear", methods=["GET", "POST"])
+@login_required
+@admin_required
+def crear_quimico():
+    form = QuimicoForm()
+    # Obtener bodegas de la empresa para el select
+    bodegas = Bodega.query.filter_by(empresa_id=current_user.empresa_id).all()
+    form.bodega_id.choices = [(b.id, f"{b.nombre} - {b.ubicacion or 'Sin ubicación'}") for b in bodegas]
+    
+    if form.validate_on_submit():
+        try:
+            nuevo_quimico = Quimico(
+                nombre=form.nombre.data,
+                tipo=form.tipo.data,
+                descripcion=form.descripcion.data,
+                cantidad_litros=form.cantidad_litros.data,
+                unidad=form.unidad.data,
+                fecha_ingreso=form.fecha_ingreso.data,
+                fecha_vencimiento=form.fecha_vencimiento.data,
+                bodega_id=form.bodega_id.data
+            )
+            db.session.add(nuevo_quimico)
+            db.session.commit()
+            flash("✅ Químico agregado exitosamente", "success")
+            return redirect(url_for("admin.admin_dashboard"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al agregar químico: {e}", "danger")
+    
+    return render_template("admin/crear_quimico.html", form=form, bodegas=bodegas)
 
 @admin_bp.route("/quimico/<int:quimico_id>/editar", methods=["GET", "POST"])
 @login_required

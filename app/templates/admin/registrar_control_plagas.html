@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Control de Plagas - {{ huerto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Panel Admin</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.vista_global_huerto', huerto_id=huerto.id) }}">{{ huerto.nombre }}</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.actividades_fitosanitarias', huerto_id=huerto.id) }}">Actividades Fitosanitarias</a></li>
+          <li class="breadcrumb-item active">Control de Plagas</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header bg-light border-danger py-4">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center me-3" 
+                 style="width: 60px; height: 60px;">
+              <i class="bi bi-bug-fill text-danger fs-2"></i>
+            </div>
+            <div>
+              <h4 class="mb-1 text-dark fw-bold">Control de Plagas</h4>
+              <p class="mb-0 text-muted">Huerto: <strong class="text-danger">{{ huerto.nombre }}</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data" autocomplete="off">
+            {{ form.hidden_tag() }}
+
+            <!-- Información General -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                {{ form.fecha.label(class_="form-label") }}
+                {{ form.fecha(class_="form-control", type="date") }}
+                {% if form.fecha.errors %}
+                  <div class="invalid-feedback d-block">{{ form.fecha.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-3">
+                {{ form.responsable.label(class_="form-label") }}
+                {{ form.responsable(class_="form-control") }}
+                {% if form.responsable.errors %}
+                  <div class="invalid-feedback d-block">{{ form.responsable.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Tipo de Control</label>
+                <select class="form-select" name="tipo_control">
+                  <option value="">Seleccionar...</option>
+                  <option value="preventivo">Preventivo</option>
+                  <option value="curativo">Curativo</option>
+                  <option value="erradicacion">Erradicación</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Método de Aplicación</label>
+                <select class="form-select" name="metodo_aplicacion">
+                  <option value="">Seleccionar...</option>
+                  <option value="aspersión">Aspersión</option>
+                  <option value="fumigación">Fumigación</option>
+                  <option value="pulverización">Pulverización</option>
+                  <option value="aplicación_local">Aplicación Local</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Información de Plaga -->
+            <div class="card border-danger mb-4">
+              <div class="card-header bg-danger bg-opacity-10">
+                <h6 class="mb-0 text-danger"><i class="bi bi-bug me-2"></i>Información de Plaga/Enfermedad</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Plaga/Enfermedad</label>
+                    <input type="text" class="form-control" name="plaga" placeholder="Ej: Pulgón, Araña roja">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Nivel de Infestación</label>
+                    <select class="form-select" name="nivel_infestacion">
+                      <option value="">Seleccionar...</option>
+                      <option value="bajo">Bajo (1-10%)</option>
+                      <option value="medio">Medio (11-30%)</option>
+                      <option value="alto">Alto (31-60%)</option>
+                      <option value="muy_alto">Muy Alto (>60%)</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Estado Fenológico</label>
+                    <select class="form-select" name="estado_fenologico">
+                      <option value="">Seleccionar...</option>
+                      <option value="vegetativo">Vegetativo</option>
+                      <option value="floración">Floración</option>
+                      <option value="fructificación">Fructificación</option>
+                      <option value="maduración">Maduración</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información de Producto -->
+            <div class="card border-warning mb-4">
+              <div class="card-header bg-warning bg-opacity-10">
+                <h6 class="mb-0 text-dark"><i class="bi bi-droplet-fill me-2"></i>Información del Producto</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Producto Comercial</label>
+                    <input type="text" class="form-control" name="producto" placeholder="Ej: Confidor, Actara">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Ingrediente Activo</label>
+                    <input type="text" class="form-control" name="ingrediente_activo" placeholder="Ej: Imidacloprid">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Dosis</label>
+                    <input type="text" class="form-control" name="dosis" placeholder="Ej: 0.5 L/ha">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Volumen Agua</label>
+                    <input type="text" class="form-control" name="volumen_agua" placeholder="Ej: 200 L/ha">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">N° Lote</label>
+                    <input type="text" class="form-control" name="numero_lote" placeholder="Ej: L001">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Condiciones de Aplicación -->
+            <div class="card border-info mb-4">
+              <div class="card-header bg-info bg-opacity-10">
+                <h6 class="mb-0 text-dark"><i class="bi bi-cloud-sun me-2"></i>Condiciones de Aplicación</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Temperatura (°C)</label>
+                    <input type="number" class="form-control" name="temperatura" placeholder="Ej: 22">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Humedad Relativa (%)</label>
+                    <input type="number" class="form-control" name="humedad" placeholder="Ej: 65">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Velocidad Viento (km/h)</label>
+                    <input type="number" class="form-control" name="velocidad_viento" placeholder="Ej: 5">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Hora de Aplicación</label>
+                    <input type="time" class="form-control" name="hora_aplicacion">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Observaciones y Evidencia -->
+            <div class="row g-3">
+              <div class="col-md-8">
+                {{ form.descripcion.label(class_="form-label") }}
+                {{ form.descripcion(class_="form-control", rows="3", placeholder="Describe la actividad realizada, resultados esperados, etc.") }}
+                {% if form.descripcion.errors %}
+                  <div class="invalid-feedback d-block">{{ form.descripcion.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                {{ form.fotos.label(class_="form-label") }}
+                {{ form.fotos(class_="form-control") }}
+                <div class="form-text">Adjunta fotos de la aplicación</div>
+                {% if form.fotos.errors %}
+                  <div class="invalid-feedback d-block">{{ form.fotos.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <a href="{{ url_for('admin.actividades_fitosanitarias', huerto_id=huerto.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+              </a>
+              <button type="submit" class="btn btn-danger px-4">
+                <i class="bi bi-check2-circle"></i> Registrar Control
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

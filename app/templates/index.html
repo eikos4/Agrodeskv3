@@ -10,6 +10,52 @@
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
 
   <style>
+
+
+.hero {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(0,180,126,.18), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(0,180,126,.10), transparent 30%),
+    linear-gradient(135deg, #0a3637 0%, #062e2f 55%, #064544 100%);
+  position: relative;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0));
+  pointer-events: none;
+}
+
+.hero h1 {
+  letter-spacing: -0.02em;
+}
+
+.hero .lead {
+  max-width: 580px;
+}
+
+.hero-visual img {
+  max-width: 100%;
+  filter: drop-shadow(0 20px 50px rgba(0,0,0,.35));
+}
+
+.bg-glow {
+  position: absolute;
+  inset: -30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,180,126,.25) 0%, transparent 70%);
+  filter: blur(40px);
+  z-index: 0;
+}
+
+
+
+
+
+
     :root {
       --main:#0a3637;
       --accent:#00b47e;
@@ -219,6 +265,234 @@
       .navbar-collapse{background:rgba(10,54,55,0.95); padding:1rem; border-radius:.5rem;}
     }
 
+    /* ===== MOBILE OPTIMIZATIONS ===== */
+    @media (max-width: 768px) {
+      /* Hero Section */
+      .hero {
+        min-height: 100vh;
+        padding: 120px 0 80px;
+        text-align: center;
+      }
+      
+      .hero h1 {
+        font-size: 2rem;
+        line-height: 1.2;
+        margin-bottom: 1.5rem;
+      }
+      
+      .hero .lead {
+        font-size: 1rem;
+        margin-bottom: 2rem;
+      }
+      
+      .hero .d-flex {
+        justify-content: center !important;
+        align-items: center;
+      }
+      
+      .hero .btn-agro,
+      .hero .btn-ghost {
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+        display: block;
+      }
+      
+      .hero-visual img {
+        max-width: 250px;
+        margin: 2rem auto;
+      }
+      
+      /* Features Section */
+      .features {
+        padding: 60px 0;
+      }
+      
+      .features h2 {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+      }
+      
+      .features p {
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+      }
+      
+      .feature-card {
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      
+      .feature-card i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+      }
+      
+      /* Demo Section */
+      .demo {
+        padding: 60px 0;
+      }
+      
+      .demo h2 {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+      }
+      
+      .demo p {
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+      }
+      
+      .instagram-media {
+        margin-bottom: 1.5rem;
+      }
+      
+      /* CTA Section */
+      .cta-slab {
+        padding: 2rem 1.5rem !important;
+        text-align: center;
+      }
+      
+      .cta-slab h3 {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+      }
+      
+      .cta-slab p {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .cta-slab .d-flex {
+        justify-content: center !important;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      
+      .cta-slab .btn {
+        width: 100%;
+        max-width: 200px;
+      }
+      
+      /* Ecosystem Section */
+      #plataformas {
+        padding: 60px 0;
+      }
+      
+      .eco-header span {
+        font-size: 0.9rem;
+        padding: 0.4rem 1.2rem;
+      }
+      
+      #plataformas h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      
+      #plataformas p {
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+      }
+      
+      .eco-card {
+        width: 100%;
+        max-width: 200px;
+        padding: 1.5rem 1rem;
+      }
+      
+      .eco-card img {
+        width: 60px;
+        height: 60px;
+      }
+      
+      .eco-card h4 {
+        font-size: 1rem;
+      }
+      
+      .eco-card p {
+        font-size: 0.85rem;
+      }
+      
+      /* Footer */
+      footer {
+        padding: 2rem 1rem;
+        text-align: center;
+      }
+      
+      footer .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      footer .fs-5 {
+        font-size: 1.2rem !important;
+      }
+      
+      /* Navbar Mobile */
+      .navbar {
+        padding: 0.5rem 0;
+      }
+      
+      .navbar-brand {
+        font-size: 1.3rem;
+      }
+      
+      .navbar-collapse {
+        background: rgba(10, 54, 55, 0.98);
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+        backdrop-filter: blur(10px);
+      }
+      
+      .navbar-nav {
+        text-align: center;
+      }
+      
+      .navbar-nav .nav-link {
+        padding: 0.5rem 0;
+        font-size: 1rem;
+      }
+      
+      .btn-login {
+        width: 100%;
+        margin-top: 1rem;
+        padding: 0.6rem 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      /* Extra Small Devices */
+      .hero h1 {
+        font-size: 1.8rem;
+      }
+      
+      .hero .lead {
+        font-size: 0.95rem;
+      }
+      
+      .features h2,
+      .demo h2 {
+        font-size: 1.6rem;
+      }
+      
+      .feature-card {
+        padding: 1.2rem;
+      }
+      
+      .eco-card {
+        padding: 1.2rem 0.8rem;
+      }
+      
+      .cta-slab {
+        padding: 1.5rem 1rem !important;
+      }
+      
+      .cta-slab h3 {
+        font-size: 1.2rem;
+      }
+    }
+
 
     /* ===== HERO ENHANCED ===== */
 .hero {
@@ -275,6 +549,9 @@
   </style>
 </head>
 
+
+
+
 <body>
   <!-- NAVBAR -->
   <nav class="navbar navbar-expand-lg fixed-top">
@@ -298,40 +575,107 @@
   </nav>
 
   <!-- HERO -->
+<!-- HERO OPCIÓN 2 -->
 <header class="hero position-relative overflow-hidden">
   <div class="container position-relative py-5">
-    <div class="row align-items-center g-5">
+    <div class="row align-items-center g-5 min-vh-100">
       
-      <!-- Texto principal -->
-      <div class="col-lg-6" data-aos="fade-right">
-        <div class="mb-3">
-          <span class="badge rounded-pill bg-light text-success px-3 py-2 fw-semibold shadow-sm">
-            <i class="bi bi-activity me-1"></i> Plataforma agrícola inteligente
-          </span>
-        </div>
-        <h1 class="display-5 fw-bold lh-1 mb-3 text-white">
-          Digitaliza la gestión<br>de tu <span class="text-success">campo</span>
+      <!-- Texto -->
+      <div class="col-lg-6 text-center text-lg-start" data-aos="fade-right">
+        <span class="badge rounded-pill bg-light text-success px-3 py-2 fw-semibold shadow-sm mb-3">
+          <i class="bi bi-activity me-1"></i> Plataforma agrícola inteligente
+        </span>
+
+        <h1 class="display-4 fw-bold text-white mb-3">
+          Menos papeles<br>
+          Más control del<br>
+          <span class="text-success">negocio agrícola</span>
         </h1>
+
         <p class="lead text-light opacity-90 mb-4">
-          Cuaderno digital, bodegas, riego y costos en una sola plataforma:
-          <strong>simple, ágil y en la nube.</strong>
+          Ordena la operación diaria,riegos, cosechas, documentos y  visualiza indicadores clave y toma decisiones con información clara desde cualquier dispositivo.
         </p>
 
-        <div class="d-flex flex-column flex-sm-row gap-3 mt-3 justify-content-center justify-content-lg-start">
-          <a href="#demo" class="btn btn-agro btn-lg shadow-sm">
-            <i class="bi bi-rocket-takeoff me-2"></i>Pruébalo ahora
+        <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start mb-4">
+          <a href="#demo" class="btn btn-agro btn-lg">
+            <i class="bi bi-rocket-takeoff me-2"></i>Solicitar demo
           </a>
-          <a href="#features" class="btn btn-ghost btn-lg border-2">
-            <i class="bi bi-grid me-2"></i>Ver módulos
+          <a href="#plataformas" class="btn btn-ghost btn-lg">
+            <i class="bi bi-diagram-3 me-2"></i>Conocer Beneficios
           </a>
+        </div>
+
+        <div class="row g-3 text-start mt-1">
+          <div class="col-6 col-sm-4">
+            <div class="bg-white bg-opacity-10 rounded-3 p-3">
+              <div class="text-success fw-bold fs-4">24/7</div>
+              <small class="text-white-50">Acceso online</small>
+            </div>
+          </div>
+          <div class="col-6 col-sm-4">
+            <div class="bg-white bg-opacity-10 rounded-3 p-3">
+              <div class="text-success fw-bold fs-4">1 sola</div>
+              <small class="text-white-50">Plataforma central</small>
+            </div>
+          </div>
+          <div class="col-12 col-sm-4">
+            <div class="bg-white bg-opacity-10 rounded-3 p-3">
+              <div class="text-success fw-bold fs-4">+ orden</div>
+              <small class="text-white-50">En tu gestión</small>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Imagen del hero -->
-      <div class="col-lg-6 text-center position-relative" data-aos="fade-left">
-        <div class="position-relative d-inline-block hero-visual">
+      <!-- Visual -->
+      <div class="col-lg-6" data-aos="fade-left">
+        <div class="position-relative hero-visual mx-auto" style="max-width:540px;">
           <div class="bg-glow"></div>
-          <img src="/static/logo.png" alt="Vista de AgroDESK" class="img-fluid position-relative z-2">
+
+          <div class="bg-white rounded-4 shadow-lg p-3 position-relative z-2">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <strong class="text-dark">Panel AgroDESK</strong>
+              <span class="badge bg-success-subtle text-success">En vivo</span>
+            </div>
+
+            <div class="bg-light rounded-4 p-3 mb-3">
+              <small class="text-muted d-block mb-1">Resumen anual de tu campo</small>
+              <div class="progress mb-2" style="height:10px;">
+                <div class="progress-bar bg-success" style="width:78%"></div>
+              </div>
+              <div class="d-flex justify-content-between small text-muted">
+                <span>Avance semanal</span>
+                <span>Riegos</span>
+                <span>78%</span>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="border rounded-4 p-3 h-100">
+                  <small class="text-muted">Bodegas</small>
+                  <div class="fw-bold fs-5 text-dark">Stock al día</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="border rounded-4 p-3 h-100">
+                  <small class="text-muted">Riegos</small>
+                  <div class="fw-bold fs-5 text-dark">Control programado</div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="border rounded-4 p-3">
+                  <small class="text-muted">Recomendaciones</small>
+                  <div class="fw-bold fs-5 text-dark">Seguimiento simple y centralizado</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="position-absolute top-0 end-0 translate-middle bg-white rounded-4 shadow p-3 z-3 d-none d-md-block">
+            <small class="text-muted d-block">Productividad</small>
+            <strong class="text-dark">Monitoreo continuo</strong>
+          </div>
         </div>
       </div>
     </div>
@@ -344,23 +688,23 @@
     <div class="container text-center">
       <h2 class="fw-bold text-success mb-3" data-aos="fade-up">Gestión agrícola de nueva generación</h2>
       <p class="text-muted mb-5" data-aos="fade-up">Automatiza, controla y analiza cada aspecto de tu campo.</p>
-      <div class="row g-4">
-        <div class="col-md-4" data-aos="fade-up">
-          <div class="feature-card h-100">
+      <div class="row g-4 justify-content-center">
+        <div class="col-md-4 col-sm-6" data-aos="fade-up">
+          <div class="feature-card h-100 text-center">
             <i class="bi bi-bar-chart mb-3"></i>
             <h5 class="fw-bold">Indicadores inteligentes</h5>
             <p>Rendimiento, costos y productividad en tiempo real.</p>
           </div>
         </div>
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-          <div class="feature-card h-100">
+        <div class="col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="100">
+          <div class="feature-card h-100 text-center">
             <i class="bi bi-cloud-check mb-3"></i>
             <h5 class="fw-bold">Datos en la nube</h5>
             <p>Accede desde cualquier dispositivo, con seguridad y respaldo.</p>
           </div>
         </div>
-        <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-          <div class="feature-card h-100">
+        <div class="col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="200">
+          <div class="feature-card h-100 text-center">
             <i class="bi bi-person-gear mb-3"></i>
             <h5 class="fw-bold">Soporte agronómico</h5>
             <p>Equipo técnico local disponible para acompañarte.</p>
@@ -418,27 +762,27 @@
       <p class="text-muted mb-5">Kodesk conecta tecnología y productividad en múltiples industrias. Descubre nuestras soluciones digitales.</p>
 
       <div class="d-flex flex-wrap justify-content-center gap-4">
-        <div class="eco-card">
+        <div class="eco-card text-center">
           <img src="static/plataformas/construdesk.png" alt="ConstruDesk">
           <h4>ConstruDesk</h4>
           <p>Gestión de proyectos de construcción.</p>
         </div>
-        <div class="eco-card">
+        <div class="eco-card text-center">
           <img src="static/plataformas/agrodesk.png" alt="AgroDesk">
           <h4>AgroDesk</h4>
           <p>Tecnología para la gestión agrícola.</p>
         </div>
-        <div class="eco-card">
+        <div class="eco-card text-center">
           <img src="static/plataformas/avidesk.png" alt="AviDesk">
           <h4>AviDesk</h4>
           <p>Soluciones para avícolas.</p>
         </div>
-        <div class="eco-card">
+        <div class="eco-card text-center">
           <img src="static/plataformas/leucode.png" alt="HealthDesk">
           <h4>HealthDesk</h4>
           <p>Gestión médica con IA y bienestar digital.</p>
         </div>
-        <div class="eco-card">
+        <div class="eco-card text-center">
           <img src="static/plataformas/smartdesk.png" alt="SmartDesk">
           <h4>SmartDesk</h4>
           <p>Automatización y productividad empresarial.</p>
@@ -467,3 +811,10 @@
   <script>AOS.init({duration:900,once:true});</script>
 </body>
 </html>
+
+
+
+
+
+
+

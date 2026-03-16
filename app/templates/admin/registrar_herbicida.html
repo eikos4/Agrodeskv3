@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}Aplicación de Herbicidas - {{ huerto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Panel Admin</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.vista_global_huerto', huerto_id=huerto.id) }}">{{ huerto.nombre }}</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.actividades_fitosanitarias', huerto_id=huerto.id) }}">Actividades Fitosanitarias</a></li>
+          <li class="breadcrumb-item active">Aplicación de Herbicidas</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div class="card border-0 shadow-lg mb-4">
+        <div class="card-header bg-light border-warning py-4">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center me-3" 
+                 style="width: 60px; height: 60px;">
+              <i class="bi bi-droplet-half text-warning fs-2"></i>
+            </div>
+            <div>
+              <h4 class="mb-1 text-dark fw-bold">Aplicación de Herbicidas</h4>
+              <p class="mb-0 text-muted">Huerto: <strong class="text-warning">{{ huerto.nombre }}</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data" autocomplete="off">
+            {{ form.hidden_tag() }}
+
+            <!-- Información General -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                {{ form.fecha.label(class_="form-label") }}
+                {{ form.fecha(class_="form-control", type="date") }}
+                {% if form.fecha.errors %}
+                  <div class="invalid-feedback d-block">{{ form.fecha.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-3">
+                {{ form.responsable.label(class_="form-label") }}
+                {{ form.responsable(class_="form-control") }}
+                {% if form.responsable.errors %}
+                  <div class="invalid-feedback d-block">{{ form.responsable.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Tipo de Aplicación</label>
+                <select class="form-select" name="tipo_aplicacion">
+                  <option value="">Seleccionar...</option>
+                  <option value="pre_siembra">Pre-siembra</option>
+                  <option value="pre_emergencia">Pre-emergencia</option>
+                  <option value="post_emergencia">Post-emergencia</option>
+                  <option value="directo">Directo</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Método de Aplicación</label>
+                <select class="form-select" name="metodo_aplicacion">
+                  <option value="">Seleccionar...</option>
+                  <option value="terrestre">Terrestre</option>
+                  <option value="aereo">Aéreo</option>
+                  <option value="localizado">Localizado</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Información de Maleza -->
+            <div class="card border-warning mb-4">
+              <div class="card-header bg-warning bg-opacity-10">
+                <h6 class="mb-0 text-dark"><i class="bi bi-flower2 me-2"></i>Información de Maleza</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Tipo de Maleza</label>
+                    <select class="form-select" name="tipo_maleza">
+                      <option value="">Seleccionar...</option>
+                      <option value="hoja_ancha">Hoja Ancha</option>
+                      <option value="hoja_estrecha">Hoja Estrecha</option>
+                      <option value="mixta">Mixta</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Especie Predominante</label>
+                    <input type="text" class="form-control" name="especie_maleza" placeholder="Ej: Amaranto, Rábano silvestre">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Densidad de Maleza</label>
+                    <select class="form-select" name="densidad_maleza">
+                      <option value="">Seleccionar...</option>
+                      <option value="baja">Baja (<10 plantas/m²)</option>
+                      <option value="media">Media (10-30 plantas/m²)</option>
+                      <option value="alta">Alta (>30 plantas/m²)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información del Herbicida -->
+            <div class="card border-success mb-4">
+              <div class="card-header bg-success bg-opacity-10">
+                <h6 class="mb-0 text-dark"><i class="bi bi-droplet-fill me-2"></i>Información del Herbicida</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Producto Comercial</label>
+                    <input type="text" class="form-control" name="producto" placeholder="Ej: Roundup, Gramoxone">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Ingrediente Activo</label>
+                    <input type="text" class="form-control" name="ingrediente_activo" placeholder="Ej: Glifosato, Paraquat">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Dosis</label>
+                    <input type="text" class="form-control" name="dosis" placeholder="Ej: 2.5 L/ha">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Volumen Agua</label>
+                    <input type="text" class="form-control" name="volumen_agua" placeholder="Ej: 150 L/ha">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">N° Lote</label>
+                    <input type="text" class="form-control" name="numero_lote" placeholder="Ej: H123">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Condiciones de Aplicación -->
+            <div class="card border-info mb-4">
+              <div class="card-header bg-info bg-opacity-10">
+                <h6 class="mb-0 text-dark"><i class="bi bi-cloud-sun me-2"></i>Condiciones de Aplicación</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Temperatura (°C)</label>
+                    <input type="number" class="form-control" name="temperatura" placeholder="Ej: 25">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Humedad Relativa (%)</label>
+                    <input type="number" class="form-control" name="humedad" placeholder="Ej: 60">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Velocidad Viento (km/h)</label>
+                    <input type="number" class="form-control" name="velocidad_viento" placeholder="Ej: 8">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Hora de Aplicación</label>
+                    <input type="time" class="form-control" name="hora_aplicacion">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información del Terreno -->
+            <div class="card border-secondary mb-4">
+              <div class="card-header bg-secondary bg-opacity-10">
+                <h6 class="mb-0 text-secondary"><i class="bi bi-map me-2"></i>Información del Terreno</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Superficie Tratada (ha)</label>
+                    <input type="number" step="0.1" class="form-control" name="superficie_tratada" placeholder="Ej: 5.5">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Etapa del Cultivo</label>
+                    <select class="form-select" name="etapa_cultivo">
+                      <option value="">Seleccionar...</option>
+                      <option value="inicial">Inicial</option>
+                      <option value="desarrollo">Desarrollo</option>
+                      <option value="floración">Floración</option>
+                      <option value="fructificación">Fructificación</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Intervalo de Seguridad (días)</label>
+                    <input type="number" class="form-control" name="intervalo_seguridad" placeholder="Ej: 30">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Observaciones y Evidencia -->
+            <div class="row g-3">
+              <div class="col-md-8">
+                {{ form.descripcion.label(class_="form-label") }}
+                {{ form.descripcion(class_="form-control", rows="3", placeholder="Describe la aplicación, condiciones del terreno, maleza controlada, etc.") }}
+                {% if form.descripcion.errors %}
+                  <div class="invalid-feedback d-block">{{ form.descripcion.errors[0] }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                {{ form.fotos.label(class_="form-label") }}
+                {{ form.fotos(class_="form-control") }}
+                <div class="form-text">Adjunta fotos de la aplicación</div>
+                {% if form.fotos.errors %}
+                  <div class="invalid-feedback d-block">{{ form.fotos.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <a href="{{ url_for('admin.actividades_fitosanitarias', huerto_id=huerto.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+              </a>
+              <button type="submit" class="btn btn-warning px-4">
+                <i class="bi bi-check2-circle"></i> Aplicar Herbicida
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,42 +1,34 @@
 {% extends "base.html" %}
-{% block title %}Nuevo Huerto{% endblock %}
+{% block title %}Editar Huerto: {{ huerto.nombre }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
   <div class="row justify-content-center">
     <div class="col-lg-8">
 
-      {# 🤖 AgroBot arriba — ocultable (cuando se oculta aparece botón flotante abajo) #}
-      <div id="agrobotBox" class="card shadow-sm border-0 mb-4" role="region" aria-label="Asistente AgroBot">
-        <div class="card-body d-flex flex-wrap align-items-start gap-3">
-          <i class="bi bi-robot fs-1 text-success" aria-hidden="true"></i>
-          <div class="flex-grow-1">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-              <div>
-                <h5 class="mb-1">AgroBot — Registrar nuevo huerto</h5>
-                <p class="mb-2 text-muted small">¿Qué necesitas para crearlo correctamente?</p>
-              </div>
-              <button id="hideAgrobotBtn" type="button" class="btn btn-outline-secondary btn-sm"
-                      aria-controls="agrobotBox" aria-expanded="true">
-                <i class="bi bi-eye-slash"></i> Ocultar
-              </button>
-            </div>
-            <ul class="mb-0 small">
-              <li><b>Nombre y ubicación:</b> identifica el predio y dónde está.</li>
-              <li><b>Superficie (ha) y cultivo:</b> base para planificar labores y costos.</li>
-              <li><b>Fecha de siembra:</b> útil para fenología y trazabilidad.</li>
-              <li><b>Técnico responsable:</b> gestiona bitácora, bodegas y recomendaciones.</li>
-            </ul>
+      {# Breadcrumb #}
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Panel Admin</a></li>
+          <li class="breadcrumb-item active">Editar Huerto</li>
+        </ol>
+      </nav>
 
-            
-          </div>
+      {# Header #}
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+          <h4 class="mb-1"><i class="bi bi-pencil-square me-2"></i>Editar Huerto</h4>
+          <p class="text-muted mb-0">Modificando: <strong>{{ huerto.nombre }}</strong></p>
+        </div>
+        <div>
+          <span class="badge bg-success">ID: {{ huerto.id }}</span>
         </div>
       </div>
 
-      {# 📋 Formulario #}
+      {# Formulario #}
       <div class="card shadow border-0">
-        <div class="card-header bg-success text-white">
-          <h4 class="mb-0"><i class="bi bi-tree-fill me-2"></i> Registrar Nuevo Huerto</h4>
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0"><i class="bi bi-tree-fill me-2"></i>Editar Información del Huerto</h5>
         </div>
         <div class="card-body">
           <form method="POST" autocomplete="off" novalidate>
@@ -45,7 +37,7 @@
             <div class="row g-3">
               <div class="col-md-6">
                 {{ form.nombre.label(class_="form-label") }}
-                {{ form.nombre(class_="form-control", placeholder="Ej: Fundo El Maitén – Cuartel 3", autofocus=True) }}
+                {{ form.nombre(class_="form-control", placeholder="Ej: Fundo El Maitén – Cuartel 3") }}
                 {% if form.nombre.errors %}
                   <div class="invalid-feedback d-block">{{ form.nombre.errors[0] }}</div>
                 {% endif %}
@@ -87,7 +79,7 @@
             <div class="mb-3 mt-2">
               {{ form.responsable_id.label(class_="form-label") }}
               {{ form.responsable_id(class_="form-select") }}
-              <div class="form-text">Puedes dejar “— Sin asignar —” y definirlo más tarde.</div>
+              <div class="form-text">Puedes dejar "— Sin asignar —" y definirlo más tarde.</div>
               {% if form.responsable_id.errors %}
                 <div class="invalid-feedback d-block">{{ form.responsable_id.errors[0] }}</div>
               {% endif %}
@@ -219,7 +211,7 @@
               <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-x-circle"></i> Cancelar
               </a>
-              {{ form.submit(class_="btn btn-success px-4") }}
+              {{ form.submit(class_="btn btn-warning px-4") }}
             </div>
           </form>
         </div>
@@ -227,82 +219,10 @@
 
       <p class="text-muted small mt-3">
         <i class="bi bi-info-circle"></i>
-        Consejo: después de crear el huerto podrás asociar <b>bodegas</b>, registrar <b>actividades</b> y enviar <b>recomendaciones</b>.
+        Los cambios se guardarán inmediatamente. Si cambias el técnico responsable, se notificará automáticamente.
       </p>
 
     </div>
   </div>
 </div>
-
-{# Botón flotante para reabrir AgroBot (aparece cuando está oculto) #}
-<button id="showAgrobotBtn" type="button"
-        class="btn btn-success agrobot-fab d-none"
-        aria-controls="agrobotBox" aria-expanded="false" aria-label="Mostrar AgroBot">
-  <i class="bi bi-robot"></i> AgroBot
-</button>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script>
-(function(){
-  // Persistencia de AgroBot por página
-  const STORAGE_KEY = 'agrobotHidden:nuevo_huerto';
-  const banner = document.getElementById('agrobotBox');
-  const hideBtn = document.getElementById('hideAgrobotBtn');
-  const showBtn = document.getElementById('showAgrobotBtn');
-
-  function setHidden(hidden){
-    if (!banner || !showBtn) return;
-    if (hidden){
-      banner.classList.add('d-none');
-      showBtn.classList.remove('d-none');
-      showBtn.setAttribute('aria-expanded','true');
-    } else {
-      banner.classList.remove('d-none');
-      showBtn.classList.add('d-none');
-      showBtn.setAttribute('aria-expanded','false');
-    }
-  }
-
-  function applyInitial(){
-    const hidden = localStorage.getItem(STORAGE_KEY) === 'true';
-    setHidden(hidden);
-  }
-
-  hideBtn?.addEventListener('click', ()=>{
-    localStorage.setItem(STORAGE_KEY, 'true');
-    setHidden(true);
-  });
-
-  showBtn?.addEventListener('click', ()=>{
-    localStorage.setItem(STORAGE_KEY, 'false');
-    setHidden(false);
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){}
-  });
-
-  applyInitial();
-})();
-</script>
-
-<style>
-/* Botón flotante AgroBot — se muestra cuando el banner está oculto */
-.agrobot-fab{
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1050;
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
-}
-
-/* Ajustes tipográficos móviles para el bloque AgroBot */
-@media (max-width: 576px){
-  .card-body .fs-1{ font-size: 2rem !important; }
-  .card-body h5{ font-size: 1.05rem; }
-  .card-body p, .card-body li{ font-size: .95rem; }
-}
-</style>
 {% endblock %}

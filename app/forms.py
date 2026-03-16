@@ -71,13 +71,84 @@ RecommendationForm = AsignarRecomendacionForm
 
 # --- HUERTO ---
 class CrearHuertoForm(FlaskForm):
-    nombre = StringField('Nombre', validators=[DataRequired()])
+    nombre = StringField('Nombre del Predio', validators=[DataRequired()])
     ubicacion = StringField('Ubicación', validators=[DataRequired()])
     superficie_ha = FloatField('Superficie (ha)', validators=[DataRequired()])
-    tipo_cultivo = StringField('Tipo de cultivo', validators=[DataRequired()])
+    tipo_cultivo = SelectField('Tipo de cultivo', choices=[
+        ('', 'Seleccione tipo de cultivo...'),
+        ('Avellano europeo', 'Avellano europeo'),
+        ('Nogal', 'Nogal'),
+        ('Cerezos', 'Cerezos'),
+        ('Manzanos', 'Manzanos'),
+        ('Vides', 'Vides'),
+        ('Frutilla', 'Frutilla'),
+        ('Arándanos', 'Arándanos'),
+        ('Kiwi', 'Kiwi'),
+        ('Ciruelos', 'Ciruelos'),
+        ('Durazneros', 'Durazneros'),
+        ('Perales', 'Perales'),
+        ('Hortalizas', 'Hortalizas'),
+        ('Frambuesas', 'Frambuesas'),
+        ('Maíz', 'Maíz'),
+        ('Trigo', 'Trigo'),
+        ('Otro', 'Otro')
+    ], validators=[DataRequired()])
     fecha_siembra = DateField('Fecha de siembra', validators=[DataRequired()])
     # 0 = “Sin asignar” (se maneja en la vista)
     responsable_id = SelectField('Técnico responsable', coerce=int, validators=[Optional()])
+    
+    # IDENTIFICACION GENERAL DEL PREDIO
+    propietario = StringField('Propietario', validators=[Optional()])
+    rut = StringField('R.U.T.', validators=[Optional()])
+    codigo_productor = StringField('Código Productor', validators=[Optional()])
+    localidad = StringField('Localidad', validators=[Optional()])
+    comuna = SelectField('Comuna', choices=[
+        ('', 'Seleccione comuna...'),
+        ('Parral', 'Parral'),
+        ('San Clemente', 'San Clemente'),
+        ('Talca', 'Talca'),
+        ('Curicó', 'Curicó'),
+        ('Linares', 'Linares'),
+        ('Constitución', 'Constitución'),
+        ('Cauquenes', 'Cauquenes'),
+        ('Chillán', 'Chillán'),
+        ('Concepción', 'Concepción'),
+        ('Los Ángeles', 'Los Ángeles'),
+        ('Otra', 'Otra')
+    ], validators=[Optional()])
+    provincia = SelectField('Provincia', choices=[
+        ('', 'Seleccione provincia...'),
+        ('Linares', 'Linares'),
+        ('Talca', 'Talca'),
+        ('Curicó', 'Curicó'),
+        ('Cauquenes', 'Cauquenes'),
+        ('Ñuble', 'Ñuble'),
+        ('Concepción', 'Concepción'),
+        ('Biobío', 'Biobío'),
+        ('Otra', 'Otra')
+    ], validators=[Optional()])
+    region = SelectField('Región', choices=[
+        ('', 'Seleccione región...'),
+        ('Región del Maule', 'Región del Maule'),
+        ('Región del Ñuble', 'Región del Ñuble'),
+        ('Región del Biobío', 'Región del Biobío'),
+        ('Región Metropolitana', 'Región Metropolitana'),
+        ('Región del Libertador Bdo. O\'Higgins', 'Región del Libertador Bdo. O\'Higgins'),
+        ('Región de Valparaíso', 'Región de Valparaíso'),
+        ('Región de Coquimbo', 'Región de Coquimbo'),
+        ('Región de La Araucanía', 'Región de La Araucanía'),
+        ('Región de Los Ríos', 'Región de Los Ríos'),
+        ('Región de Los Lagos', 'Región de Los Lagos'),
+        ('Otra', 'Otra')
+    ], validators=[Optional()])
+    distrito_agroclimatico = StringField('Distrito Agroclimático', validators=[Optional()])
+    telefono = StringField('Teléfono', validators=[Optional()])
+    administrador = StringField('Administrador', validators=[Optional()])
+    encargado_huerto = StringField('Encargado Huerto', validators=[Optional()])
+    direccion = StringField('Dirección', validators=[Optional()])
+    empresas = StringField('Empresa(s)', validators=[Optional()])
+    exportadoras = StringField('Exportadora(s)', validators=[Optional()])
+    
     submit = SubmitField('Guardar')
 
 
@@ -93,9 +164,9 @@ class BodegaForm(FlaskForm):
 
 # --- QUÍMICO ---
 class QuimicoForm(FlaskForm):
-    nombre = StringField("Nombre del Químico", validators=[DataRequired()])
+    nombre = StringField("Nombre Comercial del Químico", validators=[DataRequired()])
     tipo = SelectField(
-        "Tipo de Químico",
+        "Tipo de Químico0",
         choices=[
             ("herbicida", "Herbicida"),
             ("fungicida", "Fungicida"),
@@ -107,7 +178,18 @@ class QuimicoForm(FlaskForm):
     )
     descripcion = TextAreaField("Descripción")
     fecha_ingreso = DateField("Fecha de Ingreso", validators=[DataRequired()])
-    cantidad_litros = FloatField("Cantidad (L)", validators=[DataRequired()])
+    fecha_vencimiento = DateField("Fecha de Vencimiento", validators=[Optional()])
+    cantidad_litros = FloatField("Cantidad", validators=[DataRequired()])
+    unidad = SelectField("Unidad", 
+                        choices=[
+                            ("litros", "Litros"),
+                            ("kilos", "Kilos"),
+                            ("gramos", "Gramos"),
+                            ("unidades", "Unidades"),
+                            ("otro", "Otro")
+                        ], 
+                        validators=[DataRequired()])
+    bodega_id = SelectField("Bodega", coerce=int, validators=[DataRequired()])
     submit = SubmitField("Guardar Químico")
 
 

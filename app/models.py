@@ -83,6 +83,22 @@ class Huerto(db.Model, TenantMixin):
     tipo_cultivo = db.Column(db.String(120))
     fecha_siembra = db.Column(db.Date)
 
+    # IDENTIFICACION GENERAL DEL PREDIO
+    propietario = db.Column(db.String(120))
+    rut = db.Column(db.String(20))
+    codigo_productor = db.Column(db.String(50))
+    localidad = db.Column(db.String(100))
+    comuna = db.Column(db.String(100))
+    provincia = db.Column(db.String(100))
+    region = db.Column(db.String(100))
+    distrito_agroclimatico = db.Column(db.String(100))
+    telefono = db.Column(db.String(20))
+    administrador = db.Column(db.String(120))
+    encargado_huerto = db.Column(db.String(120))
+    direccion = db.Column(db.String(250))
+    empresas = db.Column(db.Text)  # Opcional - múltiples empresas separadas por coma
+    exportadoras = db.Column(db.Text)  # Opcional - múltiples exportadoras separadas por coma
+
     responsable_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     responsable = db.relationship("User", back_populates="huertos_asignados")
 
