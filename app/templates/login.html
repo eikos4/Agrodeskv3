@@ -7,6 +7,14 @@
   <meta name="description" content="Inicia sesión en AgroDESK — Plataforma de gestión agrícola integral.">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- PWA Meta Tags -->
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logoagrodesk.svg') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#166534">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logoagrodesk.svg') }}">
 
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -339,7 +347,7 @@
   <!-- Top bar -->
   <div class="top-bar">
     <a href="/" class="brand">
-      <div class="brand-icon"><i class="bi bi-tree-fill"></i></div>
+      <img src="{{ url_for('static', filename='img/logoagrodesk.svg') }}" alt="Logo" style="width: 34px; height: 34px;">
       <span>Agro<b>DESK</b></span>
     </a>
     <a href="/" class="top-back"><i class="bi bi-arrow-left"></i> Volver</a>
@@ -524,11 +532,85 @@
     spn.style.display='inline-block';
   });
 
-  // Autofocus
-  const emp=document.getElementById('empresaInput');
-  const eml=document.getElementById('emailInput');
-  if(emp?.value) eml?.focus(); else emp?.focus();
+  // PWA Install Logic
+  let deferredPrompt;
+  const installPrompt = document.getElementById('installPrompt');
+  const installBtn = document.getElementById('installBtn');
+  const closeInstall = document.getElementById('closeInstall');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installPrompt.style.display = 'flex';
+  });
+
+  installBtn?.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to install prompt: ${outcome}`);
+      deferredPrompt = null;
+      installPrompt.style.display = 'none';
+    }
+  });
+
+  closeInstall?.addEventListener('click', () => {
+    installPrompt.style.display = 'none';
+  });
+
+  // iOS Tip Logic
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const iosInstallTip = document.getElementById('iosInstallTip');
+  const closeIosTip = document.getElementById('closeIosTip');
+
+  if (isIos && !isStandalone) {
+    // Show tip after 3 seconds
+    setTimeout(() => {
+      iosInstallTip.style.display = 'flex';
+    }, 3000);
+  }
+
+  closeIosTip?.addEventListener('click', () => {
+    iosInstallTip.style.display = 'none';
+  });
+
+  // Register Service Worker for this page too
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}");
+    });
+  }
 })();
 </script>
+
+<!-- PWA Install Prompt (Android/Chrome) -->
+<div id="installPrompt" style="display:none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 94%; max-width: 420px; background: #fff; border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.2); border: 1px solid #e5e7eb; padding: 1.1rem; align-items: center; gap: 1rem; animation: slideUp 0.4s ease-out;">
+  <img src="{{ url_for('static', filename='img/logoagrodesk.svg') }}" style="width: 48px; height: 48px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+  <div style="flex: 1">
+    <h4 style="font-size: 0.95rem; font-weight: 800; margin: 0; color: #0b1e14;">Instalar AgroDESK</h4>
+    <p style="font-size: 0.82rem; margin: 0.1rem 0 0 0; color: #6b7280; line-height: 1.3;">Acceso instantáneo desde tu pantalla de inicio.</p>
+  </div>
+  <button id="installBtn" style="background: #166534; color: #fff; border: none; border-radius: 10px; padding: 0.6rem 1.1rem; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: background 0.2s;">Instalar</button>
+  <button id="closeInstall" style="background: none; border: none; color: #9ca3af; cursor: pointer; padding: 0.3rem; font-size: 1.2rem;"><i class="bi bi-x"></i></button>
+</div>
+
+<!-- iOS Install Tip (Safari) -->
+<div id="iosInstallTip" style="display:none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 94%; max-width: 420px; background: #fff; border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.2); border: 1px solid #e5e7eb; padding: 1.2rem; flex-direction: column; align-items: center; text-align: center; animation: slideUp 0.4s ease-out;">
+  <img src="{{ url_for('static', filename='img/logoagrodesk.svg') }}" style="width: 52px; height: 52px; border-radius: 12px; margin-bottom: 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+  <h4 style="font-size: 1rem; font-weight: 800; margin: 0 0 0.5rem 0; color: #0b1e14;">Instalar en tu iPhone</h4>
+  <p style="font-size: 0.85rem; margin: 0 0 1rem 0; color: #6b7280; line-height: 1.5;">
+    Toca el icono de compartir <i class="bi bi-box-arrow-up" style="color: #007aff; font-size: 1.1rem; vertical-align: middle;"></i> y luego selecciona <br> 
+    <strong style="color: #0b1e14;">"Agregar a inicio"</strong>.
+  </p>
+  <button id="closeIosTip" style="background: #f3f4f6; color: #4b5563; border: none; border-radius: 10px; padding: 0.6rem 2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; width: 100%;">Entendido</button>
+</div>
+
+<style>
+@keyframes slideUp {
+  from { transform: translate(-50%, 100%); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+</style>
 </body>
 </html>
