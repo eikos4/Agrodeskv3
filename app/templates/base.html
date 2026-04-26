@@ -7,7 +7,8 @@
 
   <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- DataTables (opcional si lo usas) -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
@@ -16,7 +17,12 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
 
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favi.svg') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logoagrodesk.svg') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#166534">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logoagrodesk.svg') }}">
 
   {% block extra_head %}{% endblock %}
 
@@ -50,98 +56,167 @@
     }
 
     /* Tema general */
-    html, body { height: 100%; }
+    html, body { 
+      height: 100%; 
+      font-family: 'Inter', sans-serif;
+    }
     body {
-      background: linear-gradient(120deg, #e7ecef 55%, #b3c1c9 85%, #104a57 100%);
+      background: #f4f7f5;
       min-height: 100vh;
       display: flex;
-      background-attachment: fixed;
       flex-direction: column;
     }
     main { flex: 1 0 auto; }
 
+    /* ===== NEW PREMIUM NAVBAR ===== */
     .navbar-agro {
-      background-color: #104a57;
-      border-bottom: 3px solid #c4b95f;
-      box-shadow: 0 2px 12px #104a5733;
+      background: linear-gradient(135deg, #0b1e14 0%, #163d2b 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 0.75rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
-    .navbar-agro .nav-link,
-    .navbar-agro .navbar-brand {
-      color: #fffefa !important;
-      font-weight: 600;
+    
+    .navbar-brand {
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #fff !important;
     }
-    .navbar-agro .nav-link.active, .navbar-agro .nav-link:hover {
-      color: #c4b95f !important;
-      text-shadow: 0 1px 2px #104a5733;
+    
+    .navbar-brand .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #22c55e, #166534);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 0.9rem;
     }
-    .btn-agro {
-      background-color: #c4b95f;
-      color: #104a57;
-      border: none;
-      box-shadow: 0 2px 8px #c4b95f44;
-      font-weight: 500;
-    }
-    .btn-agro:hover { background-color: #104a57; color: #c4b95f; }
-    .card {
-      border-radius: 14px;
-      box-shadow: 0 2px 16px #104a5730;
-      border: 1px solid #b3c1c9;
-    }
-    .card-header { background-color: #e7ecef; color: #104a57; font-weight: 600; }
-    .bg-success, .badge.bg-success { background-color: #7b904b !important; color: #fff !important; }
-    .bg-warning, .badge.bg-warning { background-color: #c4b95f !important; color: #104a57 !important; }
-    .bg-info, .badge.bg-info { background-color: #b3c1c9 !important; color: #104a57 !important; }
-    .bg-petroleo { background-color: #104a57 !important; color: #fffefa !important; }
 
+    .nav-link {
+      color: rgba(255,255,255,0.75) !important;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem !important;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    
+    .nav-link:hover, .nav-link.active {
+      color: #fff !important;
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .nav-link i {
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
+
+    /* User Profile Dropdown */
+    .user-dropdown .dropdown-toggle {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 0.4rem 1rem !important;
+    }
+    
+    .user-dropdown .dropdown-menu {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      margin-top: 10px;
+      padding: 0.5rem;
+      background: #fff;
+    }
+    
+    .dropdown-item {
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.6rem 1rem;
+      color: #374151;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .dropdown-item:hover {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+    
+    .dropdown-divider {
+      margin: 0.5rem 0;
+      opacity: 0.1;
+    }
+
+    /* Footer styles */
     footer {
       flex-shrink: 0;
-      background: #e7ecef;
-      border-top: 2px solid #104a57;
-      color: #104a57;
+      background: #fff;
+      border-top: 1px solid #e5e7eb;
+      color: #6b7280;
+      padding: 2rem 0;
+    }
+    
+    .footer-brand {
+      color: #166534;
+      font-weight: 800;
+      font-size: 1.1rem;
+      text-decoration: none;
     }
 
 
   </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-agro sticky-top mb-4 shadow-sm">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
-      <i class="bi bi-cloud-fill"></i> Agro <span class="text-warning">DESK</span>
+<nav class="navbar navbar-expand-lg navbar-agro sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand" href="{{ url_for('main.index') }}">
+      <img src="{{ url_for('static', filename='img/logoagrodesk.svg') }}" alt="AgroDesk Logo" style="width: 32px; height: 32px; object-fit: contain;">
+      Agro<b>DESK</b>
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
+    
+    <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <i class="bi bi-list fs-2"></i>
     </button>
-    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-      <ul class="navbar-nav me-auto">
+    
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mx-auto">
         {% if current_user.is_authenticated %}
           {% if current_user.role == 'admin' %}
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-speedometer2"></i> Admin</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.crear_tecnico') }}"><i class="bi bi-person-plus"></i> Crear Técnico</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.crear_huerto') }}"><i class="bi bi-tree-fill"></i> Crear Huerto</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.crear_bodega') }}"><i class="bi bi-box-seam"></i> Crear Bodega</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.listar_bodegas') }}"><i class="bi bi-archive"></i> Ver Bodegas</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.recomendar') }}"><i class="bi bi-chat-dots"></i> Recomendaciones</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('geo.mapa') }}"><i class="bi bi-map"></i> Georreferenciación</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-grid-fill"></i> Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.listar_bodegas') }}"><i class="bi bi-box-seam-fill"></i> Bodegas</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.recomendar') }}"><i class="bi bi-chat-dots-fill"></i> Recomendaciones</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('geo.mapa') }}"><i class="bi bi-map-fill"></i> Mapa</a></li>
           {% elif current_user.role == 'tecnico' %}
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.tecnico_dashboard') }}"><i class="bi bi-speedometer2"></i> Técnico</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.mis_huertos') }}"><i class="bi bi-tree"></i> Mis Huertos</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.mis_bodegas') }}"><i class="bi bi-archive"></i> Mis Bodegas</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.todos_los_quimicos') }}"><i class="bi bi-droplet-fill"></i> Ver Químicos</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.ver_recomendaciones') }}"><i class="bi bi-chat-dots"></i> Recomendaciones</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('geo.mapa') }}"><i class="bi bi-map"></i> Georreferenciación</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.tecnico_dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.mis_huertos') }}"><i class="bi bi-tree-fill"></i> Mis Huertos</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.mis_bodegas') }}"><i class="bi bi-archive-fill"></i> Mis Bodegas</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('tecnico.ver_recomendaciones') }}"><i class="bi bi-chat-dots-fill"></i> Recomendaciones</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('geo.mapa') }}"><i class="bi bi-map-fill"></i> Mapa</a></li>
           {% endif %}
         {% endif %}
       </ul>
-      <ul class="navbar-nav">
+      
+      <ul class="navbar-nav align-items-center">
         {% if current_user.is_authenticated %}
-          <li class="nav-item dropdown">
+          <li class="nav-item dropdown user-dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarUser" data-bs-toggle="dropdown">
               <i class="bi bi-person-circle"></i> {{ current_user.name }}
             </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUser">
-              <li><span class="dropdown-item-text"><strong>Rol:</strong> {{ current_user.role|capitalize }}</span></li>
+            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="navbarUser">
+              <li><div class="dropdown-item-text text-muted small">Rol: <strong>{{ current_user.role|capitalize }}</strong></div></li>
               <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-person-gear"></i> Mi Perfil</a></li>
               <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
             </ul>
           </li>
@@ -172,22 +247,29 @@
   </div>
 </main>
 
-<footer class="bg-light border-top py-3 mt-5 shadow-sm">
-  <div class="container text-center d-flex flex-column flex-md-row justify-content-between align-items-center">
-    <div class="mb-2 mb-md-0">
-      <span class="text-success fw-bold"><i class="bi bi-leaf"></i> AgroDESK</span>
-      <span class="text-muted ms-2">&copy; {{ current_year or "2025" }} — Todos los derechos reservados LEUCODE.IA</span>
-    </div>
-    <div>
-      <a href="mailto:contacto@agrosmart.cl" class="text-decoration-none text-success me-3" title="Contáctanos">
-        <i class="bi bi-envelope"></i>
-      </a>
-      <a href="https://www.instagram.com/" target="_blank" class="text-decoration-none text-success me-2" title="Instagram">
-        <i class="bi bi-instagram"></i>
-      </a>
-      <a href="https://www.linkedin.com/" target="_blank" class="text-decoration-none text-success" title="LinkedIn">
-        <i class="bi bi-linkedin"></i>
-      </a>
+<footer class="mt-auto">
+  <div class="container">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+      <div class="mb-3 mb-md-0">
+        <a href="{{ url_for('main.index') }}" class="footer-brand d-flex align-items-center gap-2">
+          <img src="{{ url_for('static', filename='img/logoagrodesk.svg') }}" alt="Logo" style="width: 24px; height: 24px;">
+          Agro<b>DESK</b>
+        </a>
+        <div class="small text-muted mt-1">
+          &copy; {{ current_year or "2025" }} — Parte del ecosistema <strong>KODESK.CL</strong>
+        </div>
+      </div>
+      <div class="d-flex gap-3">
+        <a href="mailto:contacto@agrosmart.cl" class="text-success fs-5" title="Contáctanos">
+          <i class="bi bi-envelope-at-fill"></i>
+        </a>
+        <a href="https://www.instagram.com/" target="_blank" class="text-success fs-5" title="Instagram">
+          <i class="bi bi-instagram"></i>
+        </a>
+        <a href="https://www.linkedin.com/" target="_blank" class="text-success fs-5" title="LinkedIn">
+          <i class="bi bi-linkedin"></i>
+        </a>
+      </div>
     </div>
   </div>
 </footer>
@@ -245,5 +327,14 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 {% block scripts %}{% endblock %}
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}")
+          .then(reg => console.log('Service Worker registrado', reg))
+          .catch(err => console.log('Error registrando Service Worker', err));
+      });
+    }
+  </script>
 </body>
 </html>
