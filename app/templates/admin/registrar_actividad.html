@@ -34,6 +34,24 @@
               {{ form.descripcion(class="form-control", rows="3", placeholder="Describe brevemente la actividad realizada") }}
             </div>
 
+            <!-- Campos de Inventario (Kárdex) -->
+            <div class="card bg-light mb-3 border-0">
+              <div class="card-body py-2">
+                <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-box-seam"></i> Consumo de Inventario (Opcional)</h6>
+                <div class="row g-3">
+                  <div class="col-md-8">
+                    {{ form.quimico_id.label(class="form-label") }}
+                    {{ form.quimico_id(class="form-select") }}
+                  </div>
+                  <div class="col-md-4">
+                    {{ form.cantidad_aplicada.label(class="form-label") }}
+                    {{ form.cantidad_aplicada(class="form-control", type="number", step="0.01") }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
             <!-- Campos solo para Control de Plagas -->
             <div id="plagas-campos" style="display: none;">
               <div class="row g-3">

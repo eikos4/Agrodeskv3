@@ -180,6 +180,10 @@ class ActividadHuerto(db.Model, TenantMixin):
 
     producto = db.Column(db.String(100))
     dosis = db.Column(db.String(50))
+    quimico_id = db.Column(db.Integer, db.ForeignKey("quimicos.id"))
+    cantidad_aplicada = db.Column(db.Float)
+    
+    quimico = db.relationship("Quimico")
     plaga = db.Column(db.String(100))
     nivel_infestacion = db.Column(db.String(20))
     resultado = db.Column(db.Text)
@@ -193,6 +197,27 @@ class ActividadHuerto(db.Model, TenantMixin):
 
     def __repr__(self):
         return f"<ActividadHuerto {self.id} huerto={self.huerto_id} tipo={self.tipo!r}>"
+
+# ==============================
+# MOVIMIENTO INVENTARIO
+# ==============================
+class MovimientoInventario(db.Model, TenantMixin):
+    __tablename__ = "movimientos_inventario"
+
+    id = db.Column(db.Integer, primary_key=True)
+    quimico_id = db.Column(db.Integer, db.ForeignKey("quimicos.id"), nullable=False)
+    tipo = db.Column(db.String(20), nullable=False) # 'ingreso' o 'egreso'
+    cantidad = db.Column(db.Float, nullable=False)
+    fecha = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    referencia_actividad_id = db.Column(db.Integer, db.ForeignKey("actividad_huerto.id"))
+
+    quimico = db.relationship("Quimico", backref="movimientos")
+    usuario = db.relationship("User")
+    actividad_referencia = db.relationship("ActividadHuerto")
+
+    def __repr__(self):
+        return f"<MovimientoInventario {self.tipo} {self.cantidad} del químico {self.quimico_id}>"
 
 # ==============================
 # RECOMENDACIÓN

@@ -226,6 +226,8 @@ class RegistrarActividadForm(FlaskForm):
     nivel_infestacion = StringField('Nivel de Infestación', validators=[Optional()])
     producto = StringField('Producto Aplicado', validators=[Optional()])
     dosis = StringField('Dosis Aplicada', validators=[Optional()])
+    quimico_id = SelectField('Producto del Inventario (Kárdex)', coerce=int, validators=[Optional()])
+    cantidad_aplicada = FloatField('Cantidad a Extraer (Litros/Kilos)', validators=[Optional()])
     resultado = TextAreaField('Resultado/Seguimiento', validators=[Optional()])
     fotos = FileUploadField('Fotos', validators=[Optional()])
     observaciones = TextAreaField('Observaciones', validators=[Optional()])

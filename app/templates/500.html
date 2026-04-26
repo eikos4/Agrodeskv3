@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Error 500 | AgroDESK{% endblock %}
+
+{% block content %}
+<style>
+.error-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #081714 0%, #0d211d 100%);
+  color: #eff8f3;
+  text-align: center;
+  padding: 2rem;
+}
+
+.error-content {
+  max-width: 600px;
+}
+
+.error-code {
+  font-size: 8rem;
+  font-weight: 900;
+  color: #33c481;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+
+.error-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.error-message {
+  font-size: 1.1rem;
+  color: #9db5ac;
+  margin-bottom: 2rem;
+}
+
+.error-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-error {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: #33c481;
+  color: #082018;
+}
+
+.btn-primary:hover {
+  background: #2ba86f;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #eff8f3;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+</style>
+
+<div class="error-container">
+  <div class="error-content">
+    <div class="error-code">500</div>
+    <h1 class="error-title">Error del Servidor</h1>
+    <p class="error-message">
+      Ha ocurrido un error inesperado en el servidor. 
+      Nuestro equipo técnico ha sido notificado y está trabajando en solucionarlo.
+    </p>
+    <div class="error-actions">
+      <a href="{{ url_for('auth.login') }}" class="btn-error btn-primary">
+        <i class="bi bi-house"></i> Ir al Inicio
+      </a>
+      <a href="mailto:soporte@agrodesk.cl" class="btn-error btn-secondary">
+        <i class="bi bi-envelope"></i> Contactar Soporte
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

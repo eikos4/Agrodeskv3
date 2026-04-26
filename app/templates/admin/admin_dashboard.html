@@ -3,365 +3,406 @@
 
 {% block content %}
 <style>
-  /* ======== ESTILO GLOBAL ======== */
-  body {
-    background: linear-gradient(135deg, #f9faf9, #e8f3ee);
-  }
-  h2, h3, h4 { color: #0a3637; font-weight: 800; }
+  /* ===== RESET & BASE ===== */
+  body{background:#f4f7f5 !important}
+  .dash{font-family:'Inter',system-ui,sans-serif}
 
-  .card {
-    border: none;
-    border-radius: 1rem;
-    transition: all 0.3s ease;
+  /* ===== WELCOME BANNER ===== */
+  .welcome-banner{
+    background:linear-gradient(135deg,#0b1e14 0%,#163d2b 50%,#1a5c3a 100%);
+    border-radius:18px;padding:2rem 2.2rem;color:#fff;
+    position:relative;overflow:hidden;margin-bottom:1.8rem;
   }
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  .welcome-banner::before{
+    content:'';position:absolute;top:-60px;right:-40px;
+    width:280px;height:280px;border-radius:50%;
+    background:radial-gradient(circle,rgba(74,222,128,.18),transparent 70%);
+    pointer-events:none;
   }
+  .welcome-banner h2{font-weight:800;font-size:1.6rem;margin-bottom:.3rem}
+  .welcome-banner .sub{color:#86efac;font-size:.9rem}
+  .welcome-banner .actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+  .welcome-banner .actions .btn{
+    border-radius:8px;font-size:.82rem;font-weight:600;
+    padding:.45rem .9rem;border:1.5px solid rgba(255,255,255,.2);
+    color:#fff;background:rgba(255,255,255,.08);
+    backdrop-filter:blur(4px);transition:all .2s;
+  }
+  .welcome-banner .actions .btn:hover{
+    background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);
+    transform:translateY(-1px);
+  }
+  .welcome-banner .actions .btn i{margin-right:.35rem}
 
-  /* ======== KPIs ======== */
-  .kpi-card {
-    background: linear-gradient(140deg, #0a3637, #007d66);
-    color: #fff;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    text-align: center;
-    box-shadow: 0 8px 28px rgba(10,54,55,0.18);
-    transition: all 0.3s ease;
+  /* ===== KPI CARDS ===== */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+  .kpi{
+    background:#fff;border-radius:14px;padding:1.3rem 1.2rem;
+    border:1px solid #e8ede9;position:relative;overflow:hidden;
+    transition:all .25s;
   }
-  .kpi-card:hover {
-    background: linear-gradient(140deg, #007d66, #00b47e);
+  .kpi:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.07)}
+  .kpi .kpi-ic{
+    width:42px;height:42px;border-radius:10px;display:grid;place-items:center;
+    font-size:1.15rem;margin-bottom:.8rem;
   }
-  .kpi-icon { font-size: 2rem; opacity: 0.9; }
-  .kpi-value { font-size: 2rem; font-weight: 800; }
-  .kpi-label { font-size: .9rem; opacity: .9; }
-
-  /* ======== AGROBOT ======== */
-  .agrobot-fab {
-    position: fixed; bottom: 1rem; right: 1rem;
-    z-index: 1050; border-radius: 50%;
-  }
-  .alert-agrobot {
-    border-left: 5px solid #00b47e;
-    background: #f0fff8;
-  }
-
-  /* ======== HUERTOS MODERNOS ======== */
-  .huerto-modern-card {
-    border-radius: 1rem;
-    transition: all 0.3s ease;
-    overflow: hidden;
-  }
-  .huerto-modern-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(0,123,255,0.15) !important;
-  }
-  .huerto-modern-card .card-header {
-    border: none;
-    background: linear-gradient(135deg, #28a745, #20c997) !important;
-  }
-  .huerto-modern-card .btn {
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-  .huerto-modern-card .btn:hover {
-    transform: translateY(-2px);
+  .kpi .kpi-ic.green{background:#ecfdf5;color:#16a34a}
+  .kpi .kpi-ic.amber{background:#fffbeb;color:#d97706}
+  .kpi .kpi-ic.blue{background:#eff6ff;color:#2563eb}
+  .kpi .kpi-ic.purple{background:#faf5ff;color:#9333ea}
+  .kpi .kpi-val{font-size:1.8rem;font-weight:800;color:#0b1e14;line-height:1}
+  .kpi .kpi-lbl{font-size:.8rem;color:#6b7b72;margin-top:.25rem;font-weight:500}
+  .kpi .kpi-badge{
+    position:absolute;top:1rem;right:1rem;font-size:.68rem;
+    background:#ecfdf5;color:#16a34a;padding:.2rem .55rem;
+    border-radius:6px;font-weight:600;
   }
 
-  /* ======== VARIANTES DE DISEÑO ======== */
-  .compact-card {
-    transition: all 0.3s ease;
-    border-radius: 1rem;
+  /* ===== SECTION HEADERS ===== */
+  .sec-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:1rem;margin-top:.5rem;
   }
-  .compact-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  .sec-head h4{
+    font-weight:800;font-size:1.1rem;color:#0b1e14;
+    display:flex;align-items:center;gap:.5rem;margin:0;
   }
-  
-  .icon-card {
-    transition: all 0.3s ease;
-    border-radius: 1rem;
-    border: 2px solid #e9ecef;
+  .sec-head h4 .dot{
+    width:8px;height:8px;border-radius:50%;display:inline-block;
   }
-  .icon-card:hover {
-    transform: translateY(-5px);
-    border-color: #28a745;
-    box-shadow: 0 12px 30px rgba(40,167,69,0.15);
+  .sec-head .sec-link{
+    font-size:.82rem;color:#16a34a;text-decoration:none;font-weight:600;
+    display:flex;align-items:center;gap:.3rem;
   }
-  
-  .side-card {
-    transition: all 0.3s ease;
-    border-radius: 1rem;
-    overflow: hidden;
+  .sec-head .sec-link:hover{text-decoration:underline}
+
+  /* ===== HUERTO CARDS ===== */
+  .h-card{
+    background:#fff;border-radius:14px;border:1px solid #e8ede9;
+    overflow:hidden;transition:all .25s;
   }
-  .side-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  .h-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.08)}
+  .h-card .h-top{
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+    padding:1rem 1.2rem;color:#fff;
+    display:flex;justify-content:space-between;align-items:flex-start;
   }
-  .side-card .col-4 {
-    transition: all 0.3s ease;
+  .h-card .h-top h6{font-weight:700;margin:0;font-size:.95rem}
+  .h-card .h-top small{opacity:.8;font-size:.72rem}
+  .h-card .h-top .badge{
+    background:rgba(255,255,255,.2);color:#fff;font-size:.72rem;
+    padding:.25rem .55rem;border-radius:6px;font-weight:600;
   }
-  .side-card:hover .col-4 {
-    background: linear-gradient(135deg, #20c997, #28a745) !important;
+  .h-card .h-body{padding:1rem 1.2rem}
+  .h-card .h-meta{
+    display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.8rem;
+  }
+  .h-card .h-meta-item{display:flex;align-items:center;gap:.45rem}
+  .h-card .h-meta-item i{color:#22c55e;font-size:.85rem}
+  .h-card .h-meta-item .lbl{font-size:.72rem;color:#9ca3af}
+  .h-card .h-meta-item .val{font-size:.82rem;font-weight:600;color:#0b1e14}
+  .h-card .h-actions{
+    display:flex;flex-wrap:wrap;gap:.4rem;padding-top:.8rem;
+    border-top:1px solid #f0f3f1;
+  }
+  .h-card .h-actions a{
+    flex:1 1 auto;text-align:center;font-size:.75rem;font-weight:600;
+    padding:.4rem .5rem;border-radius:7px;text-decoration:none;
+    transition:all .15s;border:1px solid #e8ede9;color:#374151;background:#f9fafb;
+  }
+  .h-card .h-actions a:hover{background:#ecfdf5;color:#16a34a;border-color:#bbf7d0}
+  .h-card .h-actions a i{margin-right:.25rem}
+  .h-card .h-actions a.primary{background:#16a34a;color:#fff;border-color:#16a34a}
+  .h-card .h-actions a.primary:hover{background:#15803d}
+
+  /* ===== BODEGA CARDS ===== */
+  .b-card{
+    background:#fff;border-radius:14px;border:1px solid #e8ede9;
+    padding:1.1rem 1.2rem;transition:all .25s;
+    border-left:4px solid #f59e0b;
+  }
+  .b-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.07)}
+  .b-card h6{font-weight:700;font-size:.9rem;color:#0b1e14;margin-bottom:.5rem}
+  .b-card h6 i{color:#f59e0b;margin-right:.3rem}
+  .b-card .b-info{font-size:.8rem;color:#6b7b72;margin-bottom:.1rem}
+  .b-card .b-info strong{color:#374151}
+  .b-card .b-btns{display:flex;gap:.4rem;margin-top:.7rem}
+  .b-card .b-btns a{
+    font-size:.76rem;font-weight:600;padding:.35rem .65rem;
+    border-radius:7px;text-decoration:none;transition:all .15s;
   }
 
-  /* ======== BODEGAS ======== */
-  .bodega-card {
-    border-left: 5px solid #ffc10755;
+  /* ===== TECHNICIANS TABLE ===== */
+  .t-table{
+    background:#fff;border-radius:14px;border:1px solid #e8ede9;
+    overflow:hidden;
   }
-  .bodega-card:hover {
-    border-left: 5px solid #ffc107;
+  .t-table table{margin:0;font-size:.87rem}
+  .t-table thead{background:#f8faf9}
+  .t-table thead th{
+    font-weight:700;font-size:.78rem;color:#6b7b72;
+    text-transform:uppercase;letter-spacing:.4px;
+    padding:.85rem 1.1rem;border:none;
+  }
+  .t-table tbody td{padding:.75rem 1.1rem;border-color:#f0f3f1;vertical-align:middle}
+  .t-table .t-name{font-weight:600;color:#0b1e14}
+  .t-table .t-email{color:#6b7b72;font-size:.82rem}
+  .t-table .t-phone{color:#6b7b72;font-size:.82rem}
+  .t-table .t-actions a{
+    width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;
+    border-radius:8px;border:1px solid #e8ede9;color:#6b7b72;
+    text-decoration:none;transition:all .15s;margin-left:.3rem;font-size:.85rem;
+  }
+  .t-table .t-actions a:hover{background:#ecfdf5;color:#16a34a;border-color:#bbf7d0}
+  .t-table .t-actions a.warn:hover{background:#fffbeb;color:#d97706;border-color:#fde68a}
+
+  /* ===== RECOMMENDATIONS ===== */
+  .rec-list{
+    background:#fff;border-radius:14px;border:1px solid #e8ede9;
+    overflow:hidden;
+  }
+  .rec-item{
+    padding:.85rem 1.2rem;border-bottom:1px solid #f0f3f1;
+    display:flex;align-items:flex-start;gap:.8rem;
+    transition:background .15s;
+  }
+  .rec-item:last-child{border-bottom:none}
+  .rec-item:hover{background:#f8faf9}
+  .rec-item .rec-av{
+    width:34px;height:34px;border-radius:8px;
+    background:#ecfdf5;color:#16a34a;display:grid;place-items:center;
+    font-size:.85rem;flex-shrink:0;
+  }
+  .rec-item .rec-body{flex:1;min-width:0}
+  .rec-item .rec-body strong{font-size:.85rem;color:#0b1e14}
+  .rec-item .rec-body p{
+    font-size:.82rem;color:#6b7b72;margin:.15rem 0 0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .rec-item .rec-date{
+    font-size:.72rem;color:#9ca3af;white-space:nowrap;flex-shrink:0;
   }
 
-  /* ======== TABLAS ======== */
-  .table td { vertical-align: middle; }
+  /* ===== PAGINATION ===== */
+  .pg{display:flex;justify-content:center;gap:.3rem;margin-top:1rem}
+  .pg a,.pg span{
+    padding:.35rem .7rem;border-radius:7px;font-size:.82rem;
+    font-weight:600;text-decoration:none;border:1px solid #e8ede9;color:#6b7b72;
+  }
+  .pg .active{background:#16a34a;color:#fff;border-color:#16a34a}
+  .pg a:hover{background:#ecfdf5;color:#16a34a}
 
-  /* ======== ANIMACIONES ======== */
-  @keyframes fadeIn { from {opacity:0; transform:translateY(10px);} to {opacity:1; transform:none;} }
-  .fade-in { animation: fadeIn .6s ease both; }
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:768px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    .welcome-banner{padding:1.5rem}
+    .welcome-banner h2{font-size:1.3rem}
+  }
+  @media(max-width:480px){
+    .kpi-grid{grid-template-columns:1fr 1fr}
+    .h-card .h-meta{grid-template-columns:1fr}
+    .h-card .h-actions a{flex:1 1 calc(50% - .2rem)}
+  }
 </style>
 
-<div class="container py-4">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- ========= AGROBOT ========= -->
-  <div id="agrobotBox" class="alert alert-agrobot shadow-sm p-4 mb-4 fade-in">
-    <div class="d-flex align-items-start gap-3">
-      <div class="fs-1">🤖</div>
-      <div class="flex-grow-1">
-        <h4 class="fw-bold mb-2 text-success">AgroBot Administrativo</h4>
-        <p class="mb-2">
-          Bienvenido a <b>AgroDESK</b> 🌱. Como administrador puedes gestionar huertos, bodegas y técnicos.
-          <br>Recuerda: <strong>si cambias una contraseña</strong>, <span class="text-danger">avisa al técnico en terreno</span> para evitar bloqueos en su acceso móvil.
-        </p>
-        <div class="d-flex flex-wrap gap-2">
-          <a href="{{ url_for('admin.crear_huerto') }}" class="btn btn-success btn-sm"><i class="bi bi-tree"></i> Nuevo Huerto</a>
-          <a href="{{ url_for('admin.crear_bodega') }}" class="btn btn-warning btn-sm"><i class="bi bi-box"></i> Nueva Bodega</a>
-          <a href="{{ url_for('admin.crear_tecnico') }}" class="btn btn-info text-white btn-sm"><i class="bi bi-person-plus"></i> Nuevo Técnico</a>
-          <a href="{{ url_for('admin.crear_quimico') }}" class="btn btn-primary btn-sm"><i class="bi bi-droplet-fill"></i> Agregar Químico</a>
-        </div>
-      </div>
-      <button id="hideAgrobotBtn" class="btn btn-outline-success btn-sm ms-auto">
-        <i class="bi bi-x-lg"></i> Ocultar
-      </button>
-    </div>
-  </div>
-  <button id="showAgrobotBtn" class="btn btn-success agrobot-fab" style="display:none;">🤖</button>
+<div class="dash">
 
-  <!-- ========= ENCABEZADO ========= -->
-  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4">
-    <div>
-      <h2 class="mb-1 text-success"><i class="bi bi-person-circle"></i> Hola, {{ current_user.name }}</h2>
-      <div class="text-muted small">Rol: <strong>{{ current_user.role|capitalize }}</strong></div>
+  <!-- ===== WELCOME BANNER ===== -->
+  <div class="welcome-banner">
+    <h2><i class="bi bi-person-circle me-2"></i>Hola, {{ current_user.name }}</h2>
+    <div class="sub">{{ current_user.role|capitalize }} · {{ current_user.empresa.nombre if current_user.empresa else '' }}</div>
+    <div class="actions">
+      <a href="{{ url_for('admin.crear_huerto') }}" class="btn"><i class="bi bi-tree-fill"></i>Nuevo Huerto</a>
+      <a href="{{ url_for('admin.crear_bodega') }}" class="btn"><i class="bi bi-box-seam"></i>Nueva Bodega</a>
+      <a href="{{ url_for('admin.crear_tecnico') }}" class="btn"><i class="bi bi-person-plus-fill"></i>Nuevo Técnico</a>
+      <a href="{{ url_for('admin.crear_quimico') }}" class="btn"><i class="bi bi-droplet-fill"></i>Agregar Químico</a>
+      <a href="{{ url_for('admin.recomendar') }}" class="btn"><i class="bi bi-chat-dots-fill"></i>Recomendaciones</a>
+      <a href="{{ url_for('geo.mapa') }}" class="btn"><i class="bi bi-map-fill"></i>Mapa</a>
     </div>
   </div>
 
-  <!-- ========= KPIs ========= -->
-  <div class="row g-3 mb-5">
-    <div class="col-6 col-md-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-tree"></i></div><div class="kpi-value">{{ huertos|length }}</div><div class="kpi-label">Huertos</div></div></div>
-    <div class="col-6 col-md-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-cloud"></i></div><div class="kpi-value">{{ bodegas|length }}</div><div class="kpi-label">Bodegas</div></div></div>
-    <div class="col-6 col-md-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-people"></i></div><div class="kpi-value">{{ tecnicos|length }}</div><div class="kpi-label">Técnicos</div></div></div>
-    <div class="col-6 col-md-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-diagram-3"></i></div><div class="kpi-value">{{ '%.2f'|format(total_superficie or 0) }}</div><div class="kpi-label">Superficie Total (ha)</div></div></div>
+  <!-- ===== KPIs ===== -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-ic green"><i class="bi bi-tree-fill"></i></div>
+      <div class="kpi-val">{{ total_huertos }}</div>
+      <div class="kpi-lbl">Huertos</div>
+      {% if huertos_con_responsable %}<span class="kpi-badge">{{ huertos_con_responsable }} asignados</span>{% endif %}
+    </div>
+    <div class="kpi">
+      <div class="kpi-ic amber"><i class="bi bi-box-seam-fill"></i></div>
+      <div class="kpi-val">{{ bodegas|length }}</div>
+      <div class="kpi-lbl">Bodegas</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-ic blue"><i class="bi bi-people-fill"></i></div>
+      <div class="kpi-val">{{ tecnicos_paginados.total }}</div>
+      <div class="kpi-lbl">Técnicos</div>
+      {% if tecnicos_con_telefono %}<span class="kpi-badge">{{ tecnicos_con_telefono }} con tel.</span>{% endif %}
+    </div>
+    <div class="kpi">
+      <div class="kpi-ic purple"><i class="bi bi-rulers"></i></div>
+      <div class="kpi-val">{{ '%.1f'|format(total_superficie or 0) }}</div>
+      <div class="kpi-lbl">Hectáreas totales</div>
+    </div>
   </div>
 
-  <!-- ========= HUERTOS ========= -->
-  <h4 class="text-success mb-4"><i class="bi bi-tree-fill"></i> Huertos Registrados</h4>
-  <div class="row g-4">
+  <!-- ===== HUERTOS ===== -->
+  <div class="sec-head">
+    <h4><span class="dot" style="background:#22c55e"></span> Huertos Registrados</h4>
+    <a href="{{ url_for('admin.crear_huerto') }}" class="sec-link"><i class="bi bi-plus-circle"></i> Nuevo</a>
+  </div>
+  <div class="row g-3 mb-4">
     {% for h in huertos %}
     <div class="col-lg-6">
-      <div class="card border-0 shadow-lg huerto-modern-card">
-        <div class="card-header bg-gradient-success text-white py-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h5 class="mb-1 fw-bold"><i class="bi bi-tree-fill me-2"></i>{{ h.nombre }}</h5>
-              <small class="opacity-75">ID: {{ h.id }}</small>
-            </div>
-            <div class="text-end">
-              {% if h.responsable %}
-                <span class="badge bg-white text-success">{{ h.responsable.name }}</span>
-              {% else %}
-                <span class="badge bg-warning text-dark">Sin técnico</span>
-              {% endif %}
-            </div>
+      <div class="h-card">
+        <div class="h-top">
+          <div>
+            <h6><i class="bi bi-tree-fill me-1"></i>{{ h.nombre }}</h6>
+            <small>ID: {{ h.id }}</small>
           </div>
-        </div>
-        <div class="card-body">
-          <div class="row mb-3">
-            <div class="col-6">
-              <div class="d-flex align-items-center">
-                <i class="bi bi-geo-alt-fill text-success me-2"></i>
-                <div>
-                  <small class="text-muted d-block">Ubicación</small>
-                  <strong>{{ h.ubicacion or "—" }}</strong>
-                </div>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="d-flex align-items-center">
-                <i class="bi bi-flower1 text-success me-2"></i>
-                <div>
-                  <small class="text-muted d-block">Cultivo</small>
-                  <strong>{{ h.tipo_cultivo or "—" }}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="row mb-3">
-            <div class="col-6">
-              <div class="d-flex align-items-center">
-                <i class="bi bi-rulers text-success me-2"></i>
-                <div>
-                  <small class="text-muted d-block">Superficie</small>
-                  <strong>{{ '%.2f'|format(h.superficie_ha or 0) }} ha</strong>
-                </div>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="d-flex align-items-center">
-                <i class="bi bi-house-door text-success me-2"></i>
-                <div>
-                  <small class="text-muted d-block">Bodegas</small>
-                  <strong>{{ h.bodegas|length }}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {% if h.fecha_siembra %}
-          <div class="row mb-3">
-            <div class="col-12">
-              <div class="d-flex align-items-center">
-                <i class="bi bi-calendar-check text-success me-2"></i>
-                <div>
-                  <small class="text-muted d-block">Fecha siembra</small>
-                  <strong>{{ h.fecha_siembra.strftime('%d-%m-%Y') }}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
+          {% if h.responsable %}
+            <span class="badge">{{ h.responsable.name }}</span>
+          {% else %}
+            <span class="badge" style="background:rgba(251,191,36,.3);color:#fef3c7">Sin técnico</span>
           {% endif %}
-          
-          <hr class="my-3">
-          <div class="d-flex flex-wrap gap-2">
-            <a href="{{ url_for('admin.vista_global_huerto', huerto_id=h.id) }}" class="btn btn-info btn-sm flex-fill">
-              <i class="bi bi-eye me-1"></i> Vista Global
-            </a>
-            <a href="{{ url_for('admin.editar_huerto', huerto_id=h.id) }}" class="btn btn-warning btn-sm flex-fill">
-              <i class="bi bi-pencil-square me-1"></i> Editar
-            </a>
-            <a href="{{ url_for('admin.bitacora_huerto', huerto_id=h.id) }}" class="btn btn-outline-primary btn-sm flex-fill">
-              <i class="bi bi-clock-history me-1"></i> Bitácora
-            </a>
-            <a href="{{ url_for('admin.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn btn-outline-info btn-sm flex-fill">
-              <i class="bi bi-plus me-1"></i> Nueva
-            </a>
-            <a href="{{ url_for('admin.actividades_fitosanitarias', huerto_id=h.id) }}" class="btn btn-success btn-sm flex-fill">
-              <i class="bi bi-shield-check me-1"></i> Fitosanitarias
-            </a>
-            <a href="{{ url_for('geo.mapa') }}?focus=huerto:{{ h.id }}" class="btn btn-outline-success btn-sm flex-fill">
-              <i class="bi bi-geo-alt me-1"></i> Mapa
-            </a>
-          </div>
         </div>
-        <div class="card-footer bg-light py-2">
-          <small class="text-muted">
-            <i class="bi bi-clock"></i> 
-            {% if h.updated_at %}
-              Actualizado: {{ h.updated_at.strftime('%d-%m-%Y %H:%M') }}
-            {% else %}
-              Sin actualizaciones
-            {% endif %}
-          </small>
+        <div class="h-body">
+          <div class="h-meta">
+            <div class="h-meta-item">
+              <i class="bi bi-geo-alt-fill"></i>
+              <div><div class="lbl">Ubicación</div><div class="val">{{ h.ubicacion or "—" }}</div></div>
+            </div>
+            <div class="h-meta-item">
+              <i class="bi bi-flower1"></i>
+              <div><div class="lbl">Cultivo</div><div class="val">{{ h.tipo_cultivo or "—" }}</div></div>
+            </div>
+            <div class="h-meta-item">
+              <i class="bi bi-rulers"></i>
+              <div><div class="lbl">Superficie</div><div class="val">{{ '%.2f'|format(h.superficie_ha or 0) }} ha</div></div>
+            </div>
+            <div class="h-meta-item">
+              <i class="bi bi-box-seam"></i>
+              <div><div class="lbl">Bodegas</div><div class="val">{{ h.bodegas|length }}</div></div>
+            </div>
+          </div>
+          <div class="h-actions">
+            <a href="{{ url_for('admin.vista_global_huerto', huerto_id=h.id) }}" class="primary"><i class="bi bi-eye"></i>Vista Global</a>
+            <a href="{{ url_for('admin.editar_huerto', huerto_id=h.id) }}"><i class="bi bi-pencil-square"></i>Editar</a>
+            <a href="{{ url_for('admin.bitacora_huerto', huerto_id=h.id) }}"><i class="bi bi-clock-history"></i>Bitácora</a>
+            <a href="{{ url_for('admin.registrar_actividad_huerto', huerto_id=h.id) }}"><i class="bi bi-plus"></i>Actividad</a>
+            <a href="{{ url_for('admin.actividades_fitosanitarias', huerto_id=h.id) }}"><i class="bi bi-shield-check"></i>Fito</a>
+            <a href="{{ url_for('geo.mapa') }}?focus=huerto:{{ h.id }}"><i class="bi bi-geo-alt"></i>Mapa</a>
+          </div>
         </div>
       </div>
     </div>
+    {% else %}
+    <div class="col-12"><p class="text-muted text-center py-4">No hay huertos registrados.</p></div>
     {% endfor %}
   </div>
 
+  <!-- Pagination huertos -->
+  {% if huertos_paginados.pages > 1 %}
+  <div class="pg mb-4">
+    {% for p in huertos_paginados.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if p %}
+        <a href="{{ url_for('admin.admin_dashboard', page_huertos=p, page_tecnicos=request.args.get('page_tecnicos',1)) }}" class="{% if p == huertos_paginados.page %}active{% endif %}">{{ p }}</a>
+      {% else %}
+        <span>…</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
 
-
- 
-
-  <!-- ========= BODEGAS ========= -->
-  <h4 class="text-warning mt-5 mb-3"><i class="bi bi-box-seam"></i> Bodegas</h4>
-  <div class="row g-4">
+  <!-- ===== BODEGAS ===== -->
+  <div class="sec-head mt-4">
+    <h4><span class="dot" style="background:#f59e0b"></span> Bodegas</h4>
+    <a href="{{ url_for('admin.crear_bodega') }}" class="sec-link"><i class="bi bi-plus-circle"></i> Nueva</a>
+  </div>
+  <div class="row g-3 mb-4">
     {% for b in bodegas %}
     <div class="col-md-6 col-lg-4">
-      <div class="card bodega-card p-3 shadow-sm">
-        <h5 class="fw-bold text-warning"><i class="bi bi-house"></i> {{ b.nombre }}</h5>
-        <p class="small text-muted mb-2"><i class="bi bi-geo-alt"></i> {{ b.ubicacion or "—" }}</p>
-        <div class="small mb-2"><b>Huerto:</b> {{ b.huerto.nombre if b.huerto else "—" }}</div>
-        <div class="small"><b>Responsable:</b> {{ b.responsable.name if b.responsable else "Sin asignar" }}</div>
-        <div class="d-flex gap-2 mt-3">
-          <a href="{{ url_for('admin.ver_quimicos', bodega_id=b.id) }}" class="btn btn-outline-success btn-sm"><i class="bi bi-flask"></i> Químicos</a>
-          <a href="{{ url_for('admin.editar_bodega', bodega_id=b.id) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> Editar</a>
+      <div class="b-card">
+        <h6><i class="bi bi-box-seam-fill"></i>{{ b.nombre }}</h6>
+        <div class="b-info"><i class="bi bi-geo-alt me-1"></i>{{ b.ubicacion or "—" }}</div>
+        <div class="b-info"><strong>Huerto:</strong> {{ b.huerto.nombre if b.huerto else "—" }}</div>
+        <div class="b-info"><strong>Responsable:</strong> {{ b.responsable.name if b.responsable else "Sin asignar" }}</div>
+        <div class="b-btns">
+          <a href="{{ url_for('admin.ver_quimicos', bodega_id=b.id) }}" style="background:#ecfdf5;color:#16a34a;border:1px solid #bbf7d0"><i class="bi bi-droplet me-1"></i>Químicos</a>
+          <a href="{{ url_for('admin.editar_bodega', bodega_id=b.id) }}" style="background:#f9fafb;color:#374151;border:1px solid #e8ede9"><i class="bi bi-pencil me-1"></i>Editar</a>
         </div>
       </div>
     </div>
+    {% else %}
+    <div class="col-12"><p class="text-muted text-center py-4">No hay bodegas registradas.</p></div>
     {% endfor %}
   </div>
 
-  <!-- ========= TÉCNICOS ========= -->
-  <h4 class="text-info mt-5 mb-3"><i class="bi bi-person-gear"></i> Técnicos</h4>
-  <div class="card shadow-sm fade-in">
-    <table class="table mb-0 align-middle">
-      <thead class="table-light">
-        <tr><th>Nombre</th><th>Email</th><th class="text-end">Acciones</th></tr>
+  <!-- ===== TÉCNICOS ===== -->
+  <div class="sec-head mt-4">
+    <h4><span class="dot" style="background:#2563eb"></span> Técnicos</h4>
+    <a href="{{ url_for('admin.crear_tecnico') }}" class="sec-link"><i class="bi bi-plus-circle"></i> Nuevo</a>
+  </div>
+  <div class="t-table mb-4">
+    <table class="table">
+      <thead>
+        <tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th class="text-end">Acciones</th></tr>
       </thead>
       <tbody>
         {% for t in tecnicos %}
         <tr>
-          <td><i class="bi bi-person-circle text-success"></i> {{ t.name }}</td>
-          <td class="text-muted small">{{ t.email }}</td>
-          <td class="text-end">
-            <a href="{{ url_for('admin.reset_password', tecnico_id=t.id) }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-shield-lock"></i></a>
-            <a href="{{ url_for('admin.editar_tecnico', tecnico_id=t.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil-square"></i></a>
+          <td class="t-name"><i class="bi bi-person-circle me-2" style="color:#22c55e"></i>{{ t.name }}</td>
+          <td class="t-email">{{ t.email }}</td>
+          <td class="t-phone">{{ t.telefono or "—" }}</td>
+          <td class="text-end t-actions">
+            <a href="{{ url_for('admin.reset_password', tecnico_id=t.id) }}" class="warn" title="Resetear contraseña"><i class="bi bi-shield-lock"></i></a>
+            <a href="{{ url_for('admin.editar_tecnico', tecnico_id=t.id) }}" title="Editar"><i class="bi bi-pencil-square"></i></a>
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="3" class="text-center text-muted">No hay técnicos registrados.</td></tr>
+        <tr><td colspan="4" class="text-center text-muted py-4">No hay técnicos registrados.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 
-  <!-- ========= RECOMENDACIONES ========= -->
-  <h4 class="text-primary mt-5 mb-3"><i class="bi bi-chat-square-dots"></i> Recomendaciones recientes</h4>
-  <div class="card border-info shadow-sm fade-in">
-    <div class="card-body p-3" style="max-height: 250px; overflow-y: auto;">
-      {% if ultimas_recomendaciones %}
-      <ul class="list-group list-group-flush">
-        {% for r in ultimas_recomendaciones %}
-        <li class="list-group-item small">
-          <b class="text-success">{{ r.tecnico.name }}</b>: {{ r.contenido|truncate(60) }}
-          <br><span class="text-muted"><i class="bi bi-calendar-event"></i> {{ r.fecha.strftime('%d-%m-%Y') }}</span>
-        </li>
-        {% endfor %}
-      </ul>
+  <!-- Pagination técnicos -->
+  {% if tecnicos_paginados.pages > 1 %}
+  <div class="pg mb-4">
+    {% for p in tecnicos_paginados.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if p %}
+        <a href="{{ url_for('admin.admin_dashboard', page_tecnicos=p, page_huertos=request.args.get('page_huertos',1)) }}" class="{% if p == tecnicos_paginados.page %}active{% endif %}">{{ p }}</a>
       {% else %}
-      <div class="text-muted text-center">Sin recomendaciones aún.</div>
+        <span>…</span>
       {% endif %}
-      <div class="text-center mt-3">
-        <a href="{{ url_for('admin.recomendar') }}" class="btn btn-info text-white btn-sm"><i class="bi bi-plus-circle"></i> Agregar Recomendación</a>
-      </div>
-    </div>
+    {% endfor %}
   </div>
-</div>
+  {% endif %}
 
-<!-- ========= AGROBOT JS ========= -->
-<script>
-(function(){
-  const box=document.getElementById('agrobotBox'),
-        showBtn=document.getElementById('showAgrobotBtn'),
-        hideBtn=document.getElementById('hideAgrobotBtn'),
-        KEY='agrobotHiddenAdmin';
-  function toggle(hidden){
-    box.style.display=hidden?'none':'block';
-    showBtn.style.display=hidden?'inline-flex':'none';
-  }
-  toggle(localStorage.getItem(KEY)==='true');
-  hideBtn.addEventListener('click',()=>{localStorage.setItem(KEY,'true');toggle(true);});
-  showBtn.addEventListener('click',()=>{localStorage.setItem(KEY,'false');toggle(false);});
-})();
-</script>
+  <!-- ===== RECOMENDACIONES ===== -->
+  <div class="sec-head mt-4">
+    <h4><span class="dot" style="background:#8b5cf6"></span> Recomendaciones recientes</h4>
+    <a href="{{ url_for('admin.recomendar') }}" class="sec-link"><i class="bi bi-plus-circle"></i> Nueva</a>
+  </div>
+  <div class="rec-list mb-4">
+    {% if ultimas_recomendaciones %}
+      {% for r in ultimas_recomendaciones %}
+      <div class="rec-item">
+        <div class="rec-av"><i class="bi bi-chat-dots-fill"></i></div>
+        <div class="rec-body">
+          <strong>{{ r.tecnico.name }}</strong>
+          <p>{{ r.contenido|truncate(80) }}</p>
+        </div>
+        <div class="rec-date"><i class="bi bi-calendar3 me-1"></i>{{ r.fecha.strftime('%d-%m-%Y') }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="text-muted text-center py-4">Sin recomendaciones aún.</div>
+    {% endif %}
+  </div>
+
+</div>
 {% endblock %}

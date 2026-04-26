@@ -1,549 +1,543 @@
 {% extends "base.html" %}
-{% block title %}Panel Técnico{% endblock %}
+{% block title %}Panel Técnico | AgroDESK{% endblock %}
 
 {% block content %}
+<style>
+  /* ===== RESET & BASE ===== */
+  body{background:#f4f7f5 !important}
+  .dash{font-family:'Inter',system-ui,sans-serif}
 
-<!-- ===== Hero / Presentación ===== -->
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
-    <div class="flex-grow-1">
-      <h2 class="text-success mb-1"><i class="bi bi-clipboard2-pulse"></i> Bienvenido a AgroDESK</h2>
-      <p class="text-muted mb-0">
-        Administra tus <strong>huertos</strong>, <strong>bodegas y químicos</strong>, registra <strong>actividades</strong> y consulta <strong>recomendaciones</strong> técnicas.
-      </p>
-    </div>
-    <div class="d-flex flex-wrap gap-2">
-      <a href="{{ url_for('tecnico.registrar_actividad') }}" class="btn btn-success">
-        <i class="bi bi-plus-circle"></i> Registrar actividad
-      </a>
-      <a href="{{ url_for('geo.mapa') }}" class="btn btn-outline-success">
-        <i class="bi bi-geo"></i> Ver mapa
-      </a>
-      <a href="{{ url_for('tecnico.ver_recomendaciones') }}" class="btn btn-outline-primary">
-        <i class="bi bi-chat-dots"></i> Recomendaciones
-      </a>
+  /* ===== WELCOME BANNER ===== */
+  .welcome-banner{
+    background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%);
+    border-radius:18px;padding:2rem 2.2rem;color:#fff;
+    position:relative;overflow:hidden;margin-bottom:1.8rem;
+    box-shadow: 0 10px 30px rgba(6,78,59,0.15);
+  }
+  .welcome-banner::before{
+    content:'';position:absolute;top:-60px;right:-40px;
+    width:280px;height:280px;border-radius:50%;
+    background:radial-gradient(circle,rgba(52,211,153,.15),transparent 70%);
+    pointer-events:none;
+  }
+  .welcome-banner h2{font-weight:800;font-size:1.6rem;margin-bottom:.3rem}
+  .welcome-banner .sub{color:#a7f3d0;font-size:.9rem;font-weight:500}
+  .welcome-banner .actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.2rem}
+  .welcome-banner .actions .btn{
+    border-radius:10px;font-size:.85rem;font-weight:600;
+    padding:.5rem 1rem;border:1.5px solid rgba(255,255,255,.2);
+    color:#fff;background:rgba(255,255,255,.08);
+    backdrop-filter:blur(4px);transition:all .2s;
+  }
+  .welcome-banner .actions .btn:hover{
+    background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);
+    transform:translateY(-1px);
+  }
+  .welcome-banner .actions .btn i{margin-right:.4rem}
+
+  /* ===== KPI GRID ===== */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+  .kpi{
+    background:#fff;border-radius:16px;padding:1.3rem;
+    border:1px solid #e8ede9;transition:all .25s;
+    display:flex;flex-direction:column;
+  }
+  .kpi:hover{transform:translateY(-4px);box-shadow:0 12px 24px rgba(0,0,0,.06)}
+  .kpi .kpi-ic{
+    width:40px;height:40px;border-radius:10px;display:grid;place-items:center;
+    font-size:1.2rem;margin-bottom:1rem;
+  }
+  .kpi .kpi-ic.green{background:#ecfdf5;color:#059669}
+  .kpi .kpi-ic.amber{background:#fffbeb;color:#d97706}
+  .kpi .kpi-ic.blue{background:#eff6ff;color:#2563eb}
+  .kpi .kpi-ic.purple{background:#faf5ff;color:#7c3aed}
+  
+  .kpi .kpi-val{font-size:1.7rem;font-weight:800;color:#064e3b;line-height:1.1}
+  .kpi .kpi-lbl{font-size:.82rem;color:#6b7b72;margin-top:.3rem;font-weight:600}
+
+  /* ===== MODERN TABS ===== */
+  .nav-pills-custom{
+    background:rgba(0,0,0,0.03);padding:.4rem;border-radius:14px;
+    display:inline-flex;gap:.2rem;margin-bottom:1.5rem;
+  }
+  .nav-pills-custom .nav-link{
+    border-radius:10px;padding:.5rem 1.2rem;font-size:.85rem;
+    font-weight:700;color:#059669 !important;border:none;transition:all .2s;
+    opacity: 0.7;
+  }
+  .nav-pills-custom .nav-link:hover{
+    opacity: 1;
+    color: #047857 !important;
+  }
+  .nav-pills-custom .nav-link.active{
+    background:#fff !important;color:#059669 !important;box-shadow:0 4px 12px rgba(0,0,0,0.05);
+    opacity: 1;
+  }
+
+  /* ===== HUERTO CARDS ===== */
+  .h-card{
+    background:#fff;border-radius:16px;border:1px solid #e8ede9;
+    overflow:hidden;transition:all .25s;height:100%;
+    display:flex;flex-direction:column;
+  }
+  .h-card:hover{transform:translateY(-5px);box-shadow:0 15px 35px rgba(0,0,0,0.08)}
+  .h-card .h-header{
+    padding:1.2rem;background:#f9fafb;border-bottom:1px solid #f3f4f6;
+    display:flex;justify-content:space-between;align-items:flex-start;
+  }
+  .h-card .h-header h6{font-weight:700;color:#111827;margin:0;font-size:1rem}
+  .h-card .h-header .badge{
+    font-size:.7rem;padding:.3rem .6rem;border-radius:6px;
+    background:#fff;border:1px solid #e5e7eb;color:#6b7280;
+  }
+  .h-card .h-body{padding:1.2rem;flex-grow:1}
+  .h-card .h-info{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem}
+  .h-card .h-info-item{display:flex;align-items:center;gap:.5rem}
+  .h-card .h-info-item i{color:#10b981;font-size:.9rem}
+  .h-card .h-info-item span{font-size:.8rem;color:#6b7280;display:block;line-height:1.2}
+  .h-card .h-info-item strong{font-size:.85rem;color:#111827;display:block}
+  
+  .h-card .h-footer{
+    padding:1rem 1.2rem;background:#fff;border-top:1px solid #f3f4f6;
+    display:flex;flex-wrap:wrap;gap:.4rem;
+  }
+  .h-card .btn-action{
+    flex:1 1 auto;font-size:.75rem;font-weight:700;padding:.45rem .6rem;
+    border-radius:8px;text-decoration:none;transition:all .15s;
+    display:inline-flex;align-items:center;justify-content:center;gap:.3rem;
+    background:#f9fafb;border:1px solid #e5e7eb;color:#374151;
+  }
+  .h-card .btn-action:hover{background:#ecfdf5;color:#059669;border-color:#10b981}
+  .h-card .btn-action.primary{background:#059669;color:#fff;border-color:#059669}
+  .h-card .btn-action.primary:hover{background:#047857}
+
+  /* ===== BODEGA CARDS ===== */
+  .b-card{
+    background:#fff;border-radius:16px;border:1px solid #e8ede9;
+    padding:1.3rem;transition:all .25s;height:100%;
+    border-top:4px solid #f59e0b;
+  }
+  .b-card:hover{transform:translateY(-4px);box-shadow:0 12px 24px rgba(0,0,0,0.06)}
+  .b-card h6{font-weight:800;color:#111827;margin-bottom:.8rem;font-size:.95rem}
+  .b-card .b-meta{font-size:.82rem;color:#6b7280;margin-bottom:.4rem;display:flex;align-items:center;gap:.4rem}
+  .b-card .b-meta i{color:#f59e0b}
+  .b-card .b-stats{
+    margin-top:1rem;padding-top:1rem;border-top:1px solid #f3f4f6;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .b-card .btn-sm{font-weight:700;border-radius:8px;font-size:.75rem}
+
+  /* ===== AGROBOT BOX ===== */
+  .agrobot-banner{
+    background:#fff;border-radius:18px;padding:1.5rem;
+    border:1px solid #d1fae5;margin-bottom:2rem;
+    display:flex;gap:1.2rem;position:relative;
+  }
+  .agrobot-banner .bot-av{
+    width:50px;height:50px;border-radius:12px;background:#ecfdf5;
+    display:grid;place-items:center;font-size:1.8rem;flex-shrink:0;
+  }
+  .agrobot-banner h5{font-weight:800;color:#065f46;margin-bottom:.5rem}
+  .agrobot-banner p{font-size:.85rem;color:#065f46;opacity:.85;margin-bottom:.8rem}
+  .agrobot-banner .btn-close-bot{
+    position:absolute;top:1rem;right:1rem;background:none;border:none;color:#059669;opacity:.5;
+  }
+  .agrobot-banner .btn-close-bot:hover{opacity:1}
+
+  /* ===== PAGINATION ===== */
+  .pagination{gap:.3rem}
+  .pagination .page-link{
+    border-radius:8px;border:1px solid #e5e7eb;color:#059669 !important;
+    font-weight:600;font-size:.85rem;padding:.4rem .8rem;
+  }
+  .pagination .page-item.active .page-link{
+    background:#059669 !important;border-color:#059669 !important;color:#fff !important;
+  }
+  .pagination .page-link:hover{background:#ecfdf5 !important;color:#059669 !important;border-color:#10b981 !important}
+
+  /* ===== LISTS & TABLES ===== */
+  .custom-card{background:#fff;border-radius:16px;border:1px solid #e8ede9;overflow:hidden}
+  .custom-card-header{padding:1.2rem;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center}
+  .custom-card-header h6{font-weight:800;margin:0;color:#111827}
+  
+  .rec-item{padding:1.1rem 1.3rem;border-bottom:1px solid #f3f4f6;display:flex;gap:1rem}
+  .rec-item:last-child{border-bottom:none}
+  .rec-item .rec-ic{width:36px;height:36px;border-radius:9px;background:#f0fdf4;color:#10b981;display:grid;place-items:center;flex-shrink:0}
+  .rec-item .rec-content{flex:1}
+  .rec-item .rec-content strong{font-size:.85rem;color:#111827;display:block;margin-bottom:.1rem}
+  .rec-item .rec-content p{font-size:.82rem;color:#6b7280;margin:0}
+  .rec-item .rec-date{font-size:.72rem;color:#9ca3af;font-weight:600}
+
+  .activity-item{padding:.9rem 1.2rem;border-bottom:1px solid #f3f4f6}
+  .activity-item:last-child{border-bottom:none}
+  .activity-item .a-top{display:flex;justify-content:space-between;font-size:.72rem;color:#9ca3af;font-weight:600;margin-bottom:.2rem}
+  .activity-item .a-title{font-size:.85rem;font-weight:700;color:#111827;text-transform:capitalize}
+  .activity-item .a-desc{font-size:.8rem;color:#6b7280;margin-top:.1rem}
+
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:992px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:576px){
+    .welcome-banner{padding:1.5rem}
+    .kpi-grid{grid-template-columns:1fr 1fr}
+    .h-info{grid-template-columns:1fr}
+    .nav-pills-custom{width:100%;overflow-x:auto;display:flex;white-space:nowrap}
+  }
+</style>
+
+<div class="dash">
+
+  <!-- ===== WELCOME BANNER ===== -->
+  <div class="welcome-banner">
+    <h2><i class="bi bi-clipboard2-pulse me-2"></i>Bienvenido, {{ current_user.name }}</h2>
+    <div class="sub">Panel Técnico · Gestiona tus actividades y supervisa tus huertos asignados</div>
+    <div class="actions">
+      <a href="{{ url_for('tecnico.registrar_actividad') }}" class="btn"><i class="bi bi-plus-circle-fill"></i>Registrar Actividad</a>
+      <a href="{{ url_for('tecnico.ver_recomendaciones') }}" class="btn"><i class="bi bi-chat-dots-fill"></i>Ver Recomendaciones</a>
+      <a href="{{ url_for('geo.mapa') }}" class="btn"><i class="bi bi-geo-alt-fill"></i>Ver Mapa</a>
     </div>
   </div>
-</div>
 
-<!-- ===== AgroBot (visible por defecto) ===== -->
-<div id="agrobotBox" class="alert alert-success shadow-sm p-4 mb-4">
-  <div class="d-flex align-items-start gap-3">
-    <div class="fs-1" aria-hidden="true">🤖</div>
-    <div class="flex-grow-1">
-      <h4 class="fw-bold mb-2">Esto te recomienda tu asistente <span class="text-success">AgroBot</span></h4>
-      <p class="mb-2">
-        Con AgroDESK puedes llevar el <strong>histórico del campo</strong>: siembras, riegos, fertilizaciones y controles.
-        También verás tus <strong>bodegas</strong> con químicos y documentos que el administrador comparte contigo.
-      </p>
-      <ul class="mb-3 ps-3">
-        <li>Registra actividades y revisa la <strong>bitácora</strong> del huerto.</li>
-        <li>Consulta <strong>recomendaciones</strong> y marca las realizadas.</li>
-        <li>Descarga e imprime <strong>documentos</strong> del campo.</li>
-      </ul>
+  <!-- ===== KPIs ===== -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-ic green"><i class="bi bi-tree-fill"></i></div>
+      <div class="kpi-val">{{ huertos|length }}</div>
+      <div class="kpi-lbl">Huertos Asignados</div>
     </div>
-    <button id="hideAgrobotBtn" type="button" class="btn btn-outline-success btn-sm ms-auto" aria-label="Ocultar AgroBot">
-      <i class="bi bi-x-lg"></i> Ocultar
-    </button>
+    <div class="kpi">
+      <div class="kpi-ic amber"><i class="bi bi-box-seam-fill"></i></div>
+      <div class="kpi-val">{{ bodegas|length }}</div>
+      <div class="kpi-lbl">Bodegas a Cargo</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-ic blue"><i class="bi bi-clipboard-check-fill"></i></div>
+      <div class="kpi-val">{{ recomendaciones|length }}</div>
+      <div class="kpi-lbl">Recomendaciones</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-ic purple"><i class="bi bi-activity"></i></div>
+      <div class="kpi-val">{{ ult_actividades|length }}</div>
+      <div class="kpi-lbl">Activ. Recientes</div>
+    </div>
   </div>
-</div>
 
-<!-- ===== Botón flotante para volver a mostrar AgroBot ===== -->
-<button id="showAgrobotBtn" type="button" class="btn btn-success agrobot-fab" style="display:none;" aria-label="Mostrar AgroBot">
-  🤖 AgroBot
-</button>
-
-<div class="container py-4">
-
-  <!-- Header -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3">
+  <!-- ===== AGROBOT BANNER ===== -->
+  <div id="agrobotBox" class="agrobot-banner">
+    <button id="hideAgrobotBtn" class="btn-close-bot"><i class="bi bi-x-lg"></i></button>
+    <div class="bot-av">🤖</div>
     <div>
-      <h2 class="text-success mb-1"><i class="bi bi-person-circle"></i> Hola, {{ current_user.name }}</h2>
-      <div class="text-muted">Panel Técnico — <strong>{{ current_user.role|capitalize }}</strong></div>
-    </div>
-    <div class="d-flex flex-wrap gap-2 w-100 w-md-auto">
-      <a href="{{ url_for('tecnico.ver_recomendaciones') }}" class="btn btn-outline-success w-100 w-sm-auto">
-        <i class="bi bi-chat-dots"></i> Ver Recomendaciones
-      </a>
-      <a href="{{ url_for('tecnico.registrar_actividad') }}" class="btn btn-success w-100 w-sm-auto">
-        <i class="bi bi-plus-circle"></i> Registrar actividad
-      </a>
+      <h5>Tu Asistente AgroBot</h5>
+      <p>
+        Optimiza tu gestión: registra actividades fitosanitarias, riegos y fertilizaciones directamente desde el campo.
+        Revisa las recomendaciones del administrador y mantén el inventario de químicos al día.
+      </p>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('tecnico.registrar_actividad') }}" class="btn btn-sm" style="background:#059669;color:#fff;font-weight:700">Nueva Actividad</a>
+        <a href="{{ url_for('tecnico.ver_recomendaciones') }}" class="btn btn-sm" style="background:rgba(5,150,105,0.1);color:#059669;font-weight:700">Ver Consejos</a>
+      </div>
     </div>
   </div>
+  <button id="showAgrobotBtn" class="btn btn-success shadow-lg agrobot-fab" style="display:none;border-radius:12px;font-weight:800;padding:.6rem 1rem">🤖 AgroBot</button>
 
-  <!-- Chips resumen -->
-  <div class="d-flex flex-wrap gap-2 mb-3">
-    <span class="badge bg-success-subtle text-success-emphasis px-3 py-2">
-      <i class="bi bi-tree-fill me-1"></i> {{ huertos|length }} huerto(s)
-    </span>
-    <span class="badge bg-warning-subtle text-warning-emphasis px-3 py-2">
-      <i class="bi bi-box-seam me-1"></i> {{ bodegas|length }} bodega(s)
-    </span>
-    <span class="badge bg-info-subtle text-info-emphasis px-3 py-2">
-      <i class="bi bi-clipboard-check me-1"></i> {{ recomendaciones|length }} recomendación(es)
-    </span>
-    {% if notificaciones and notificaciones|length %}
-    <span class="badge bg-secondary-subtle text-secondary-emphasis px-3 py-2">
-      <i class="bi bi-bell me-1"></i> {{ notificaciones|length }} notificación(es)
-    </span>
-    {% endif %}
-  </div>
-
-  <!-- Tabs -->
-  <ul class="nav nav-tabs no-print" id="techTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="tab-huertos" data-bs-toggle="tab" data-bs-target="#pane-huertos" type="button" role="tab">Huertos</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="tab-bodegas" data-bs-toggle="tab" data-bs-target="#pane-bodegas" type="button" role="tab">Bodegas</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="tab-recos" data-bs-toggle="tab" data-bs-target="#pane-recos" type="button" role="tab">Recomendaciones</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="tab-docs" data-bs-toggle="tab" data-bs-target="#pane-docs" type="button" role="tab">Documentos</button>
-    </li>
-    <li class="nav-item ms-auto" role="presentation">
-      <button class="nav-link" id="tab-activity" data-bs-toggle="tab" data-bs-target="#pane-activity" type="button" role="tab">
-        Actividad reciente
-      </button>
-    </li>
+  <!-- ===== TABS ===== -->
+  <ul class="nav nav-pills nav-pills-custom" id="techTabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#pane-huertos" type="button">Huertos</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#pane-bodegas" type="button">Bodegas</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#pane-recos" type="button">Recomendaciones</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#pane-docs" type="button">Documentos</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#pane-activity" type="button">Historial</button></li>
   </ul>
 
-  <div class="tab-content mt-3">
-
-    <!-- ===== HUERTOS ===== -->
-    <div class="tab-pane fade show active" id="pane-huertos" role="tabpanel" aria-labelledby="tab-huertos">
-      <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body row g-2 align-items-end">
-          <div class="col-12 col-sm-7 col-md-6">
-            <label class="form-label small mb-1">Buscar huerto</label>
-            <input id="qHuertos" type="search" class="form-control" placeholder="Nombre, ubicación o cultivo">
+  <div class="tab-content" id="techTabsContent">
+    
+    <!-- ===== HUERTOS PANE ===== -->
+    <div class="tab-pane fade show active" id="pane-huertos">
+      <div class="row g-3 mb-4 align-items-center">
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input id="qHuertos" type="text" class="form-control border-start-0" placeholder="Buscar huerto por nombre o ubicación...">
           </div>
-          <div class="col-6 col-sm-5 col-md-3">
-            <label class="form-label small mb-1">Ordenar por</label>
-            <select id="sortHuertos" class="form-select">
-              <option value="nombre">Nombre (A–Z)</option>
-              <option value="superficie">Superficie (↓)</option>
-            </select>
-          </div>
-          <div class="col-6 col-sm-12 col-md-3">
-            <label class="form-label small mb-1">Acciones</label>
-            <div class="d-flex flex-wrap gap-2">
-              <a class="btn btn-outline-secondary flex-grow-1" href="{{ url_for('tecnico.tecnico_dashboard') }}">Limpiar</a>
-              <a class="btn btn-outline-success flex-grow-1" href="{{ url_for('geo.mapa') }}?focus=my">
-                <i class="bi bi-geo"></i> Ver mapa
-              </a>
-            </div>
-          </div>
+        </div>
+        <div class="col-md-3">
+          <select id="sortHuertos" class="form-select">
+            <option value="nombre">Ordenar por nombre</option>
+            <option value="superficie">Mayor superficie</option>
+          </select>
+        </div>
+        <div class="col-md-3 text-end">
+          <a href="{{ url_for('geo.mapa') }}?focus=my" class="btn btn-outline-success w-100 fw-bold border-2" style="border-radius:10px"><i class="bi bi-geo-alt me-2"></i>Ver en Mapa</a>
         </div>
       </div>
 
-      <!-- Grid Huertos -->
       <div class="row g-4" id="gridHuertos">
         {% for h in huertos %}
-        <div class="col-12 col-md-6 col-lg-4 card-huerto"
-             data-name="{{ (h.nombre or '')|lower }}"
-             data-ubic="{{ (h.ubicacion or '')|lower }}"
-             data-cult="{{ (h.tipo_cultivo or '')|lower }}"
+        <div class="col-12 col-md-6 col-lg-4 card-huerto" 
+             data-name="{{ (h.nombre or '')|lower }}" 
+             data-ubic="{{ (h.ubicacion or '')|lower }}" 
+             data-cult="{{ (h.tipo_cultivo or '')|lower }}" 
              data-sup="{{ h.superficie_ha or 0 }}">
-          <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-              <div class="fw-semibold"><i class="bi bi-tree-fill text-success"></i> {{ h.nombre }}</div>
-              <div class="d-flex gap-2 align-items-center">
-                {% if not h.center_lat or not h.center_lng %}
-                  <span class="badge bg-secondary-subtle text-secondary-emphasis">Sin centro</span>
-                {% endif %}
-                <span class="badge bg-light text-success">ID {{ h.id }}</span>
+          <div class="h-card">
+            <div class="h-header">
+              <div>
+                <h6>{{ h.nombre }}</h6>
+                <div class="small text-muted">ID: {{ h.id }}</div>
               </div>
+              <span class="badge">{{ h.tipo_cultivo or 'Sin cultivo' }}</span>
             </div>
-            <div class="card-body">
-              <div class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> {{ h.ubicacion or "—" }}</div>
-              <div class="row g-2 small">
-                <div class="col-6"><strong>Cultivo:</strong> {{ h.tipo_cultivo or "—" }}</div>
-                <div class="col-6"><strong>Superficie:</strong> {{ '%.2f'|format(h.superficie_ha or 0) }} ha</div>
-                <div class="col-12">
-                  <strong>Técnico:</strong>
-                  <span class="badge {{ 'bg-success-subtle text-success-emphasis' if h.responsable else 'bg-warning-subtle text-warning-emphasis' }}">
-                    {{ h.responsable.name if h.responsable else 'Sin asignar' }}
-                  </span>
+            <div class="h-body">
+              <div class="h-info">
+                <div class="h-info-item">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <div><span>Ubicación</span><strong>{{ h.ubicacion or '—' }}</strong></div>
+                </div>
+                <div class="h-info-item">
+                  <i class="bi bi-rulers"></i>
+                  <div><span>Superficie</span><strong>{{ '%.2f'|format(h.superficie_ha or 0) }} ha</strong></div>
+                </div>
+                <div class="h-info-item">
+                  <i class="bi bi-box-seam"></i>
+                  <div><span>Bodegas</span><strong>{{ h.bodegas|length }} un.</strong></div>
+                </div>
+                <div class="h-info-item">
+                  <i class="bi bi-journal-text"></i>
+                  <div><span>Últ. Registro</span><strong>{{ h.bitacora|length if h.bitacora else '0' }} totales</strong></div>
                 </div>
               </div>
             </div>
-            <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-between">
-              <span class="small text-muted"><i class="bi bi-archive"></i> Bodegas: <strong>{{ h.bodegas|length }}</strong></span>
-              <div class="d-flex flex-wrap gap-2">
-              <a class="btn btn-sm btn-outline-primary d-inline-flex align-items-center"
-                href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" title="Bitácora">
-                <i class="bi bi-journal-text me-1"></i><span>Bitácora</span>
-              </a>
-
-              <a class="btn btn-sm btn-outline-info d-inline-flex align-items-center"
-                href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" title="Nueva actividad">
-                <i class="bi bi-plus-lg me-1"></i><span>Nueva actividad</span>
-              </a>
-
-              <a class="btn btn-sm btn-outline-success d-inline-flex align-items-center"
-                href="{{ url_for('geo.mapa') }}?focus=huerto:{{ h.id }}" title="Ver en mapa">
-                <i class="bi bi-geo-alt me-1"></i><span>Ver en mapa</span>
-              </a>
-
-              <a class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center"
-                href="{{ url_for('docs.admin_panel', huerto_id=h.id, next=request.full_path) }}" title="Documentos">
-                <i class="bi bi-file-earmark-text me-1"></i><span>Documentos</span>
-              </a>
-            </div>
-
+            <div class="h-footer">
+              <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" class="btn-action primary"><i class="bi bi-journal-check"></i>Bitácora</a>
+              <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn-action"><i class="bi bi-plus-lg"></i>Nueva Activ.</a>
+              <a href="{{ url_for('geo.mapa') }}?focus=huerto:{{ h.id }}" class="btn-action"><i class="bi bi-geo-alt"></i>Mapa</a>
+              <a href="{{ url_for('docs.admin_panel', huerto_id=h.id) }}" class="btn-action"><i class="bi bi-file-earmark-pdf"></i>Docs</a>
             </div>
           </div>
         </div>
         {% else %}
-        <div class="col-12">
-          <div class="alert alert-info text-center">
-            <i class="bi bi-info-circle"></i> No tienes huertos asignados aún.
-          </div>
+        <div class="col-12 text-center py-5">
+          <i class="bi bi-tree text-muted" style="font-size:3rem"></i>
+          <p class="mt-2 text-muted fw-semibold">No tienes huertos asignados aún.</p>
         </div>
         {% endfor %}
       </div>
 
       {% if huertos_paginados and huertos_paginados.pages > 1 %}
-      <nav aria-label="Paginación de huertos" class="mt-4">
+      <nav class="mt-5">
         <ul class="pagination justify-content-center">
-          {% if huertos_paginados.has_prev %}
-          <li class="page-item"><a class="page-link text-success" href="{{ url_for('tecnico.tecnico_dashboard', page=1) }}">&laquo;&laquo;</a></li>
-          <li class="page-item"><a class="page-link text-success" href="{{ url_for('tecnico.tecnico_dashboard', page=huertos_paginados.prev_num) }}">&laquo;</a></li>
-          {% else %}
-          <li class="page-item disabled"><span class="page-link">&laquo;&laquo;</span></li>
-          <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-          {% endif %}
-
           {% for page_num in huertos_paginados.iter_pages() %}
             {% if page_num %}
-              {% if page_num != huertos_paginados.page %}
-                <li class="page-item"><a class="page-link text-success" href="{{ url_for('tecnico.tecnico_dashboard', page=page_num) }}">{{ page_num }}</a></li>
-              {% else %}
-                <li class="page-item active"><span class="page-link bg-success border-success">{{ page_num }}</span></li>
-              {% endif %}
+              <li class="page-item {% if page_num == huertos_paginados.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('tecnico.tecnico_dashboard', page=page_num) }}">{{ page_num }}</a>
+              </li>
             {% else %}
               <li class="page-item disabled"><span class="page-link">…</span></li>
             {% endif %}
           {% endfor %}
-
-          {% if huertos_paginados.has_next %}
-          <li class="page-item"><a class="page-link text-success" href="{{ url_for('tecnico.tecnico_dashboard', page=huertos_paginados.next_num) }}">&raquo;</a></li>
-          <li class="page-item"><a class="page-link text-success" href="{{ url_for('tecnico.tecnico_dashboard', page=huertos_paginados.pages) }}">&raquo;&raquo;</a></li>
-          {% else %}
-          <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-          <li class="page-item disabled"><span class="page-link">&raquo;&raquo;</span></li>
-          {% endif %}
         </ul>
       </nav>
       {% endif %}
     </div>
 
-    <!-- ===== BODEGAS ===== -->
-    <div class="tab-pane fade" id="pane-bodegas" role="tabpanel" aria-labelledby="tab-bodegas">
-      <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body">
-          <label class="form-label small mb-1">Buscar bodega</label>
-          <input id="qBodegas" type="search" class="form-control" placeholder="Nombre o ubicación">
-        </div>
-      </div>
-
+    <!-- ===== BODEGAS PANE ===== -->
+    <div class="tab-pane fade" id="pane-bodegas">
       <div class="row g-4" id="gridBodegas">
         {% for b in bodegas %}
         <div class="col-12 col-md-6 col-lg-4 card-bodega"
              data-name="{{ (b.nombre or '')|lower }}"
              data-ubic="{{ (b.ubicacion or '')|lower }}"
              data-huerto="{{ (b.huerto.nombre if b.huerto else '')|lower }}">
-          <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-              <strong><i class="bi bi-house-door-fill text-success"></i> {{ b.nombre }}</strong>
-              <span class="badge bg-light text-success">ID {{ b.id }}</span>
-            </div>
-            <div class="card-body">
-              <div class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> {{ b.ubicacion or "No especificada" }}</div>
-              <div class="small"><strong>Huerto:</strong> {{ b.huerto.nombre if b.huerto else "—" }}</div>
-              <div class="small"><strong>Responsable:</strong> {{ b.responsable.name if b.responsable else "—" }}</div>
-              <div class="mt-2 small"><i class="bi bi-flask"></i> Químicos: <span class="badge bg-info">{{ b.quimicos|length }}</span></div>
-            </div>
-            <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-end">
-              <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=b.id) }}" class="btn btn-sm btn-outline-success">
-                <i class="bi bi-flask"></i> Ver Químicos
-              </a>
-              <a href="{{ url_for('tecnico.agregar_quimico', bodega_id=b.id) }}" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-plus-circle"></i> Agregar
-              </a>
+          <div class="b-card">
+            <h6><i class="bi bi-house-door-fill me-2" style="color:#f59e0b"></i>{{ b.nombre }}</h6>
+            <div class="b-meta"><i class="bi bi-geo-alt"></i>{{ b.ubicacion or "Ubicación no definida" }}</div>
+            <div class="b-meta"><i class="bi bi-tree"></i>Huerto: {{ b.huerto.nombre if b.huerto else "—" }}</div>
+            <div class="b-stats">
+              <span class="small fw-bold text-muted"><i class="bi bi-flask me-1"></i>{{ b.quimicos|length }} Químicos</span>
+              <div class="d-flex gap-2">
+                <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=b.id) }}" class="btn btn-sm btn-outline-success">Ver Todo</a>
+                <a href="{{ url_for('tecnico.agregar_quimico', bodega_id=b.id) }}" class="btn btn-sm btn-success"><i class="bi bi-plus-lg"></i></a>
+              </div>
             </div>
           </div>
         </div>
         {% else %}
-        <div class="col-12">
-          <div class="alert alert-info text-center">
-            <i class="bi bi-info-circle"></i> No tienes bodegas asignadas aún.
-          </div>
+        <div class="col-12 text-center py-5">
+          <p class="text-muted">No hay bodegas asignadas.</p>
         </div>
         {% endfor %}
       </div>
     </div>
 
-    <!-- ===== RECOMENDACIONES ===== -->
-    <div class="tab-pane fade" id="pane-recos" role="tabpanel" aria-labelledby="tab-recos">
-      <div class="card shadow-sm border-0">
-        <div class="card-header bg-white">
-          <strong><i class="bi bi-clipboard-check"></i> Recomendaciones recientes</strong>
+    <!-- ===== RECOMENDACIONES PANE ===== -->
+    <div class="tab-pane fade" id="pane-recos">
+      <div class="custom-card shadow-sm">
+        <div class="custom-card-header">
+          <h6>Recomendaciones del Administrador</h6>
+          <span class="badge bg-success-subtle text-success">{{ recomendaciones|length }} totales</span>
         </div>
         <div class="list-group list-group-flush">
           {% for r in recomendaciones %}
-          <div class="list-group-item list-group-item-action border-start border-success border-4">
-            <div class="d-flex w-100 justify-content-between">
-              <h6 class="mb-1"><i class="bi bi-calendar-event text-success"></i> {{ r.fecha.strftime('%d-%m-%Y') }}</h6>
-              {% if r.autor %}<small class="text-muted">Por: {{ r.autor.name }}</small>{% endif %}
+          <div class="rec-item">
+            <div class="rec-ic"><i class="bi bi-clipboard-check"></i></div>
+            <div class="rec-content">
+              <strong>Fecha: {{ r.fecha.strftime('%d-%m-%Y') }}</strong>
+              <p>{{ r.contenido }}</p>
+              {% if r.autor %}<div class="small text-muted mt-1">Enviado por: {{ r.autor.name }}</div>{% endif %}
             </div>
-            <p class="mb-1">📌 {{ r.contenido }}</p>
+            <div class="rec-date">{{ r.fecha.strftime('%H:%M') }}</div>
           </div>
           {% else %}
-          <div class="list-group-item text-muted text-center">No tienes recomendaciones aún.</div>
+          <div class="p-4 text-center text-muted">Sin recomendaciones pendientes.</div>
           {% endfor %}
         </div>
       </div>
     </div>
 
-    <!-- ===== DOCUMENTOS ===== -->
-    <div class="tab-pane fade" id="pane-docs" role="tabpanel" aria-labelledby="tab-docs">
-      <div class="card shadow-sm border-0">
-        <div class="card-header bg-white d-flex gap-2 align-items-center">
-          <strong><i class="bi bi-file-earmark-text"></i> Documentos</strong>
-          <div class="ms-auto d-flex gap-2">
-            <input id="qDocs" type="search" class="form-control form-control-sm" placeholder="Buscar título o categoría">
-            <button id="btnReloadDocs" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Refrescar</button>
+    <!-- ===== DOCUMENTOS PANE ===== -->
+    <div class="tab-pane fade" id="pane-docs">
+      <div class="custom-card shadow-sm">
+        <div class="custom-card-header">
+          <h6>Documentación de Campo</h6>
+          <div class="d-flex gap-2">
+            <input id="qDocs" type="text" class="form-control form-control-sm" placeholder="Filtrar por nombre...">
+            <button id="btnReloadDocs" class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-clockwise"></i></button>
           </div>
         </div>
         <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0" id="docsTable">
-            <thead><tr><th>Título</th><th>Categoría</th><th>Fecha</th><th class="text-end">Acciones</th></tr></thead>
-            <tbody id="docsBody"><tr><td colspan="4" class="text-muted p-3">Cargando…</td></tr></tbody>
+          <table class="table align-middle mb-0" id="docsTable" style="font-size:.85rem">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-4">Título</th>
+                <th>Categoría</th>
+                <th>Fecha</th>
+                <th class="text-end pe-4">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="docsBody">
+              <tr><td colspan="4" class="text-center p-4 text-muted">Cargando documentos...</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- ===== ACTIVIDAD RECIENTE ===== -->
-    <div class="tab-pane fade" id="pane-activity" role="tabpanel" aria-labelledby="tab-activity">
-      <div class="card shadow-sm border-0">
-        <div class="card-header bg-white"><strong><i class="bi bi-activity"></i> Últimas actividades en tus huertos</strong></div>
+    <!-- ===== ACTIVIDAD PANE ===== -->
+    <div class="tab-pane fade" id="pane-activity">
+      <div class="custom-card shadow-sm">
+        <div class="custom-card-header">
+          <h6>Historial de Actividades Recientes</h6>
+        </div>
         <div class="list-group list-group-flush">
           {% for a in ult_actividades %}
-          <div class="list-group-item">
-            <div class="d-flex justify-content-between small text-muted">
-              <span><i class="bi bi-tree"></i> {{ a.huerto.nombre if a.huerto else '—' }}</span>
-              <span><i class="bi bi-calendar-event"></i> {{ a.fecha.strftime('%d-%m-%Y') }}</span>
+          <div class="activity-item">
+            <div class="a-top">
+              <span><i class="bi bi-tree me-1"></i>{{ a.huerto.nombre if a.huerto else '—' }}</span>
+              <span>{{ a.fecha.strftime('%d-%m-%Y') }}</span>
             </div>
-            <div class="fw-semibold text-capitalize">{{ a.tipo|replace('_',' ') }}</div>
-            <div class="small">{{ a.descripcion|default('—') }}</div>
+            <div class="a-title">{{ a.tipo|replace('_',' ') }}</div>
+            <div class="a-desc">{{ a.descripcion|truncate(100) }}</div>
           </div>
           {% else %}
-          <div class="list-group-item text-muted text-center">Sin actividad reciente.</div>
+          <div class="p-4 text-center text-muted">Sin actividad registrada.</div>
           {% endfor %}
         </div>
       </div>
     </div>
 
-  </div> <!-- /tab-content -->
+  </div>
 </div>
 
-<style>
-/* Tabs scrolleables en móvil */
-@media (max-width: 576px) {
-  #techTabs { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; gap: .25rem; }
-  #techTabs .nav-link { white-space: nowrap; }
-}
-
-/* badges “subtle” si no usas Bootstrap 5.3 */
-.bg-success-subtle { background:#e6f4ea !important; color:#1e7e34 !important; }
-.text-success-emphasis { color:#1e7e34 !important; }
-.bg-warning-subtle { background:#fff4df !important; color:#b58100 !important; }
-.text-warning-emphasis { color:#b58100 !important; }
-.bg-info-subtle { background:#e7f5ff !important; color:#095aba !important; }
-.text-info-emphasis { color:#095aba !important; }
-.bg-secondary-subtle { background:#f0f2f4 !important; color:#5c636a !important; }
-.text-secondary-emphasis { color:#5c636a !important; }
-
-/* Tabla de documentos apilada en XS */
-@media (max-width: 576px) {
-  #docsTable thead { display: none; }
-  #docsTable tbody tr {
-    display: block;
-    margin-bottom: .75rem;
-    border: 1px solid #e9ecef;
-    border-radius: .5rem;
-    padding: .5rem .75rem;
-  }
-  #docsTable tbody td {
-    display: flex;
-    justify-content: space-between;
-    gap: .5rem;
-    border: 0 !important;
-    padding: .25rem 0 !important;
-  }
-  #docsTable tbody td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: #6c757d;
-  }
-  #docsTable tbody td:last-child { justify-content: flex-start; flex-wrap: wrap; gap: .5rem; }
-  #docsTable .btn { padding: .25rem .5rem; }
-}
-
-/* Botón flotante AgroBot */
-.agrobot-fab{
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1030;
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
-}
-
-/* Efecto hover tarjetas */
-.card { transition: transform .15s ease-in-out; }
-.card:hover { transform: translateY(-2px); }
-</style>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
 <script>
 (function(){
-  // ===== HUERTOS: búsqueda y orden =====
-  const qHuertos = document.getElementById('qHuertos');
-  const sortHuertos = document.getElementById('sortHuertos');
-  const gridHuertos = document.getElementById('gridHuertos');
-  const huertoCards = Array.from(document.querySelectorAll('.card-huerto'));
+  // --- HUERTOS SEARCH & SORT ---
+  const qH = document.getElementById('qHuertos');
+  const sH = document.getElementById('sortHuertos');
+  const gH = document.getElementById('gridHuertos');
+  const cards = Array.from(document.querySelectorAll('.card-huerto'));
 
-  function filterHuertos(){
-    const term = (qHuertos?.value || '').trim().toLowerCase();
-    huertoCards.forEach(c => {
-      const hit = [c.dataset.name, c.dataset.ubic, c.dataset.cult].some(v => (v||'').includes(term));
-      c.style.display = (!term || hit) ? '' : 'none';
+  function filter(){
+    const t = qH.value.trim().toLowerCase();
+    cards.forEach(c => {
+      const match = [c.dataset.name, c.dataset.ubic, c.dataset.cult].some(v => v.includes(t));
+      c.style.display = match ? '' : 'none';
     });
   }
-  function sortHuertosFn(){
-    if(!gridHuertos) return;
-    const mode = sortHuertos?.value || 'nombre';
-    const visible = huertoCards.filter(c => c.style.display !== 'none');
-    visible.sort((a,b)=>{
-      if(mode==='superficie'){
-        return (parseFloat(b.dataset.sup||0) - parseFloat(a.dataset.sup||0));
-      } else {
-        return (a.dataset.name||'').localeCompare(b.dataset.name||'');
-      }
+
+  function sort(){
+    const mode = sH.value;
+    const visible = cards.filter(c => c.style.display !== 'none');
+    visible.sort((a,b) => {
+      if(mode === 'superficie') return parseFloat(b.dataset.sup) - parseFloat(a.dataset.sup);
+      return a.dataset.name.localeCompare(b.dataset.name);
     });
-    visible.forEach(el => gridHuertos.appendChild(el));
+    visible.forEach(c => gH.appendChild(c));
   }
-  qHuertos?.addEventListener('input', ()=>{ filterHuertos(); sortHuertosFn(); });
-  sortHuertos?.addEventListener('change', sortHuertosFn);
 
-  // ===== BODEGAS: búsqueda =====
-  const qBodegas = document.getElementById('qBodegas');
-  const bodegaCards = Array.from(document.querySelectorAll('.card-bodega'));
-  qBodegas?.addEventListener('input', ()=>{
-    const t = qBodegas.value.trim().toLowerCase();
-    bodegaCards.forEach(c=>{
-      const hit = [c.dataset.name, c.dataset.ubic, c.dataset.huerto].some(v => (v||'').includes(t));
-      c.style.display = (!t || hit) ? '' : 'none';
-    });
-  });
+  qH?.addEventListener('input', () => { filter(); sort(); });
+  sH?.addEventListener('change', sort);
 
-  // ===== DOCUMENTOS: carga para huertos del técnico =====
-  const docsBody = document.getElementById('docsBody');
-  const qDocs = document.getElementById('qDocs');
-  const btnReloadDocs = document.getElementById('btnReloadDocs');
-
+  // --- DOCS LOADER ---
+  const dBody = document.getElementById('docsBody');
+  const btnR = document.getElementById('btnReloadDocs');
+  
   async function loadDocs(){
     try {
       const ids = {{ huertos|map(attribute='id')|list|tojson }};
-      docsBody.innerHTML = `<tr><td colspan="4" class="text-muted p-3">Cargando…</td></tr>`;
-      let items = [];
-      for (const hid of ids){
-        const r = await fetch(`/docs/list?huerto_id=${hid}`);
-        const ct = r.headers.get('content-type') || '';
-        if(!r.ok) throw new Error(`HTTP ${r.status}`);
-        if(!ct.includes('application/json')) throw new Error('Respuesta no JSON');
-        const data = await r.json();
-        if (data?.items?.length) items = items.concat(data.items);
-      }
-      items.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
-      if (!items.length){
-        docsBody.innerHTML = `<tr><td colspan="4" class="text-muted p-3">No hay documentos.</td></tr>`;
+      if(!ids.length) {
+        dBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No hay huertos asignados.</td></tr>';
         return;
       }
-      docsBody.innerHTML = items.map(d => `
-        <tr data-title="${(d.titulo||'').toLowerCase()}" data-cat="${(d.categoria||'').toLowerCase()}">
-          <td data-label="Título">${d.titulo}</td>
-          <td data-label="Categoría">${d.categoria || '—'}</td>
-          <td data-label="Fecha">${d.fecha || ''}</td>
-          <td data-label="Acciones" class="text-end text-md-end">
-            <a class="btn btn-sm btn-outline-primary" href="/docs/view/${d.id}" target="_blank">Ver</a>
-            <a class="btn btn-sm btn-outline-secondary" href="/docs/download/${d.id}">Descargar</a>
-            <button class="btn btn-sm btn-outline-dark" onclick="(function(w){w=window.open('/docs/view/${d.id}','_blank'); setTimeout(()=>{try{w.print()}catch(e){}},600)})()">Imprimir</button>
+      dBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Actualizando lista...</td></tr>';
+      let all = [];
+      for(const id of ids){
+        const r = await fetch(`/docs/list?huerto_id=${id}`);
+        if(r.ok) {
+          const data = await r.json();
+          if(data.items) all = all.concat(data.items);
+        }
+      }
+      if(!all.length){
+        dBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No se encontraron documentos.</td></tr>';
+        return;
+      }
+      dBody.innerHTML = all.map(d => `
+        <tr>
+          <td class="ps-4 fw-bold text-dark">${d.titulo}</td>
+          <td><span class="badge bg-light text-success border">${d.categoria || 'Sin cat.'}</span></td>
+          <td class="text-muted small">${d.fecha || '—'}</td>
+          <td class="text-end pe-4">
+            <div class="btn-group">
+              <a href="/docs/view/${d.id}" class="btn btn-sm btn-outline-success" target="_blank">Ver</a>
+              <a href="/docs/download/${d.id}" class="btn btn-sm btn-outline-secondary">Descargar</a>
+            </div>
           </td>
         </tr>
       `).join('');
-      applyDocSearch();
-    } catch (err){
-      console.error('Load docs error:', err);
-      docsBody.innerHTML = `<tr><td colspan="4" class="text-danger p-3">Error cargando documentos: ${err.message}</td></tr>`;
+    } catch(e){
+      dBody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-danger">Error al cargar.</td></tr>';
     }
   }
-  function applyDocSearch(){
-    const q = (qDocs?.value||'').trim().toLowerCase();
-    const rows = docsBody.querySelectorAll('tr');
-    let shown = 0;
-    rows.forEach(tr=>{
-      const ok = !q || (tr.dataset.title||'').includes(q) || (tr.dataset.cat||'').includes(q);
-      tr.style.display = ok ? '' : 'none';
-      if(ok) shown++;
-    });
-    if(!shown){
-      docsBody.innerHTML = `<tr><td colspan="4" class="text-muted p-3">Sin coincidencias.</td></tr>`;
-    }
+
+  btnR?.addEventListener('click', loadDocs);
+  document.querySelectorAll('[data-bs-target="#pane-docs"]').forEach(el => el.addEventListener('shown.bs.tab', loadDocs));
+
+  // --- AGROBOT PERSISTENCE ---
+  const box = document.getElementById('agrobotBox');
+  const sB = document.getElementById('showAgrobotBtn');
+  const hB = document.getElementById('hideAgrobotBtn');
+  const K = 'agrobotHidden_Tech';
+
+  function apply(h){
+    if(box) box.style.display = h ? 'none' : 'flex';
+    if(sB) sB.style.display = h ? 'inline-flex' : 'none';
   }
-  qDocs?.addEventListener('input', applyDocSearch);
-  btnReloadDocs?.addEventListener('click', loadDocs);
-  document.getElementById('tab-docs')?.addEventListener('shown.bs.tab', loadDocs);
 
-  // ===== AgroBot: persistir estado con localStorage =====
-  const BOX_ID = 'agrobotBox';
-  const SHOW_BTN_ID = 'showAgrobotBtn';
-  const HIDE_BTN_ID = 'hideAgrobotBtn';
-  const STORAGE_KEY = 'agrobotHidden'; // "true" | "false"
+  apply(localStorage.getItem(K) === 'true');
+  hB?.addEventListener('click', () => { localStorage.setItem(K, 'true'); apply(true); });
+  sB?.addEventListener('click', () => { localStorage.setItem(K, 'false'); apply(false); });
 
-  const box = document.getElementById(BOX_ID);
-  const showBtn = document.getElementById(SHOW_BTN_ID);
-  const hideBtn = document.getElementById(HIDE_BTN_ID);
-
-  function applyState(hidden) {
-    if (!box || !showBtn) return;
-    if (hidden) {
-      box.style.display = 'none';
-      showBtn.style.display = 'inline-flex';
-    } else {
-      box.style.display = 'block';
-      showBtn.style.display = 'none';
-    }
-  }
-  const isHidden = localStorage.getItem(STORAGE_KEY) === 'true';
-  applyState(isHidden);
-
-  hideBtn?.addEventListener('click', () => {
-    localStorage.setItem(STORAGE_KEY, 'true');
-    applyState(true);
-  });
-
-  showBtn?.addEventListener('click', () => {
-    localStorage.setItem(STORAGE_KEY, 'false');
-    applyState(false);
-  });
 })();
 </script>
+
 {% endblock %}

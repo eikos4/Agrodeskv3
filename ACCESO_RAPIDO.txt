@@ -1,0 +1,65 @@
+CREDENCIALES DE ACCESO RÁPIDO - AGRODESK V3.0
+===============================================
+
+🌐 URL ACCESO: https://agrodesk.cl/
+
+👤 ADMINISTRADORES (4 usuarios - VERIFICADOS ✅)
+==============================================
+
+🎯 Guido Castilla Mora
+Email: g.castilla@agrodesk.cl
+Password: Guido123
+Estado: ✅ VERIFICADO
+
+
+🎯 Evelyn 
+Email: evelyn@agrodesk.cl
+Password: Evelyn
+Estado: ✅ VERIFICADO
+
+🎯 Carlos Henríquez  
+Email: carlos.henriquez@chs.cl
+Password: Carlos123
+Estado: ✅ VERIFICADO
+
+🎯 Manuel Vergara
+Email: manuel.vergara@chs.cl
+Password: Manuel123
+Estado: ✅ VERIFICADO
+
+🎯 Marcos Alegría
+Email: marcos.alegria@chs.cl
+Password: Marcos123
+Estado: ✅ VERIFICADO
+
+👨‍🌾 TÉCNICOS (274 usuarios)
+===========================
+Distribuidos entre los 4 administradores:
+- Guido Castilla: 68 técnicos
+- Carlos Henríquez: 69 técnicos  
+- Manuel Vergara: 69 técnicos
+- Marcos Alegría: 68 técnicos
+
+📊 ESTADÍSTICAS
+===============
+- 170 huertos totales
+- 165.3 ha superficie total
+- 100% huertos con responsable
+- 4 tipos de cultivo
+
+🔐 ROLES
+========
+ADMIN: Acceso completo al dashboard
+TÉCNICO: Acceso a huertos asignados
+
+📱 ACCESO MÓVIL
+===============
+100% responsive - funciona en smartphones y tablets
+
+🆘 SOPORTE
+==========
+Email: soporte@agrodesk.cl
+GitHub: https://github.com/eikos4/Agrodeskv3
+
+Estado: ✅ PRODUCCIÓN ACTIVA
+Fecha: 08/03/2026

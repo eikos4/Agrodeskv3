@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import extract
 
 from app.extensions import db  # 👈 usar extensions
-from app.models import User, Recomendacion, Huerto, Bodega, Quimico, ActividadHuerto, Parcela, ActividadCampo, Documento
+from app.models import User, Recomendacion, Huerto, Bodega, Quimico, ActividadHuerto, MovimientoInventario, Parcela, ActividadCampo, Documento
 
 from app.forms import (
     CreateTechnicianForm,
@@ -51,8 +51,9 @@ def cargar_tecnicos_choices():
 
 def cargar_huertos_choices():
     huertos = (
-        Huerto.query
-        .filter_by(empresa_id=current_user.empresa_id)
+        Huerto.query.filter_by(empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
         .order_by(Huerto.nombre.asc())
         .all()
     )
@@ -76,9 +77,11 @@ def admin_dashboard():
     per_page_huertos = 9
     per_page_tecnicos = 8
 
-    # Huertos paginados (evitar N+1)
+    # Huertos paginados (solo del administrador actual)
     huertos_paginados = (
         Huerto.query.filter_by(empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
         .options(
             selectinload(Huerto.bodegas),
             selectinload(Huerto.responsable),
@@ -87,9 +90,12 @@ def admin_dashboard():
         .paginate(page=page_huertos, per_page=per_page_huertos, error_out=False)
     )
 
-    # Bodegas + relaciones
+    # Bodegas + relaciones (solo del administrador actual)
     bodegas = (
         Bodega.query.filter_by(empresa_id=current_user.empresa_id)
+        .join(Huerto, Bodega.huerto_id == Huerto.id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
         .options(
             selectinload(Bodega.huerto),
             selectinload(Bodega.responsable),
@@ -106,17 +112,35 @@ def admin_dashboard():
         .paginate(page=page_tecnicos, per_page=per_page_tecnicos, error_out=False)
     )
 
-    # Estadísticas de huertos
-    total_huertos = Huerto.query.filter_by(empresa_id=current_user.empresa_id).count()
-    huertos_con_responsable = Huerto.query.filter_by(empresa_id=current_user.empresa_id).filter(Huerto.responsable_id.isnot(None)).count()
+    # Estadísticas de huertos (solo del administrador actual)
+    total_huertos = (
+        Huerto.query.filter_by(empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .count()
+    )
+    huertos_con_responsable = (
+        Huerto.query.filter_by(empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter(User.created_by == current_user.id)
+        .filter(Huerto.responsable_id.isnot(None))
+        .count()
+    )
     huertos_sin_responsable = total_huertos - huertos_con_responsable
     
-    # Estadísticas de superficie por cultivo
-    superficie_por_cultivo = db.session.query(
-        Huerto.tipo_cultivo,
-        db.func.sum(Huerto.superficie_ha).label('total_superficie'),
-        db.func.count(Huerto.id).label('cantidad')
-    ).filter_by(empresa_id=current_user.empresa_id).group_by(Huerto.tipo_cultivo).all()
+    # Estadísticas de superficie por cultivo (solo del administrador actual)
+    superficie_por_cultivo = (
+        db.session.query(
+            Huerto.tipo_cultivo,
+            db.func.sum(Huerto.superficie_ha).label('total_superficie'),
+            db.func.count(Huerto.id).label('cantidad')
+        )
+        .join(User, Huerto.responsable_id == User.id)
+        .filter(Huerto.empresa_id == current_user.empresa_id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .group_by(Huerto.tipo_cultivo)
+        .all()
+    )
     
     # Calcular superficie total
     total_superficie = sum(s.total_superficie or 0 for s in superficie_por_cultivo)
@@ -145,6 +169,8 @@ def admin_dashboard():
 
     q_rec = (
         Recomendacion.query
+        .join(User, Recomendacion.tecnico_id == User.id)
+        .filter(User.created_by == current_user.id)
         .options(
             selectinload(Recomendacion.tecnico),
             selectinload(Recomendacion.autor),
@@ -370,12 +396,12 @@ def crear_huerto():
 @login_required
 @admin_required
 def editar_huerto(huerto_id):
-    huerto = Huerto.query.get_or_404(huerto_id)
-    
-    # Verificar que el huerto pertenezca a la empresa del usuario actual
-    if huerto.empresa_id != current_user.empresa_id:
-        flash("No tienes permiso para editar este huerto", "danger")
-        return redirect(url_for("admin.admin_dashboard"))
+    huerto = (
+        Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .first_or_404()
+    )
     
     form = CrearHuertoForm()
     form.responsable_id.choices = [(0, "— Sin asignar —")] + cargar_tecnicos_choices()
@@ -450,7 +476,12 @@ def editar_huerto(huerto_id):
 @login_required
 @admin_required
 def vista_global_huerto(huerto_id):
-    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    huerto = (
+        Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .first_or_404()
+    )
     
     # Obtener toda la información relacionada
     actividades = ActividadHuerto.query.filter_by(huerto_id=huerto.id).order_by(ActividadHuerto.fecha.desc()).limit(10).all()
@@ -483,7 +514,12 @@ def vista_global_huerto(huerto_id):
 @login_required
 @admin_required
 def bitacora_huerto(huerto_id):
-    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    huerto = (
+        Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .first_or_404()
+    )
 
     anio_seleccionado = request.args.get("anio", type=int)
     tipo_seleccionado = request.args.get("tipo", default=None, type=str)
@@ -518,8 +554,17 @@ def bitacora_huerto(huerto_id):
 @login_required
 @admin_required
 def registrar_actividad_huerto(huerto_id):
-    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    huerto = (
+        Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .first_or_404()
+    )
+    
     form = RegistrarActividadForm()
+    quimicos_disponibles = Quimico.query.join(Bodega).filter(Bodega.empresa_id == current_user.empresa_id).all()
+    form.quimico_id.choices = [(0, "— Sin químico del inventario —")] + [(q.id, f"{q.nombre} (Stock: {q.cantidad_litros})") for q in quimicos_disponibles]
+    
     if form.validate_on_submit():
         try:
             actividad = ActividadHuerto(
@@ -538,7 +583,20 @@ def registrar_actividad_huerto(huerto_id):
                 actividad.producto = form.producto.data
                 actividad.dosis = form.dosis.data
                 actividad.resultado = form.resultado.data
+            
+            actividad.quimico_id = form.quimico_id.data if form.quimico_id.data != 0 else None
+            actividad.cantidad_aplicada = form.cantidad_aplicada.data
             db.session.add(actividad)
+            db.session.flush() # Obtener ID
+            
+            if actividad.quimico_id and actividad.cantidad_aplicada:
+                q = Quimico.query.get(actividad.quimico_id)
+                if q and q.cantidad_litros >= actividad.cantidad_aplicada:
+                    q.cantidad_litros -= actividad.cantidad_aplicada
+                    mov = MovimientoInventario(quimico_id=q.id, tipo="egreso", cantidad=actividad.cantidad_aplicada, usuario_id=current_user.id, referencia_actividad_id=actividad.id, empresa_id=current_user.empresa_id)
+                    db.session.add(mov)
+            # 
+
             db.session.commit()
             flash(" Actividad registrada exitosamente", "success")
             return redirect(url_for("admin.bitacora_huerto", huerto_id=huerto.id))
@@ -551,15 +609,29 @@ def registrar_actividad_huerto(huerto_id):
 @login_required
 @admin_required
 def actividades_fitosanitarias(huerto_id):
-    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    huerto = (
+        Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .first_or_404()
+    )
     return render_template("admin/actividades_fitosanitarias.html", huerto=huerto)
 
 @admin_bp.route("/huerto/<int:huerto_id>/registrar_control_plagas", methods=["GET", "POST"])
 @login_required
 @admin_required
 def registrar_control_plagas(huerto_id):
-    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    huerto = (
+        Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .first_or_404()
+    )
+    
     form = RegistrarActividadForm()
+    quimicos_disponibles = Quimico.query.join(Bodega).filter(Bodega.empresa_id == current_user.empresa_id).all()
+    form.quimico_id.choices = [(0, "— Sin químico del inventario —")] + [(q.id, f"{q.nombre} (Stock: {q.cantidad_litros})") for q in quimicos_disponibles]
+    
     if form.validate_on_submit():
         try:
             actividad = ActividadHuerto(
@@ -576,7 +648,20 @@ def registrar_control_plagas(huerto_id):
             actividad.nivel_infestacion = request.form.get('nivel_infestacion')
             actividad.producto = request.form.get('producto')
             actividad.dosis = request.form.get('dosis')
+            
+            actividad.quimico_id = form.quimico_id.data if form.quimico_id.data != 0 else None
+            actividad.cantidad_aplicada = form.cantidad_aplicada.data
             db.session.add(actividad)
+            db.session.flush() # Obtener ID
+            
+            if actividad.quimico_id and actividad.cantidad_aplicada:
+                q = Quimico.query.get(actividad.quimico_id)
+                if q and q.cantidad_litros >= actividad.cantidad_aplicada:
+                    q.cantidad_litros -= actividad.cantidad_aplicada
+                    mov = MovimientoInventario(quimico_id=q.id, tipo="egreso", cantidad=actividad.cantidad_aplicada, usuario_id=current_user.id, referencia_actividad_id=actividad.id, empresa_id=current_user.empresa_id)
+                    db.session.add(mov)
+            # 
+
             db.session.commit()
             flash(" Control de plagas registrado exitosamente", "success")
             return redirect(url_for("admin.bitacora_huerto", huerto_id=huerto.id))
@@ -589,8 +674,17 @@ def registrar_control_plagas(huerto_id):
 @login_required
 @admin_required
 def registrar_herbicida(huerto_id):
-    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    huerto = (
+        Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .first_or_404()
+    )
+    
     form = RegistrarActividadForm()
+    quimicos_disponibles = Quimico.query.join(Bodega).filter(Bodega.empresa_id == current_user.empresa_id).all()
+    form.quimico_id.choices = [(0, "— Sin químico del inventario —")] + [(q.id, f"{q.nombre} (Stock: {q.cantidad_litros})") for q in quimicos_disponibles]
+    
     if form.validate_on_submit():
         try:
             actividad = ActividadHuerto(
@@ -605,7 +699,20 @@ def registrar_herbicida(huerto_id):
             # Guardar campos específicos del formulario
             actividad.producto = request.form.get('producto')
             actividad.dosis = request.form.get('dosis')
+            
+            actividad.quimico_id = form.quimico_id.data if form.quimico_id.data != 0 else None
+            actividad.cantidad_aplicada = form.cantidad_aplicada.data
             db.session.add(actividad)
+            db.session.flush() # Obtener ID
+            
+            if actividad.quimico_id and actividad.cantidad_aplicada:
+                q = Quimico.query.get(actividad.quimico_id)
+                if q and q.cantidad_litros >= actividad.cantidad_aplicada:
+                    q.cantidad_litros -= actividad.cantidad_aplicada
+                    mov = MovimientoInventario(quimico_id=q.id, tipo="egreso", cantidad=actividad.cantidad_aplicada, usuario_id=current_user.id, referencia_actividad_id=actividad.id, empresa_id=current_user.empresa_id)
+                    db.session.add(mov)
+            # 
+
             db.session.commit()
             flash(" Aplicación de herbicida registrada exitosamente", "success")
             return redirect(url_for("admin.bitacora_huerto", huerto_id=huerto.id))
@@ -618,8 +725,17 @@ def registrar_herbicida(huerto_id):
 @login_required
 @admin_required
 def registrar_fertilizante(huerto_id):
-    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    huerto = (
+        Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .first_or_404()
+    )
+    
     form = RegistrarActividadForm()
+    quimicos_disponibles = Quimico.query.join(Bodega).filter(Bodega.empresa_id == current_user.empresa_id).all()
+    form.quimico_id.choices = [(0, "— Sin químico del inventario —")] + [(q.id, f"{q.nombre} (Stock: {q.cantidad_litros})") for q in quimicos_disponibles]
+    
     if form.validate_on_submit():
         try:
             actividad = ActividadHuerto(
@@ -634,7 +750,20 @@ def registrar_fertilizante(huerto_id):
             # Guardar campos específicos del formulario
             actividad.producto = request.form.get('producto')
             actividad.dosis = request.form.get('dosis')
+            
+            actividad.quimico_id = form.quimico_id.data if form.quimico_id.data != 0 else None
+            actividad.cantidad_aplicada = form.cantidad_aplicada.data
             db.session.add(actividad)
+            db.session.flush() # Obtener ID
+            
+            if actividad.quimico_id and actividad.cantidad_aplicada:
+                q = Quimico.query.get(actividad.quimico_id)
+                if q and q.cantidad_litros >= actividad.cantidad_aplicada:
+                    q.cantidad_litros -= actividad.cantidad_aplicada
+                    mov = MovimientoInventario(quimico_id=q.id, tipo="egreso", cantidad=actividad.cantidad_aplicada, usuario_id=current_user.id, referencia_actividad_id=actividad.id, empresa_id=current_user.empresa_id)
+                    db.session.add(mov)
+            # 
+
             db.session.commit()
             flash(" Aplicación de fertilizante registrada exitosamente", "success")
             return redirect(url_for("admin.bitacora_huerto", huerto_id=huerto.id))
@@ -647,12 +776,15 @@ def registrar_fertilizante(huerto_id):
 # ======================
 # Bodegas
 # ======================
-@admin_bp.route("/bodegas")
+@admin_bp.route("/listar_bodegas")
 @login_required
 @admin_required
 def listar_bodegas():
     bodegas = (
         Bodega.query.filter_by(empresa_id=current_user.empresa_id)
+        .join(Huerto, Bodega.huerto_id == Huerto.id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
         .options(
             selectinload(Bodega.huerto),
             selectinload(Bodega.responsable),
@@ -847,7 +979,12 @@ def inject_timeline_utils():
 @login_required
 @admin_required
 def asignar_responsable_huerto(huerto_id):
-    huerto = Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id).first_or_404()
+    huerto = (
+        Huerto.query.filter_by(id=huerto_id, empresa_id=current_user.empresa_id)
+        .join(User, Huerto.responsable_id == User.id)
+        .filter((Huerto.responsable_id.is_(None)) | (User.created_by == current_user.id))
+        .first_or_404()
+    )
     form = CrearHuertoForm(obj=huerto)
     # solo usamos el campo responsable_id acá
     form.responsable_id.choices = [(0, "— Sin asignar —")] + cargar_tecnicos_choices()

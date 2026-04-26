@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.extensions import db  # 👈 DB desde extensions
 from app.models import (
     Bodega, Huerto, Recomendacion, Quimico,
-    FormularioTarea, ChecklistItem, ActividadHuerto
+    FormularioTarea, ChecklistItem, ActividadHuerto, MovimientoInventario
 )
 from app.forms import (
     QuimicoForm, ResponderFormularioForm, ChecklistItemForm, RegistrarActividadForm
@@ -220,7 +220,11 @@ def registrar_actividad_huerto(huerto_id):
         flash("No tienes acceso a este huerto.", "danger")
         return redirect(url_for("tecnico.mis_huertos"))
 
+    
     form = RegistrarActividadForm()
+    quimicos_disponibles = Quimico.query.join(Bodega).filter(Bodega.empresa_id == current_user.empresa_id).all()
+    form.quimico_id.choices = [(0, "— Sin químico del inventario —")] + [(q.id, f"{q.nombre} (Stock: {q.cantidad_litros})") for q in quimicos_disponibles]
+    
     if form.validate_on_submit():
         try:
             act = ActividadHuerto(
@@ -239,7 +243,19 @@ def registrar_actividad_huerto(huerto_id):
             )
             # Si ActividadHuerto tiene empresa_id NOT NULL en tu modelo, descomenta:
             # act.empresa_id = current_user.empresa_id
+            
+            act.quimico_id = form.quimico_id.data if form.quimico_id.data != 0 else None
+            act.cantidad_aplicada = form.cantidad_aplicada.data
             db.session.add(act)
+            db.session.flush() # Para obtener el ID
+            
+            if act.quimico_id and act.cantidad_aplicada:
+                q = Quimico.query.get(act.quimico_id)
+                if q and q.cantidad_litros >= act.cantidad_aplicada:
+                    q.cantidad_litros -= act.cantidad_aplicada
+                    mov = MovimientoInventario(quimico_id=q.id, tipo="egreso", cantidad=act.cantidad_aplicada, usuario_id=current_user.id, referencia_actividad_id=act.id, empresa_id=current_user.empresa_id)
+                    db.session.add(mov)
+
             db.session.commit()
             flash("✅ Actividad registrada exitosamente.", "success")
             return redirect(url_for("tecnico.bitacora_huerto", huerto_id=huerto.id))

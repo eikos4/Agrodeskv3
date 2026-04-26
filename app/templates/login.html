@@ -1,309 +1,534 @@
-{% extends "base.html" %}
-{% block title %}Iniciar Sesión | AgroDESK{% endblock %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Iniciar Sesión | AgroDESK</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Inicia sesión en AgroDESK — Plataforma de gestión agrícola integral.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-{% block content %}
-{% set _bg = url_for('static', filename='fondo8.jpg') %}
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-<style>
-  :root{
-    /* Tema oscuro por defecto */
-    --ink:#e9f5ef; --muted:#b8cac5; --stroke:rgba(255,255,255,.12);
-    --success:#198754; --olive:#7b904b; --gold:#c4b95f;
-    --card-bg: rgba(13,25,22,.90);
-    --field-bg:#0f1a18; --field-bd:#2e463f; --field-focus:#8bc28a;
-    --fab-bg:#0f1a18; --fab-bd:#2e463f;
-    --agrobot-bg: rgba(33,57,49,.70); --agrobot-bd:#28463e; --agrobot-ink:#cae5dc;
-    --overlay-radial: radial-gradient(60% 50% at 50% 25%, rgba(11,25,21,.10) 0%, rgba(8,20,18,.55) 55%, rgba(6,18,16,.90) 100%);
-    --overlay-linear: linear-gradient(180deg, rgba(10,24,22,.25) 0%, rgba(10,24,22,.85) 70%, rgba(10,24,22,.95) 100%);
-  }
-  /* Tema claro */
-  :root[data-theme="light"]{
-    --ink:#0f1a18; --muted:#4b6660; --stroke:rgba(0,0,0,.10);
-    --card-bg: rgba(255,255,255,.92);
-    --field-bg:#ffffff; --field-bd:#cfdad6; --field-focus:#7bb07a;
-    --fab-bg:#ffffff; --fab-bd:#cfdad6;
-    --agrobot-bg: rgba(227,242,234,.95); --agrobot-bd:#cfe8d8; --agrobot-ink:#184b3b;
-    --overlay-radial: radial-gradient(60% 50% at 50% 25%, rgba(255,255,255,.10) 0%, rgba(255,255,255,.30) 50%, rgba(255,255,255,.55) 100%);
-    --overlay-linear: linear-gradient(180deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.25) 60%, rgba(255,255,255,.35) 100%);
-  }
+    body{
+      font-family:'Inter',system-ui,sans-serif;
+      height:100vh; overflow:hidden;
+      display:flex; background:#fff;
+    }
 
-  /* ===== Hero de fondo ===== */
-  .auth-hero{ position: fixed; inset:0; overflow:hidden; z-index:0; }
-  .auth-hero .layer-img{
-    position:absolute; inset:0;
-    background: url('{{ _bg }}') center/cover no-repeat fixed;
-    filter:saturate(.95) contrast(.98); opacity:.85; transition: opacity .6s ease;
-  }
-  .auth-hero .layer-grad{ position:absolute; inset:0; background: var(--overlay-radial), var(--overlay-linear); pointer-events:none; }
-  .auth-hero .layer-dots{
-    position:absolute; inset:-20%;
-    background-image:url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='2' fill='%23ffffff10'/%3E%3C/svg%3E");
-    animation: floatDots 45s linear infinite; opacity:.35; pointer-events:none;
-  }
-  @keyframes floatDots { from{ transform:translateY(0)} to{ transform:translateY(-10%)} }
+    /* ============================================================
+       LEFT PANEL – Form
+    ============================================================ */
+    .left{
+      width:50%; max-width:600px; min-width:380px;
+      display:flex; flex-direction:column;
+      padding:2.2rem 3rem 2rem;
+      overflow-y:auto; background:#fff;
+    }
 
-  /* ===== Layout ===== */
-  .auth-wrap{ position: relative; z-index:1; min-height: 100vh; display:grid; place-items:center; padding: clamp(1rem, 3vw, 2rem); }
-  .auth-card{
-    width:100%; max-width: 520px; background: var(--card-bg); border:1px solid var(--stroke);
-    border-radius: 1rem; box-shadow: 0 24px 64px rgba(0,0,0,.45); overflow:hidden; animation: rise .6s ease both;
-  }
-  @keyframes rise { from{opacity:0; transform: translateY(18px)} to{opacity:1; transform:none} }
+    /* top bar */
+    .top-bar{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:2.6rem;
+    }
+    .brand{
+      display:flex; align-items:center; gap:.55rem;
+      text-decoration:none; color:#0b1e14;
+    }
+    .brand-icon{
+      width:34px;height:34px;border-radius:9px;
+      background:linear-gradient(135deg,#166534,#22c55e);
+      display:grid;place-items:center;color:#fff;font-size:1rem;
+    }
+    .brand span{font-weight:800;font-size:1.05rem;letter-spacing:-.3px}
+    .brand b{font-weight:900}
 
-  /* Brand bar + Theme switch */
-  .brand-bar{
-    background: linear-gradient(90deg, var(--olive) 0%, var(--gold) 100%); color:#0f1a18;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:.9rem 1.1rem; font-weight:800; letter-spacing:.4px; position:relative; overflow:hidden;
-  }
-  .brand-bar::after{
-    content:""; position:absolute; inset:0; background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.35) 25%, transparent 50%);
-    transform: translateX(-100%); animation: shimmer 5s infinite; mix-blend-mode: soft-light;
-  }
-  @keyframes shimmer { 0%{transform:translateX(-100%)} 60%{transform:translateX(100%)} 100%{transform:translateX(100%)} }
-  .theme-btn{ border:1px solid var(--stroke); background: transparent; color: #0f1a18; padding:.25rem .55rem; border-radius:.55rem; }
+    .top-back{
+      font-size:.86rem;color:#6b7280;text-decoration:none;
+      display:flex;align-items:center;gap:.35rem;font-weight:500;
+      transition:color .2s;
+    }
+    .top-back:hover{color:#0b1e14}
 
-  /* AgroBot */
-  .agrobot{ border-left:4px solid var(--success); background: var(--agrobot-bg); border:1px solid var(--agrobot-bd); color: var(--agrobot-ink);
-    border-radius:.9rem; padding:.8rem .9rem; margin: .9rem .9rem 0; }
-  .agrobot-avatar{ width:40px; height:40px; border-radius:50%; background:#e8f5ee; color:var(--success);
-    display:grid; place-items:center; font-size:1.25rem; box-shadow: inset 0 0 0 2px #c5ecd4; }
-  .agrobot-fab{
-    position: fixed; right: 1rem; bottom: 1rem; z-index: 1050;
-    background:var(--fab-bg); color:var(--ink); border:1px solid var(--fab-bd);
-    border-radius:999px; padding:.55rem .8rem; display:inline-flex; align-items:center; gap:.5rem;
-    box-shadow:0 12px 36px rgba(0,0,0,.35);
-  }
+    /* badge */
+    .pill{
+      display:inline-flex;align-items:center;gap:.45rem;
+      background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;
+      border-radius:999px;padding:.3rem .9rem;
+      font-size:.77rem;font-weight:600;margin-bottom:1.5rem;
+      width:fit-content;
+    }
+    .pill-dot{
+      width:7px;height:7px;border-radius:50%;background:#22c55e;
+      animation:blink 2s ease-in-out infinite;
+    }
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
 
-  /* Cuerpo */
-  .auth-body{ padding: .9rem .9rem 1.2rem; }
-  .auth-title{ color:var(--ink); font-weight:800; letter-spacing:.2px; margin: .6rem .2rem .2rem; }
-  .auth-sub{ color:var(--muted); margin: 0 .2rem 1rem; font-size:.92rem; }
+    /* heading */
+    .heading{
+      font-size:1.95rem;font-weight:800;color:#0b1e14;
+      line-height:1.15;margin-bottom:.45rem;letter-spacing:-.5px;
+    }
+    .subtext{
+      color:#6b7b72;font-size:.91rem;line-height:1.55;margin-bottom:1.7rem;
+    }
 
-  /* Campos */
-  .form-floating>.form-control{ background:var(--field-bg); color:var(--ink); border:1px solid var(--field-bd); height:3.2rem; }
-  .form-floating>.form-control:focus{ border-color:var(--field-focus); box-shadow:0 0 0 .2rem color-mix(in srgb, var(--field-focus) 18%, transparent); }
-  .form-floating>label{ color:color-mix(in srgb, var(--muted) 78%, white 22%); }
-  .input-icon{ position:absolute; right:.9rem; top:50%; transform:translateY(-50%); color:color-mix(in srgb, var(--muted) 70%, white 30%); cursor:pointer; user-select:none; }
-  .hint{ color:var(--muted); font-size:.8rem; margin: .25rem .1rem 0; }
+    /* flash messages */
+    .flashes{margin-bottom:.8rem}
+    .flash-msg{
+      border-radius:9px;padding:.55rem .85rem;font-size:.84rem;font-weight:500;
+      margin-bottom:.4rem;display:flex;align-items:center;gap:.45rem;
+    }
+    .flash-danger{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+    .flash-success{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+    .flash-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+    .flash-info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
 
-  /* Botón */
-  .btn-agro{
-    background: linear-gradient(90deg, var(--olive) 0%, var(--gold) 100%); color:#0f1a18; font-weight:800; letter-spacing:.4px; border:none;
-    box-shadow: 0 10px 28px rgba(196,185,95,.2); height: 2.9rem;
-  }
-  .btn-agro:hover{ filter:brightness(1.02); }
-  .btn-agro .spinner-border{ --bs-spinner-width:1.2rem; --bs-spinner-height:1.2rem; }
+    /* field group */
+    .fg{margin-bottom:1.05rem}
+    .fg-label{
+      display:flex;justify-content:space-between;align-items:center;
+      margin-bottom:.4rem;
+    }
+    .fg-label span{font-size:.82rem;font-weight:600;color:#374151}
+    .fg-label a{font-size:.8rem;color:#15803d;text-decoration:none;font-weight:500}
+    .fg-label a:hover{text-decoration:underline}
 
-  /* Flash */
-  .auth-flash{ padding: .6rem .9rem 0; }
-  .auth-flash .alert{ border-radius:.65rem; padding:.55rem .75rem; }
+    .iw{position:relative;display:flex;align-items:center}
+    .iw .ico{
+      position:absolute;left:.9rem;color:#9ca3af;font-size:1rem;pointer-events:none;
+    }
+    .iw input,.iw select{
+      width:100%;border:1.5px solid #e5e7eb;border-radius:10px;
+      padding:.8rem .9rem .8rem 2.5rem;font-size:.91rem;
+      font-family:'Inter',sans-serif;color:#111827;background:#f9fafb;
+      outline:none;transition:border .2s,box-shadow .2s;
+      -webkit-appearance:none;appearance:none;
+    }
+    .iw select{
+      background:#f9fafb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E") no-repeat right 1rem center;
+      padding-right:2.2rem;
+    }
+    .iw input:focus,.iw select:focus{
+      border-color:#22c55e;background:#fff;
+      box-shadow:0 0 0 3px rgba(34,197,94,.12);
+    }
+    .iw .eye-btn{
+      position:absolute;right:.85rem;background:none;border:none;
+      color:#9ca3af;cursor:pointer;font-size:1rem;padding:0;line-height:1;
+    }
+    .iw .eye-btn:hover{color:#6b7280}
 
-  @media (prefers-reduced-motion: reduce){
-    .auth-hero .layer-img{ transition:none !important; }
-    .auth-card{ animation:none !important; }
-    .brand-bar::after{ animation:none !important; opacity:.25; }
-  }
-</style>
+    .ferr{font-size:.77rem;color:#dc2626;margin-top:.3rem}
 
-<div class="auth-hero" aria-hidden="true">
-  <div class="layer-img" id="bgImg"></div>
-  <div class="layer-grad"></div>
-  <div class="layer-dots"></div>
-</div>
+    /* checkbox */
+    .chk-row{
+      display:flex;align-items:center;gap:.5rem;margin-bottom:1.35rem;
+    }
+    .chk-row input[type=checkbox]{
+      width:16px;height:16px;accent-color:#15803d;cursor:pointer;
+      border-radius:4px;
+    }
+    .chk-row label{font-size:.85rem;color:#4b5563;cursor:pointer}
 
-<div class="auth-wrap">
-  <div class="auth-card">
+    /* submit */
+    .btn-go{
+      width:100%;background:#0b1e14;color:#fff;border:none;border-radius:10px;
+      padding:.82rem 1.5rem;font-size:.95rem;font-weight:700;
+      font-family:'Inter',sans-serif;cursor:pointer;
+      display:inline-flex;align-items:center;justify-content:center;gap:.6rem;
+      transition:background .2s,transform .12s;letter-spacing:.15px;
+    }
+    .btn-go:hover{background:#166534;transform:translateY(-1px)}
+    .btn-go:active{transform:translateY(0)}
+    .btn-go .arr{transition:transform .2s}
+    .btn-go:hover .arr{transform:translateX(4px)}
 
-    <div class="brand-bar">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-cloud"></i> Agro <b>DESK</b>
+    .powered{
+      margin-top:auto;padding-top:1.5rem;text-align:center;
+      font-size:.76rem;color:#9ca3af;
+    }
+    .powered strong{color:#6b7280}
+
+    /* ============================================================
+       RIGHT PANEL – Hero / Marketing
+    ============================================================ */
+    .right{
+      flex:1;
+      background:linear-gradient(160deg,#071a10 0%,#0a2718 40%,#0d3320 100%);
+      position:relative;overflow:hidden;
+      display:flex;flex-direction:column;justify-content:center;
+      padding:3.5rem 3.5rem 6rem;
+    }
+
+    /* dot grid */
+    .dot-grid{
+      position:absolute;inset:0;
+      background-image:radial-gradient(rgba(255,255,255,.045) 1px,transparent 1px);
+      background-size:26px 26px;pointer-events:none;
+    }
+
+    /* glow orbs */
+    .orb1,.orb2{position:absolute;border-radius:50%;pointer-events:none}
+    .orb1{
+      width:420px;height:420px;top:-100px;right:-60px;
+      background:radial-gradient(circle,rgba(34,197,94,.2) 0%,transparent 70%);
+    }
+    .orb2{
+      width:340px;height:340px;bottom:-80px;left:-40px;
+      background:radial-gradient(circle,rgba(74,222,128,.12) 0%,transparent 70%);
+    }
+
+    .rc{position:relative;z-index:2}
+
+    /* avatars */
+    .av-row{display:flex;align-items:center;margin-bottom:1.8rem}
+    .av{
+      width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+      font-size:.82rem;font-weight:700;border:2.5px solid #071a10;margin-left:-7px;
+    }
+    .av:first-child{margin-left:0}
+    .av-1{background:linear-gradient(135deg,#4ade80,#16a34a);color:#071a10}
+    .av-2{background:linear-gradient(135deg,#86efac,#4ade80);color:#071a10}
+    .av-3{background:linear-gradient(135deg,#bbf7d0,#86efac);color:#166534}
+    .av-n{background:#1a3a26;color:#4ade80;font-size:.72rem}
+
+    .av-txt{
+      margin-left:.7rem;font-size:.82rem;color:#5a8c6a;font-weight:500;
+    }
+    .av-txt strong{color:#a3e4b8}
+
+    /* right headline */
+    .r-h{
+      font-size:2.55rem;font-weight:900;color:#fff;
+      line-height:1.15;margin-bottom:.75rem;letter-spacing:-.8px;
+    }
+    .r-h .acc{color:#4ade80}
+    .r-sub{
+      font-size:.93rem;color:#6b9e7a;line-height:1.6;
+      margin-bottom:2.2rem;max-width:400px;
+    }
+
+    /* features */
+    .feats{display:flex;flex-direction:column;gap:1.1rem}
+    .feat{display:flex;align-items:flex-start;gap:.9rem}
+    .feat-ic{
+      width:40px;height:40px;border-radius:10px;flex-shrink:0;
+      background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.18);
+      display:grid;place-items:center;color:#4ade80;font-size:1rem;
+    }
+    .feat-t b{display:block;color:#e2f5e9;font-size:.88rem;font-weight:700;margin-bottom:.12rem}
+    .feat-t span{color:#5e8f70;font-size:.8rem;line-height:1.4}
+
+    /* bottom strip */
+    .strip{
+      position:absolute;bottom:2rem;left:3.5rem;right:3.5rem;
+      display:flex;gap:1rem;z-index:2;
+    }
+    .scard{
+      flex:1;background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:12px;padding:.8rem 1rem;
+      backdrop-filter:blur(6px);
+    }
+    .scard .sl{
+      font-size:.7rem;color:#5e8f70;font-weight:600;
+      text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem;
+    }
+    .scard .sv{font-size:1.25rem;font-weight:800;color:#fff}
+    .scard .ss{font-size:.73rem;color:#4ade80;margin-top:.1rem}
+
+    /* ============================================================
+       Responsive — Tablet
+    ============================================================ */
+    @media(max-width:960px){
+      body{flex-direction:column-reverse;overflow-y:auto;overflow-x:hidden;height:auto;min-height:100vh}
+
+      .left{
+        width:100%;min-width:unset;max-width:unset;
+        padding:2rem 1.8rem 2.5rem;
+        order:2;
+      }
+      .right{
+        width:100%;position:relative;
+        padding:2.2rem 1.8rem 2rem;
+        order:1;min-height:auto;
+      }
+      .r-h{font-size:1.8rem}
+      .r-sub{margin-bottom:1.2rem}
+      .feats{display:none}
+      .strip{position:relative;bottom:auto;left:0;right:0;
+        margin-top:1.3rem;flex-wrap:wrap;gap:.7rem}
+      .scard{min-width:calc(50% - .4rem);flex:1 1 calc(50% - .4rem)}
+      .orb1,.orb2{display:none}
+    }
+
+    /* ============================================================
+       Responsive — Phone
+    ============================================================ */
+    @media(max-width:580px){
+      .left{padding:1.5rem 1.2rem 2rem}
+
+      .top-bar{margin-bottom:1.6rem}
+      .brand span{font-size:.95rem}
+      .brand-icon{width:30px;height:30px;font-size:.9rem}
+
+      .pill{font-size:.72rem;padding:.25rem .7rem;margin-bottom:1rem}
+
+      .heading{font-size:1.45rem;margin-bottom:.35rem}
+      .subtext{font-size:.85rem;margin-bottom:1.2rem}
+
+      .fg{margin-bottom:.9rem}
+      .fg-label span{font-size:.8rem}
+      .fg-label a{font-size:.75rem}
+
+      .iw input,.iw select{
+        padding:.72rem .8rem .72rem 2.3rem;font-size:.87rem;
+        border-radius:9px;
+      }
+      .iw .ico{left:.75rem;font-size:.92rem}
+      .iw .eye-btn{right:.75rem}
+
+      .chk-row{margin-bottom:1.1rem}
+      .chk-row label{font-size:.82rem}
+
+      .btn-go{padding:.78rem 1.2rem;font-size:.9rem;border-radius:9px}
+
+      .powered{font-size:.7rem;padding-top:1rem}
+
+      /* Right panel compact on phone */
+      .right{padding:1.5rem 1.2rem 1.2rem}
+      .av-row{margin-bottom:1rem}
+      .av{width:30px;height:30px;font-size:.7rem;margin-left:-5px}
+      .av-txt{font-size:.75rem}
+      .r-h{font-size:1.35rem;margin-bottom:.4rem}
+      .r-sub{font-size:.82rem;margin-bottom:.6rem;max-width:none}
+      .dot-grid{background-size:20px 20px}
+
+      .strip{gap:.5rem;margin-top:.8rem}
+      .scard{padding:.6rem .7rem;border-radius:9px}
+      .scard .sl{font-size:.65rem}
+      .scard .sv{font-size:1rem}
+      .scard .ss{font-size:.67rem}
+    }
+
+    /* ============================================================
+       Responsive — Very small screens
+    ============================================================ */
+    @media(max-width:360px){
+      .left{padding:1.2rem 1rem}
+      .heading{font-size:1.25rem}
+      .right{padding:1.2rem 1rem 1rem}
+      .r-h{font-size:1.15rem}
+      .strip .scard:nth-child(3){display:none}
+    }
+
+    /* spinner */
+    @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    .spin-icon{display:inline-block;animation:spin .65s linear infinite}
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     LEFT — FORM
+============================================================ -->
+<div class="left">
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <a href="/" class="brand">
+      <div class="brand-icon"><i class="bi bi-tree-fill"></i></div>
+      <span>Agro<b>DESK</b></span>
+    </a>
+    <a href="/" class="top-back"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+
+  <!-- Badge -->
+  <div class="pill"><div class="pill-dot"></div>Plataforma agrícola</div>
+
+  <!-- Heading -->
+  <h1 class="heading">Hola de nuevo 🌿</h1>
+  <p class="subtext">Ingresa a tu cuenta para continuar gestionando tus huertos.</p>
+
+  <!-- Flash messages -->
+  <div class="flashes">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash-msg flash-{{ cat }}">
+            <i class="bi bi-{% if cat == 'danger' %}exclamation-circle{% elif cat == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+            {{ msg }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Form -->
+  <form method="POST" id="loginForm" autocomplete="off" novalidate>
+    {{ form.hidden_tag() }}
+
+    <!-- Empresa -->
+    <div class="fg">
+      <div class="fg-label"><span>Empresa</span></div>
+      <div class="iw">
+        <i class="bi bi-building ico"></i>
+        {{ form.empresa(id="empresaInput") }}
       </div>
-      <div class="d-flex align-items-center gap-2">
-        <small class="fw-semibold">Acceso</small>
-        <button id="themeToggle" type="button" class="theme-btn" title="Cambiar tema">
-          <i id="themeIcon" class="bi"></i>
-        </button>
-      </div>
+      {% if form.empresa.errors %}<div class="ferr">{{ form.empresa.errors[0] }}</div>{% endif %}
     </div>
 
-    <!-- AgroBot (ocultable) -->
-    <div id="agrobotBox" class="agrobot">
-      <div class="d-flex align-items-start gap-3">
-        <div class="agrobot-avatar">🤖</div>
-        <div class="flex-grow-1">
-          <div class="d-flex justify-content-between align-items-start">
-            <strong>AgroBot</strong>
-            <button id="hideAgrobotBtn" class="btn btn-sm btn-outline-success py-0 px-2">Ocultar</button>
-          </div>
-          <div class="small" id="agrobotTip">
-            Te acompaño con <b>alertas</b>, <b>recomendaciones</b> y <b>atajos</b> para cuidar tu campo.
-          </div>
+    <!-- Email -->
+    <div class="fg">
+      <div class="fg-label"><span>Correo electrónico</span></div>
+      <div class="iw">
+        <i class="bi bi-envelope ico"></i>
+        {{ form.email(id="emailInput", placeholder="tu@agrodesk.cl", autocomplete="username") }}
+      </div>
+      {% if form.email.errors %}<div class="ferr">{{ form.email.errors[0] }}</div>{% endif %}
+    </div>
+
+    <!-- Password -->
+    <div class="fg">
+      <div class="fg-label">
+        <span>Contraseña</span>
+        <a href="#">¿Olvidaste tu contraseña?</a>
+      </div>
+      <div class="iw">
+        <i class="bi bi-lock ico"></i>
+        {{ form.password(id="pwdInput", placeholder="••••••••", autocomplete="current-password", type="password") }}
+        <button type="button" class="eye-btn" id="eyeBtn" tabindex="-1" aria-label="Mostrar contraseña">
+          <i class="bi bi-eye" id="eyeIco"></i>
+        </button>
+      </div>
+      {% if form.password.errors %}<div class="ferr">{{ form.password.errors[0] }}</div>{% endif %}
+    </div>
+
+    <!-- Remember -->
+    <div class="chk-row">
+      {{ form.remember(id="rememberCheck") }}
+      <label for="rememberCheck">Mantener sesión iniciada</label>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="btn-go" id="goBtn">
+      <span id="goTxt">Iniciar sesión</span>
+      <i class="bi bi-arrow-right arr" id="goArr"></i>
+      <span id="goSpin" style="display:none"><i class="bi bi-arrow-repeat spin-icon"></i></span>
+    </button>
+  </form>
+
+  <!-- Footer -->
+  <div class="powered">© 2025 AgroDESK — Parte del ecosistema <a href="https://kodesk.cl" target="_blank" style="color:#15803d;text-decoration:none;font-weight:700">KODESK.CL</a></div>
+</div>
+
+<!-- ============================================================
+     RIGHT — MARKETING HERO
+============================================================ -->
+<div class="right">
+  <div class="dot-grid"></div>
+  <div class="orb1"></div>
+  <div class="orb2"></div>
+
+  <div class="rc">
+    <!-- Avatars -->
+    <div class="av-row">
+      <div class="av av-1">🌾</div>
+      <div class="av av-2">🌿</div>
+      <div class="av av-3">🍃</div>
+      <div class="av av-n">+7</div>
+      <span class="av-txt">Parte del <strong>ecosistema agrícola</strong> de <a href="https://kodesk.cl" target="_blank" style="color:#4ade80;text-decoration:none;font-weight:700">KODESK.CL</a></span>
+    </div>
+
+    <!-- Headline -->
+    <h2 class="r-h">Tu campo,<br><span class="acc">simplificado.</span></h2>
+    <p class="r-sub">
+      Bitácora digital, inventario de bodegas, georreferenciación
+      y recomendaciones técnicas. Todo en una sola plataforma,
+      hecha en Chile.
+    </p>
+
+    <!-- Features -->
+    <div class="feats">
+      <div class="feat">
+        <div class="feat-ic"><i class="bi bi-lightning-charge-fill"></i></div>
+        <div class="feat-t">
+          <b>Ahorra 8 horas a la semana</b>
+          <span>Automatiza registros de campo y actividades agrícolas.</span>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-ic"><i class="bi bi-shield-check"></i></div>
+        <div class="feat-t">
+          <b>Datos 100% seguros</b>
+          <span>Trazabilidad completa de cada acción en tus huertos.</span>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-ic"><i class="bi bi-graph-up-arrow"></i></div>
+        <div class="feat-t">
+          <b>30% menos pérdidas</b>
+          <span>Kárdex automático y alertas de stock en tus bodegas.</span>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="auth-body">
-      <!-- Flash -->
-      <div class="auth-flash">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, msg in messages %}
-              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-      </div>
-
-      <h5 class="auth-title"><i class="bi bi-box-arrow-in-right me-1"></i> Inicia sesión</h5>
-      <div class="auth-sub">Usa tu correo y tu contraseña corporativa.</div>
-
-      <form method="POST" id="loginForm" autocomplete="off" novalidate>
-        {{ form.hidden_tag() }}
-
-      <div class="form-floating mb-3 position-relative">
-  {{ form.empresa(class="form-select", id="empresaInput") }}
-  <label for="empresaInput">Empresa</label>
-  {% if form.empresa.errors %}
-    <div class="text-danger small mt-1">{{ form.empresa.errors[0] }}</div>
-  {% else %}
-    <div class="hint">Selecciona tu empresa o consultora</div>
-  {% endif %}
-</div>
-
-
-
-        <div class="form-floating mb-3 position-relative">
-          {{ form.email(class="form-control", id="emailInput", placeholder="nombre@agro.cl", autocomplete="username") }}
-          <label for="emailInput">Correo electrónico</label>
-          {% if form.email.errors %}
-            <div class="text-danger small mt-1">{{ form.email.errors[0] }}</div>
-          {% else %}
-            <div class="hint">Ej: empresa@agrodesk.cl</div>
-          {% endif %}
-        </div>
-
-        <div class="form-floating mb-2 position-relative">
-          {{ form.password(class="form-control", id=form.password.id, placeholder="••••••••", autocomplete="current-password", type="password") }}
-          <label for="{{ form.password.id }}">Contraseña</label>
-          <span id="togglePwd" class="input-icon" role="button" aria-label="Mostrar contraseña" aria-pressed="false">
-            <i class="bi bi-eye"></i>
-          </span>
-        </div>
-        <div class="form-check mb-3">
-  {{ form.remember(class="form-check-input", id="rememberCheck") }}
-  <label class="form-check-label" for="rememberCheck">Recordarme</label>
-</div>
-
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="hint" id="capsHint" style="display:none;"><i class="bi bi-exclamation-triangle"></i> Bloq Mayús activo</div>
-          {% if form.password.errors %}
-            <div class="text-danger small ms-auto">{{ form.password.errors[0] }}</div>
-          {% else %}
-            <div class="hint ms-auto">Manténla privada.</div>
-          {% endif %}
-        </div>
-
-        <button id="submitBtn" class="btn btn-agro w-100 d-inline-flex align-items-center justify-content-center gap-2">
-          <span id="submitText"><i class="bi bi-lock-fill"></i> Iniciar sesión</span>
-          <span id="submitSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-        </button>
-
-      
-      </form>
+  <!-- Preview cards -->
+  <div class="strip">
+    <div class="scard">
+      <div class="sl">Huertos activos</div>
+      <div class="sv">24</div>
+      <div class="ss">↑ Esta temporada</div>
+    </div>
+    <div class="scard">
+      <div class="sl">Actividades hoy</div>
+      <div class="sv">138</div>
+      <div class="ss">↑ +12% vs ayer</div>
+    </div>
+    <div class="scard">
+      <div class="sl">Alertas activas</div>
+      <div class="sv">3</div>
+      <div class="ss">⚡ Revisar stock</div>
     </div>
   </div>
 </div>
 
-<!-- FAB para reabrir AgroBot -->
-<button id="showAgrobotBtn" type="button" class="agrobot-fab d-none"
-        aria-controls="agrobotBox" aria-expanded="false" aria-label="Mostrar AgroBot">
-  <i class="bi bi-robot"></i> AgroBot
-</button>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
+<!-- ============================================================
+     SCRIPTS
+============================================================ -->
 <script>
 (function(){
-  /* ===== Preload fondo ===== */
-  const bgEl = document.getElementById('bgImg');
-  const preload = new Image();
-  preload.onload = ()=> bgEl.style.opacity = 1;
-  preload.src = "{{ _bg }}";
-
-  /* ===== Tema: auto por sistema + toggle persistente ===== */
-  const THEME_KEY = 'agro:theme';
-  const root = document.documentElement;
-  const btn = document.getElementById('themeToggle');
-  const icon = document.getElementById('themeIcon');
-
-  function applyTheme(mode){
-    if(mode === 'light'){ root.setAttribute('data-theme','light'); icon.className = 'bi bi-sun'; }
-    else if(mode === 'dark'){ root.removeAttribute('data-theme'); icon.className = 'bi bi-moon'; }
-    else {
-      // auto: respeta sistema
-      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-      prefersLight ? root.setAttribute('data-theme','light') : root.removeAttribute('data-theme');
-      icon.className = prefersLight ? 'bi bi-sun' : 'bi bi-moon';
-    }
-  }
-  let saved = localStorage.getItem(THEME_KEY) || 'auto';
-  applyTheme(saved);
-  // escucha cambios del sistema si está en auto
-  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', e=>{
-    if(localStorage.getItem(THEME_KEY) === 'auto'){ applyTheme('auto'); }
-  });
-  btn?.addEventListener('click', ()=>{
-    saved = (saved === 'auto') ? 'light' : (saved === 'light') ? 'dark' : 'auto';
-    localStorage.setItem(THEME_KEY, saved);
-    applyTheme(saved);
-  });
-
-  /* ===== AgroBot persistencia ===== */
-  const KEY='agrobotHidden:login_ultra';
-  const box=document.getElementById('agrobotBox');
-  const hide=document.getElementById('hideAgrobotBtn');
-  const show=document.getElementById('showAgrobotBtn');
-  function setHidden(h){ if(!box||!show)return; box.classList.toggle('d-none',h); show.classList.toggle('d-none',!h); }
-  setHidden(localStorage.getItem(KEY)==='true');
-  hide?.addEventListener('click',()=>{localStorage.setItem(KEY,'true'); setHidden(true);});
-  show?.addEventListener('click',()=>{localStorage.setItem(KEY,'false'); setHidden(false); try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){};});
-
-  // Tips rotativos
-  const tips=[
-    "Atajos para registrar actividades en segundos.",
-    "Recomendaciones técnicas según tu realidad.",
-    "Alertas y seguimiento de plagas.",
-    "Geo y bitácora: todo en un solo lugar."
-  ];
-  const tipEl=document.getElementById('agrobotTip'); let i=0;
-  setInterval(()=>{ if(!tipEl) return; i=(i+1)%tips.length; tipEl.innerHTML=tips[i]; }, 5500);
-
-  // Toggle contraseña + CapsLock
-  const pwd=document.getElementById('{{ form.password.id }}');
-  const toggle=document.getElementById('togglePwd');
-  toggle?.addEventListener('click', ()=>{
-    if(!pwd) return;
+  // Toggle password
+  const pwd=document.getElementById('pwdInput');
+  const eyeBtn=document.getElementById('eyeBtn');
+  const eyeIco=document.getElementById('eyeIco');
+  eyeBtn?.addEventListener('click',()=>{
     const show=pwd.type==='password';
-    pwd.type = show ? 'text' : 'password';
-    toggle.setAttribute('aria-pressed', String(show));
-    toggle.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+    pwd.type=show?'text':'password';
+    eyeIco.className=show?'bi bi-eye-slash':'bi bi-eye';
   });
-  const capsHint=document.getElementById('capsHint');
-  pwd?.addEventListener('keyup', (e)=>{ if(!e.getModifierState) return; capsHint.style.display=e.getModifierState('CapsLock')?'':'none'; });
 
-  // Loading en submit + bloqueo doble click
+  // Submit loading
   const form=document.getElementById('loginForm');
-  const btnSubmit=document.getElementById('submitBtn');
-  const txt=document.getElementById('submitText');
-  const spn=document.getElementById('submitSpinner');
-  form?.addEventListener('submit', ()=>{ btnSubmit.disabled=true; spn.classList.remove('d-none'); txt.style.opacity=.85; });
+  const btn=document.getElementById('goBtn');
+  const txt=document.getElementById('goTxt');
+  const arr=document.getElementById('goArr');
+  const spn=document.getElementById('goSpin');
+  form?.addEventListener('submit',()=>{
+    btn.disabled=true;
+    txt.textContent='Ingresando...';
+    arr.style.display='none';
+    spn.style.display='inline-block';
+  });
 
-  // Autofocus email
-  document.getElementById('emailInput')?.focus();
+  // Autofocus
+  const emp=document.getElementById('empresaInput');
+  const eml=document.getElementById('emailInput');
+  if(emp?.value) eml?.focus(); else emp?.focus();
 })();
 </script>
-{% endblock %}
+</body>
+</html>
