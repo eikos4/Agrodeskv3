@@ -257,6 +257,31 @@
       text-decoration:underline;
     }
 
+    /* ===== PODCAST IA ENHANCEMENTS ===== */
+    .video-container {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background: #000;
+      position: relative;
+    }
+    .video-container:hover {
+      transform: translateY(-8px) scale(1.01);
+      box-shadow: 0 20px 60px rgba(0,180,126,0.25) !important;
+    }
+    .video-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 2px solid var(--accent);
+      border-radius: 1rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .video-container:hover::before {
+      opacity: 0.3;
+    }
+
     /* ===== MEDIA QUERIES ===== */
     @media (max-width:992px){
       .hero h1{font-size:2.3rem;}
@@ -563,6 +588,7 @@
       <div class="collapse navbar-collapse" id="menu">
         <ul class="navbar-nav ms-auto gap-3 text-center">
           <li><a href="#features" class="nav-link">Beneficios</a></li>
+          <li><a href="#podcast" class="nav-link">Podcast IA</a></li>
           <li><a href="#demo" class="nav-link">Plataforma</a></li>
           <li><a href="#plataformas" class="nav-link">Ecosistema</a></li>
           <li><a href="#faq" class="nav-link">FAQ</a></li>
@@ -708,6 +734,55 @@
             <i class="bi bi-person-gear mb-3"></i>
             <h5 class="fw-bold">Soporte agronómico</h5>
             <p>Equipo técnico local disponible para acompañarte.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PODCAST IA -->
+  <section id="podcast" class="py-5" style="background: linear-gradient(180deg, #f8faf8 0%, #ffffff 100%);">
+    <div class="container text-center">
+      <div class="mb-2" data-aos="fade-up">
+        <span class="badge rounded-pill bg-success-subtle text-success px-4 py-2 border border-success border-opacity-10">
+          <i class="bi bi-robot me-2"></i>Innovación AgroDESK
+        </span>
+      </div>
+      <h2 class="fw-bold text-dark mb-3" data-aos="fade-up" data-aos-delay="100">Podcast IA: El Futuro del Campo 🤖🌾</h2>
+      <p class="text-muted mb-5 mx-auto" style="max-width: 700px;" data-aos="fade-up" data-aos-delay="200">
+        Descubre una conversación revolucionaria entre dos Inteligencias Artificiales analizando cómo la tecnología está transformando la gestión agrícola en Chile.
+      </p>
+      
+      <div class="row g-4 justify-content-center">
+        <!-- Parte 1 -->
+        <div class="col-lg-6" data-aos="fade-right" data-aos-delay="300">
+          <div class="video-container shadow-lg rounded-4 overflow-hidden">
+            <div class="ratio ratio-16x9">
+              <iframe src="https://www.youtube.com/embed/W1RsVdUoZVU" title="Podcast AgroDESK Parte 1" allowfullscreen style="border:none;"></iframe>
+            </div>
+            <div class="p-4 text-start bg-white">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small text-success fw-bold"><i class="bi bi-mic-fill me-1"></i> Episodio 01</span>
+                <span class="badge bg-dark text-white">IA Analysis</span>
+              </div>
+              <h5 class="fw-bold text-dark mb-0">Parte 1: La digitalización del agro</h5>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Parte 2 -->
+        <div class="col-lg-6" data-aos="fade-left" data-aos-delay="400">
+          <div class="video-container shadow-lg rounded-4 overflow-hidden">
+            <div class="ratio ratio-16x9">
+              <iframe src="https://www.youtube.com/embed/8Lji1mDpPGg" title="Podcast AgroDESK Parte 2" allowfullscreen style="border:none;"></iframe>
+            </div>
+            <div class="p-4 text-start bg-white">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small text-success fw-bold"><i class="bi bi-mic-fill me-1"></i> Episodio 02</span>
+                <span class="badge bg-dark text-white">IA Deep Dive</span>
+              </div>
+              <h5 class="fw-bold text-dark mb-0">Parte 2: Eficiencia, Bodega y Resultados</h5>
+            </div>
           </div>
         </div>
       </div>
