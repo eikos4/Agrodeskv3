@@ -17,7 +17,6 @@
         <i class="bi bi-plus-circle"></i> Nueva Actividad
       </a>
 
-      {% if current_user.is_authenticated and current_user.role == 'admin' %}
       <a
         href="{{ url_for('docs.admin_panel', huerto_id=huerto.id, next=request.full_path) }}"
         class="btn btn-outline-primary"
@@ -25,7 +24,6 @@
       >
         <i class="bi bi-upload"></i> Subir documento al huerto
       </a>
-      {% endif %}
 
       <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">Volver</a>
 

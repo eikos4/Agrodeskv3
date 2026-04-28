@@ -58,7 +58,7 @@ def resolve_empresa_for_doc(huerto_id: int | None) -> int | None:
 @docs_bp.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin_panel():
-    if not is_admin():
+    if not is_admin() and current_user.role != "tecnico":
         flash("No autorizado", "danger")
         return redirect(url_for("main.index"))
 
@@ -74,6 +74,10 @@ def admin_panel():
     huertos_q = Huerto.query
     if emp_id:
         huertos_q = huertos_q.filter(Huerto.empresa_id == emp_id)
+    
+    if not is_admin() and current_user.role == "tecnico":
+        huertos_q = huertos_q.filter(Huerto.responsable_id == current_user.id)
+
     form.huerto_id.choices = [(0, "— General —")] + [
         (h.id, h.nombre) for h in huertos_q.order_by(Huerto.nombre).all()
     ]
@@ -137,6 +141,12 @@ def admin_panel():
     q = Documento.query
     if emp_id:
         q = q.filter(Documento.empresa_id == emp_id)
+        
+    if not is_admin() and current_user.role == "tecnico":
+        # Un técnico solo debería ver documentos de sus huertos o documentos generales de la empresa
+        q = q.join(Huerto, Documento.huerto_id == Huerto.id, isouter=True)\
+             .filter((Huerto.responsable_id == current_user.id) | (Documento.huerto_id.is_(None)))
+
     if huerto_id_param:
         q = q.filter((Documento.huerto_id == huerto_id_param) | (Documento.huerto_id.is_(None)))
     documentos = q.order_by(Documento.created_at.desc()).all()
@@ -183,16 +193,27 @@ def view(doc_id):
 @docs_bp.route("/delete/<int:doc_id>", methods=["POST"])
 @login_required
 def delete(doc_id):
-    if not is_admin():
+    if not is_admin() and getattr(current_user, "role", None) != "tecnico":
         flash("No autorizado", "danger")
         return redirect(url_for("main.index"))
 
     doc = Documento.query.get_or_404(doc_id)
-    # (Opcional) Si tu admin también está restringido a una empresa concreta:
+    # Aislamiento por empresa
     emp_id = current_empresa_id()
-    if emp_id and doc.empresa_id != emp_id:
+    if emp_id and doc.empresa_id != emp_id and not is_admin():
         flash("No puedes eliminar documentos de otra empresa.", "danger")
         return redirect(url_for("docs.admin_panel"))
+
+    # Validar que si es técnico, el documento pertenezca a un huerto asignado a él, o sea general
+    if not is_admin() and current_user.role == "tecnico":
+        if doc.huerto_id is not None:
+            if not doc.huerto or doc.huerto.responsable_id != current_user.id:
+                flash("No autorizado para eliminar este documento.", "danger")
+                return redirect(url_for("docs.admin_panel"))
+        else:
+            # Es un documento general de la empresa. Técnicos no pueden borrar doc generales.
+            flash("No tienes permiso para eliminar documentos generales.", "danger")
+            return redirect(url_for("docs.admin_panel"))
 
     folder = current_app.config["UPLOAD_FOLDER"]
     try:
