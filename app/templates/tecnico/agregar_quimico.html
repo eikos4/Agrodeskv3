@@ -1,153 +1,212 @@
 {% extends "base.html" %}
-{% block title %}Agregar Químico a {{ bodega.nombre }}{% endblock %}
+{% block title %}Agregar Químico | AgroDESK{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <!-- AgroBot banner -->
-  <div id="agrobot-banner" class="card shadow-sm border-0 mb-4">
-    <div class="card-body d-flex flex-wrap align-items-start gap-3">
-      <i class="bi bi-robot fs-1 text-success"></i>
-      <div class="flex-grow-1">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-          <div>
-            <h5 class="mb-1">AgroBot — Alta de Químicos</h5>
-            <p class="mb-2 text-muted small">Consejos rápidos para un registro limpio y trazable.</p>
-          </div>
-          <button id="agrobot-hide" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-eye-slash"></i> Ocultar
-          </button>
-        </div>
-        <ul class="small mb-0">
-          <li>Usa <b>tipo</b> correcto (insecticida, fungicida, etc.) para filtrar reportes.</li>
-          <li>Ingresa <b>fecha de ingreso</b> real; por defecto proponemos <b>hoy</b>.</li>
-          <li><b>Cantidad (L)</b> acepta decimales; usa punto. Ej: <code>12.5</code></li>
-        </ul>
-      </div>
+<style>
+  /* ===== RESET & BASE ===== */
+  body{background:#f4f7f5 !important}
+  .dash{font-family:'Inter',system-ui,sans-serif}
+
+  /* ===== HEADER BANNER ===== */
+  .page-banner{
+    background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%);
+    border-radius:18px;padding:2rem 2.2rem;color:#fff;
+    position:relative;overflow:hidden;margin-bottom:2rem;
+    box-shadow: 0 10px 30px rgba(6,78,59,0.15);
+  }
+  .page-banner::before{
+    content:'';position:absolute;top:-60px;right:-40px;
+    width:280px;height:280px;border-radius:50%;
+    background:radial-gradient(circle,rgba(52,211,153,.15),transparent 70%);
+    pointer-events:none;
+  }
+  .page-banner h2{font-weight:800;font-size:1.8rem;margin-bottom:.5rem;position:relative;z-index:2}
+  .page-banner p{color:#a7f3d0;font-size:.95rem;font-weight:500;margin-bottom:0;position:relative;z-index:2}
+  
+  .badge-banner {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+  }
+
+  /* ===== FORM CARD ===== */
+  .form-card{
+    background:#fff;border-radius:16px;border:1px solid #e8ede9;
+    padding:2rem;box-shadow:0 12px 24px rgba(0,0,0,0.04);
+  }
+  
+  .form-label { font-weight: 600; color: #374151; font-size: 0.9rem; }
+  .form-control, .form-select {
+    border-radius: 10px; border: 1px solid #d1d5db;
+    padding: 0.6rem 1rem; font-size: 0.95rem; transition: all 0.2s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.1);
+  }
+  .input-group-text { border-radius: 10px; border-color: #d1d5db; background: #f9fafb; font-weight: 600; color: #6b7280; }
+  
+  /* ===== CHIPS ===== */
+  .tipo-chip { border-radius: 20px; font-weight: 600; font-size: 0.8rem; padding: 0.3rem 0.8rem; }
+  
+  /* ===== AGROBOT BANNER ===== */
+  .agrobot-banner{
+    background:#ecfdf5;border-radius:16px;padding:1.5rem;
+    border:1px solid #a7f3d0;margin-bottom:2rem;
+    display:flex;gap:1.2rem;position:relative;
+  }
+  .agrobot-banner .bot-av{
+    width:50px;height:50px;border-radius:12px;background:#fff;
+    display:grid;place-items:center;font-size:1.8rem;flex-shrink:0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+  .agrobot-banner h5{font-weight:800;color:#065f46;margin-bottom:.5rem;font-size:1.1rem}
+  .agrobot-banner p{font-size:.85rem;color:#065f46;opacity:.9;margin-bottom:.5rem}
+  .agrobot-banner .btn-close-bot{
+    position:absolute;top:1rem;right:1rem;background:none;border:none;color:#059669;opacity:.5;
+    transition: all 0.2s;
+  }
+  .agrobot-banner .btn-close-bot:hover{opacity:1; transform: scale(1.1);}
+  .agrobot-banner ul { margin-bottom: 0; padding-left: 1.2rem; color: #065f46; opacity: 0.9; font-size: 0.85rem;}
+
+</style>
+
+<div class="container py-4 dash">
+
+  <!-- AGROBOT -->
+  <div id="agrobot-banner" class="agrobot-banner">
+    <button id="agrobot-hide" class="btn-close-bot"><i class="bi bi-x-lg"></i></button>
+    <div class="bot-av">🤖</div>
+    <div>
+      <h5>AgroBot — Alta de Químicos</h5>
+      <p>Consejos para mantener tu inventario perfecto:</p>
+      <ul>
+        <li>Selecciona el <b>tipo</b> correcto para que los reportes de aplicaciones sean precisos.</li>
+        <li>La <b>fecha de ingreso</b> es hoy por defecto.</li>
+        <li>Para <b>Cantidad</b> usa punto decimal (Ej: <code>12.5</code>).</li>
+      </ul>
     </div>
   </div>
 
-  <!-- Encabezado bodega -->
-  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-    <div class="d-flex align-items-center gap-3">
-      <h4 class="mb-0">
-        <i class="bi bi-plus-circle-fill text-success me-2"></i>
-        Agregar químico a <span class="text-success">{{ bodega.nombre }}</span>
-      </h4>
-      <span class="badge text-bg-light border">
-        <i class="bi bi-tree-fill text-success"></i>
-        {{ bodega.huerto.nombre if bodega.huerto else '—' }}
-      </span>
-      <span class="badge text-bg-light border">
-        <i class="bi bi-person-badge text-success"></i>
-        {{ bodega.responsable.name if bodega.responsable else 'Sin responsable' }}
-      </span>
+  <!-- BANNER -->
+  <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h2><i class="bi bi-plus-circle-fill me-2"></i>Agregar Químico</h2>
+      <p>Registra nuevos productos en el inventario de tu bodega.</p>
     </div>
-    <a href="{{ url_for('admin.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-secondary">
-      <i class="bi bi-arrow-left-circle"></i> Volver a Químicos
-    </a>
+    <div class="d-flex flex-column align-items-end gap-2">
+      <span class="badge-banner"><i class="bi bi-house-door-fill text-warning me-1"></i> Bodega: {{ bodega.nombre }}</span>
+      <span class="badge-banner"><i class="bi bi-tree-fill text-success me-1"></i> Huerto: {{ bodega.huerto.nombre if bodega.huerto else '—' }}</span>
+    </div>
   </div>
 
   <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <div class="card shadow">
-        <div class="card-body">
-          <!-- Flash -->
-          {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-              {% for category, msg in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                  {{ msg }}
-                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                </div>
-              {% endfor %}
-            {% endif %}
-          {% endwith %}
+    <div class="col-lg-9">
+      <div class="form-card">
+        
+        <!-- Botón Volver -->
+        <div class="d-flex justify-content-end mb-3">
+          <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-sm btn-outline-secondary fw-bold" style="border-radius:8px">
+            <i class="bi bi-arrow-left"></i> Volver al inventario
+          </a>
+        </div>
 
-          <form id="formQuimico" method="POST" autocomplete="off" novalidate>
-            {{ form.hidden_tag() }}
+        <!-- Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
 
+        <form id="formQuimico" method="POST" autocomplete="off" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-4">
             <!-- Nombre -->
-            <div class="mb-3">
+            <div class="col-12">
               <label class="form-label d-flex justify-content-between">
-                <span>{{ form.nombre.label.text }}</span>
+                <span><i class="bi bi-tag me-1 text-success"></i>{{ form.nombre.label.text }}</span>
                 <small class="text-muted"><span id="nombreCount">0</span>/100</small>
               </label>
               {{ form.nombre(class="form-control", placeholder="Ej: Glifosato 48% SL", maxlength="100") }}
               {% if form.nombre.errors %}
-                <div class="text-danger small">{{ form.nombre.errors[0] }}</div>
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle"></i> {{ form.nombre.errors[0] }}</div>
               {% endif %}
             </div>
 
             <!-- Tipo con chips rápidos -->
-            <div class="mb-3">
-              {{ form.tipo.label(class="form-label") }}
+            <div class="col-12">
+              <label class="form-label"><i class="bi bi-grid me-1 text-success"></i>{{ form.tipo.label.text }}</label>
               <div class="d-flex flex-wrap gap-2 mb-2">
-                <button type="button" class="btn btn-sm btn-outline-success tipo-chip" data-value="herbicida">Herbicida</button>
-                <button type="button" class="btn btn-sm btn-outline-success tipo-chip" data-value="fungicida">Fungicida</button>
-                <button type="button" class="btn btn-sm btn-outline-success tipo-chip" data-value="insecticida">Insecticida</button>
-                <button type="button" class="btn btn-sm btn-outline-success tipo-chip" data-value="fertilizante">Fertilizante</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary tipo-chip" data-value="otro">Otro</button>
+                <button type="button" class="btn btn-outline-success tipo-chip" data-value="herbicida">Herbicida</button>
+                <button type="button" class="btn btn-outline-success tipo-chip" data-value="fungicida">Fungicida</button>
+                <button type="button" class="btn btn-outline-success tipo-chip" data-value="insecticida">Insecticida</button>
+                <button type="button" class="btn btn-outline-success tipo-chip" data-value="fertilizante">Fertilizante</button>
+                <button type="button" class="btn btn-outline-secondary tipo-chip" data-value="otro">Otro</button>
               </div>
               {{ form.tipo(class="form-select") }}
               {% if form.tipo.errors %}
-                <div class="text-danger small">{{ form.tipo.errors[0] }}</div>
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle"></i> {{ form.tipo.errors[0] }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Cantidad + Fecha -->
+            <div class="col-md-6">
+              <label class="form-label"><i class="bi bi-droplet me-1 text-success"></i>{{ form.cantidad_litros.label.text }}</label>
+              <div class="input-group">
+                {{ form.cantidad_litros(class="form-control", placeholder="Ej: 10.5", step="0.01", min="0") }}
+                <span class="input-group-text">Litros/Kilos</span>
+              </div>
+              {% if form.cantidad_litros.errors %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle"></i> {{ form.cantidad_litros.errors[0] }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label"><i class="bi bi-calendar-event me-1 text-success"></i>{{ form.fecha_ingreso.label.text }}</label>
+              {{ form.fecha_ingreso(class="form-control", type="date", id="fechaIngreso") }}
+              {% if form.fecha_ingreso.errors %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle"></i> {{ form.fecha_ingreso.errors[0] }}</div>
               {% endif %}
             </div>
 
             <!-- Descripción -->
-            <div class="mb-3">
-              {{ form.descripcion.label(class="form-label") }}
-              {{ form.descripcion(class="form-control", rows=3, placeholder="Descripción, formulación, precauciones o instrucciones de uso…") }}
+            <div class="col-12">
+              <label class="form-label"><i class="bi bi-info-circle me-1 text-success"></i>{{ form.descripcion.label.text }}</label>
+              {{ form.descripcion(class="form-control", rows=3, placeholder="Especifica formulación, ingredientes activos, y precauciones…") }}
               {% if form.descripcion.errors %}
-                <div class="text-danger small">{{ form.descripcion.errors[0] }}</div>
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle"></i> {{ form.descripcion.errors[0] }}</div>
               {% endif %}
-              <div class="form-text">
-                Sugerencia: especifica concentración (p.ej. “48% SL”) y <em>intervalo de seguridad</em>.
-              </div>
             </div>
+          </div>
 
-            <!-- Cantidad + Fecha -->
-            <div class="row g-3">
-              <div class="col-md-6">
-                {{ form.cantidad_litros.label(class="form-label") }}
-                <div class="input-group">
-                  {{ form.cantidad_litros(class="form-control", placeholder="Ej: 10.5", step="0.01", min="0") }}
-                  <span class="input-group-text">L</span>
-                </div>
-                {% if form.cantidad_litros.errors %}
-                  <div class="text-danger small">{{ form.cantidad_litros.errors[0] }}</div>
-                {% endif %}
-                <div class="form-text">Usa punto para decimales.</div>
-              </div>
-              <div class="col-md-6">
-                {{ form.fecha_ingreso.label(class="form-label") }}
-                {{ form.fecha_ingreso(class="form-control", type="date", id="fechaIngreso") }}
-                {% if form.fecha_ingreso.errors %}
-                  <div class="text-danger small">{{ form.fecha_ingreso.errors[0] }}</div>
-                {% endif %}
-              </div>
+          <!-- Botonera -->
+          <div class="d-flex flex-wrap justify-content-between align-items-center mt-5 pt-3 border-top gap-3">
+            <div class="small text-muted d-none d-md-block">
+              <i class="bi bi-keyboard"></i> Atajo: <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> para guardar
             </div>
-
-            <!-- Botonera -->
-            <div class="d-flex flex-wrap justify-content-between mt-4 gap-2">
-              <div class="small text-muted">
-                <i class="bi bi-lightning-charge"></i> Atajo: <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> para guardar
-              </div>
-              <div class="d-flex gap-2">
-                <a href="{{ url_for('admin.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-outline-secondary">
-                  <i class="bi bi-x-circle"></i> Cancelar
-                </a>
-                <button type="submit" class="btn btn-success" id="btnGuardar">
-                  <i class="bi bi-check2-circle"></i> Guardar
-                </button>
-                <button type="submit" class="btn btn-success" id="btnGuardarOtro" name="seguir" value="1">
-                  <i class="bi bi-plus-circle"></i> Guardar y agregar otro
-                </button>
-              </div>
+            <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-end">
+              <a href="{{ url_for('tecnico.ver_quimicos', bodega_id=bodega.id) }}" class="btn btn-light fw-bold" style="border-radius:10px">
+                Cancelar
+              </a>
+              <button type="submit" class="btn btn-success fw-bold px-4" id="btnGuardar" style="border-radius:10px">
+                <i class="bi bi-check2-circle me-1"></i> Guardar Químico
+              </button>
+              <button type="submit" class="btn btn-outline-success fw-bold" id="btnGuardarOtro" name="seguir" value="1" style="border-radius:10px">
+                <i class="bi bi-plus-circle me-1"></i> Guardar y otro
+              </button>
             </div>
-          </form>
+          </div>
+        </form>
 
-        </div>
       </div>
     </div>
   </div>
@@ -155,9 +214,10 @@
 
 <!-- FAB para reabrir AgroBot -->
 <button id="agrobot-reopen"
-        class="btn btn-success shadow position-fixed bottom-0 end-0 m-3 d-none"
+        class="btn btn-success shadow-lg position-fixed bottom-0 end-0 m-4 d-none"
+        style="border-radius:12px; font-weight:800; padding:0.6rem 1rem"
         title="Mostrar guía de AgroBot">
-  <i class="bi bi-robot"></i> AgroBot
+  <i class="bi bi-robot me-1"></i> AgroBot
 </button>
 
 <script>
@@ -186,7 +246,19 @@
   // Chips tipo
   const tipoSelect = document.getElementById('{{ form.tipo.id }}');
   document.querySelectorAll('.tipo-chip').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ if(tipoSelect){ tipoSelect.value = btn.dataset.value; tipoSelect.dispatchEvent(new Event('change')); } });
+    btn.addEventListener('click', ()=>{ 
+      if(tipoSelect){ 
+        tipoSelect.value = btn.dataset.value; 
+        tipoSelect.dispatchEvent(new Event('change'));
+        // Feedback visual
+        document.querySelectorAll('.tipo-chip').forEach(b => {
+          b.classList.remove('btn-success');
+          b.classList.add('btn-outline-success');
+        });
+        btn.classList.remove('btn-outline-success');
+        btn.classList.add('btn-success');
+      } 
+    });
   });
 
   // Fecha por defecto = hoy (si viene vacía)
