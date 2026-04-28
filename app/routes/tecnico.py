@@ -13,7 +13,8 @@ from app.models import (
     FormularioTarea, ChecklistItem, ActividadHuerto, MovimientoInventario
 )
 from app.forms import (
-    QuimicoForm, ResponderFormularioForm, ChecklistItemForm, RegistrarActividadForm
+    QuimicoForm, ResponderFormularioForm, ChecklistItemForm, RegistrarActividadForm,
+    BodegaForm
 )
 
 tecnico_bp = Blueprint("tecnico", __name__, url_prefix="/tecnico")
@@ -121,6 +122,45 @@ def tecnico_dashboard():
         recomendaciones=recomendaciones,
         notificaciones=[],
     )
+
+@tecnico_bp.route("/bodega/crear", methods=["GET", "POST"])
+@login_required
+@tecnico_required
+def crear_bodega():
+    form = BodegaForm()
+    
+    # Filtrar huertos para que solo pueda asociar a los que él administra
+    huertos = Huerto.query.filter_by(
+        responsable_id=current_user.id, 
+        empresa_id=current_user.empresa_id
+    ).order_by(Huerto.nombre.asc()).all()
+    
+    form.huerto_id.choices = [(h.id, h.nombre) for h in huertos]
+    
+    # El responsable siempre será el técnico, por lo que las opciones de responsable 
+    # se pueden obviar o fijar a él mismo. Para que el formulario valide (si es SelectField),
+    # le pasamos solo su opción.
+    form.responsable_id.choices = [(current_user.id, current_user.name)]
+    form.responsable_id.data = current_user.id
+
+    if form.validate_on_submit():
+        try:
+            b = Bodega(
+                nombre=form.nombre.data,
+                ubicacion=form.ubicacion.data,
+                huerto_id=form.huerto_id.data,
+                responsable_id=current_user.id, # Se fuerza a sí mismo
+                empresa_id=current_user.empresa_id,
+            )
+            db.session.add(b)
+            db.session.commit()
+            flash("Bodega creada correctamente ✅", "success")
+            return redirect(url_for("tecnico.tecnico_dashboard"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error creando bodega: {e}", "danger")
+            
+    return render_template("admin/bodega_form.html", form=form)
 
 
 # ================== Recomendaciones ==================

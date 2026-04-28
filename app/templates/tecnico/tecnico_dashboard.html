@@ -342,6 +342,12 @@
 
     <!-- ===== BODEGAS PANE ===== -->
     <div class="tab-pane fade" id="pane-bodegas">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0 text-success fw-bold"><i class="bi bi-box-seam me-2"></i>Mis Bodegas</h5>
+        <a href="{{ url_for('tecnico.crear_bodega') }}" class="btn btn-success fw-bold" style="border-radius:10px">
+          <i class="bi bi-plus-circle me-1"></i>Crear Bodega
+        </a>
+      </div>
       <div class="row g-4" id="gridBodegas">
         {% for b in bodegas %}
         <div class="col-12 col-md-6 col-lg-4 card-bodega"
