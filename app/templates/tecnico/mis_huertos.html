@@ -1,111 +1,138 @@
 {% extends "base.html" %}
-{% block title %}Mis Huertos{% endblock %}
+{% block title %}Mis Huertos | AgroDESK{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-   <h2 class="mb-4 text-success">
-    <i class="bi bi-tree-fill"></i> Mis Huertos
-  </h2>
-  <!-- Introducción explicativa -->
-  <div class="alert alert-success shadow-sm p-4 mb-5">
-    <div class="d-flex align-items-start">
-      <div class="me-3 fs-1">🤖</div>
-      <div>
-        <h4 class="fw-bold mb-2">Esto te recomienda tu asistente AgroBot</h4>
-        <p class="mb-0">
-          Un <strong>huerto</strong> es el área de cultivo donde gestionas tus plantas o frutales.
-          Aquí podrás llevar un <strong>histórico de actividades</strong> como siembras, riegos, fertilizaciones
-          y controles, además de ver las bodegas y químicos asociados.  
-          Esta información es clave para mejorar la productividad y cuidar la salud de tu campo.
-        </p>
-      </div>
-    </div>
+<style>
+  /* ===== RESET & BASE ===== */
+  body{background:#f4f7f5 !important}
+  .dash{font-family:'Inter',system-ui,sans-serif}
+
+  /* ===== HEADER BANNER ===== */
+  .page-banner{
+    background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%);
+    border-radius:18px;padding:2rem 2.2rem;color:#fff;
+    position:relative;overflow:hidden;margin-bottom:2rem;
+    box-shadow: 0 10px 30px rgba(6,78,59,0.15);
+  }
+  .page-banner::before{
+    content:'';position:absolute;top:-60px;right:-40px;
+    width:280px;height:280px;border-radius:50%;
+    background:radial-gradient(circle,rgba(52,211,153,.15),transparent 70%);
+    pointer-events:none;
+  }
+  .page-banner h2{font-weight:800;font-size:1.8rem;margin-bottom:.5rem}
+  .page-banner p{color:#a7f3d0;font-size:.95rem;font-weight:500;margin-bottom:0}
+
+  /* ===== HUERTO CARDS (Dashboard style) ===== */
+  .h-card{
+    background:#fff;border-radius:16px;border:1px solid #e8ede9;
+    overflow:hidden;transition:all .25s;height:100%;
+    display:flex;flex-direction:column;
+  }
+  .h-card:hover{transform:translateY(-5px);box-shadow:0 15px 35px rgba(0,0,0,0.08)}
+  .h-card .h-header{
+    padding:1.2rem;background:#f9fafb;border-bottom:1px solid #f3f4f6;
+    display:flex;justify-content:space-between;align-items:flex-start;
+  }
+  .h-card .h-header h6{font-weight:800;color:#111827;margin:0;font-size:1.1rem}
+  .h-card .h-header .badge{
+    font-size:.7rem;padding:.4rem .6rem;border-radius:6px;
+    background:#fff;border:1px solid #e5e7eb;color:#6b7280;
+  }
+  .h-card .h-body{padding:1.4rem 1.2rem;flex-grow:1}
+  .h-card .h-info{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem}
+  .h-card .h-info-item{display:flex;align-items:center;gap:.6rem}
+  .h-card .h-info-item i{color:#10b981;font-size:1.1rem}
+  .h-card .h-info-item span{font-size:.8rem;color:#6b7280;display:block;line-height:1.2;font-weight:600}
+  .h-card .h-info-item strong{font-size:.9rem;color:#111827;display:block}
+  
+  .h-card .h-footer{
+    padding:1.2rem;background:#fff;border-top:1px solid #f3f4f6;
+    display:flex;flex-wrap:wrap;gap:.5rem;
+  }
+  .h-card .btn-action{
+    flex:1 1 auto;font-size:.8rem;font-weight:700;padding:.5rem .8rem;
+    border-radius:8px;text-decoration:none;transition:all .15s;
+    display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
+    background:#f9fafb;border:1px solid #e5e7eb;color:#374151;
+  }
+  .h-card .btn-action:hover{background:#ecfdf5;color:#059669;border-color:#10b981}
+  .h-card .btn-action.primary{background:#059669;color:#fff;border-color:#059669}
+  .h-card .btn-action.primary:hover{background:#047857}
+  .h-card .btn-action.warning{background:#fffbeb;color:#d97706;border-color:#fcd34d}
+  .h-card .btn-action.warning:hover{background:#fef3c7;border-color:#f59e0b}
+
+  /* Responsive */
+  @media(max-width:576px){
+    .h-info{grid-template-columns:1fr !important}
+  }
+</style>
+
+<div class="container py-4 dash">
+
+  <!-- BANNER -->
+  <div class="page-banner">
+    <h2><i class="bi bi-tree-fill me-2"></i>Mis Huertos Asignados</h2>
+    <p>Gestiona, edita y supervisa los detalles de tus áreas de cultivo.</p>
   </div>
 
-  
+  <div class="row g-4">
+    {% for h in huertos %}
+    <div class="col-12 col-lg-6">
+      <div class="h-card position-relative">
+        <span class="position-absolute top-0 end-0 badge bg-primary fs-7 me-3 mt-3 shadow-sm" style="z-index: 10;">ID {{ h.id }}</span>
+        
+        <div class="h-header">
+          <div>
+            <h6>{{ h.nombre }}</h6>
+            <div class="small text-muted mt-1"><i class="bi bi-geo-alt"></i> {{ h.ubicacion or 'Ubicación no especificada' }}</div>
+          </div>
+          <span class="badge shadow-sm"><i class="bi bi-flower2 me-1"></i>{{ h.tipo_cultivo or 'Sin cultivo' }}</span>
+        </div>
 
-  {% if huertos|length == 1 %}
-    {% set h = huertos[0] %}
-    <div class="row mb-5">
-      <div class="col-12">
-        <div class="card shadow-lg border-success position-relative" style="min-height: 340px;">
-          <span class="position-absolute top-0 end-0 badge bg-primary fs-6 me-3 mt-3 shadow">ID {{ h.id }}</span>
-          <div class="card-header bg-success text-white">
-            <i class="bi bi-tree-fill"></i> {{ h.nombre }}
-            <span class="badge bg-light text-success ms-2">Principal</span>
-          </div>
-          <div class="card-body row">
-            <div class="col-md-6">
-              <p><strong>Ubicación:</strong> {{ h.ubicacion or "—" }}</p>
-              <p><strong>Superficie:</strong> {{ h.superficie_ha }} ha</p>
-              <p><strong>Cultivo:</strong> {{ h.tipo_cultivo or "—" }}</p>
-              <p><strong>Siembra:</strong> {{ h.fecha_siembra.strftime('%d-%m-%Y') if h.fecha_siembra else "—" }}</p>
+        <div class="h-body">
+          <div class="h-info">
+            <div class="h-info-item">
+              <i class="bi bi-rulers"></i>
+              <div><span>Superficie Total</span><strong>{{ '%.2f'|format(h.superficie_ha or 0) }} ha</strong></div>
             </div>
-            <div class="col-md-6">
-              <p><strong>Bodegas:</strong>
-                <span class="badge bg-warning text-dark">{{ h.bodegas|length }}</span>
-              </p>
-              <p><strong>Actividades:</strong>
-                <span class="badge bg-info">{{ h.actividades|length }}</span>
-              </p>
-              {% if h.actividades %}
-                {% set last_act = h.actividades|sort(attribute='fecha')|last %}
-                <p><strong>Última actividad:</strong>
-                  <span class="text-muted">{{ last_act.tipo|capitalize }} el {{ last_act.fecha.strftime('%d-%m-%Y') }}</span>
-                </p>
-              {% endif %}
+            <div class="h-info-item">
+              <i class="bi bi-calendar-event"></i>
+              <div><span>Fecha Siembra</span><strong>{{ h.fecha_siembra.strftime('%d-%m-%Y') if h.fecha_siembra else 'No registrada' }}</strong></div>
+            </div>
+            <div class="h-info-item">
+              <i class="bi bi-person-badge"></i>
+              <div><span>Propietario / Rut</span><strong>{{ h.propietario or '—' }} ({{ h.rut or '—' }})</strong></div>
+            </div>
+            <div class="h-info-item">
+              <i class="bi bi-box-seam"></i>
+              <div><span>Inventario</span><strong>{{ h.bodegas|length }} Bodegas</strong></div>
             </div>
           </div>
-          <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-end">
-            <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" class="btn btn-outline-success btn-lg">
-              <i class="bi bi-journal-text"></i> Bitácora
-            </a>
-            <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn btn-outline-info btn-lg">
-              <i class="bi bi-plus-lg"></i> Nueva Actividad
-            </a>
-          </div>
+          
+          {% if h.actividades %}
+            {% set last_act = h.actividades|sort(attribute='fecha')|last %}
+            <div class="alert alert-secondary mt-3 mb-0 py-2 border-0" style="background:#f9fafb;font-size:0.85rem">
+              <i class="bi bi-clock-history me-1 text-muted"></i> <strong>Última actividad:</strong> {{ last_act.tipo|replace('_',' ')|capitalize }} ({{ last_act.fecha.strftime('%d-%m-%Y') }})
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="h-footer">
+          <a href="{{ url_for('tecnico.editar_huerto', huerto_id=h.id) }}" class="btn-action warning"><i class="bi bi-pencil-square"></i> Editar Huerto</a>
+          <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" class="btn-action primary"><i class="bi bi-journal-check"></i> Bitácora</a>
+          <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn-action"><i class="bi bi-plus-lg"></i> Nueva Actividad</a>
         </div>
       </div>
     </div>
-  {% elif huertos %}
-    <div class="row g-4">
-      {% for h in huertos %}
-      <div class="col-12 col-md-6 col-lg-4">
-        <div class="card shadow-lg h-100 border-success position-relative">
-          <span class="position-absolute top-0 end-0 badge bg-primary fs-6 me-3 mt-3 shadow">ID {{ h.id }}</span>
-          <div class="card-header bg-success text-white">
-            <i class="bi bi-tree-fill"></i> {{ h.nombre }}
-          </div>
-          <div class="card-body">
-            <p><strong>Ubicación:</strong> {{ h.ubicacion or "—" }}</p>
-            <p><strong>Superficie:</strong> {{ h.superficie_ha }} ha</p>
-            <p><strong>Cultivo:</strong> {{ h.tipo_cultivo or "—" }}</p>
-            <p><strong>Siembra:</strong> {{ h.fecha_siembra.strftime('%d-%m-%Y') if h.fecha_siembra else "—" }}</p>
-            <p><strong>Bodegas:</strong> <span class="badge bg-warning text-dark">{{ h.bodegas|length }}</span></p>
-            <p><strong>Actividades:</strong> <span class="badge bg-info">{{ h.actividades|length }}</span></p>
-            {% if h.actividades %}
-              {% set last_act = h.actividades|sort(attribute='fecha')|last %}
-              <p><strong>Última actividad:</strong>
-                <span class="text-muted">{{ last_act.tipo|capitalize }} el {{ last_act.fecha.strftime('%d-%m-%Y') }}</span>
-              </p>
-            {% endif %}
-          </div>
-          <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-end">
-            <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" class="btn btn-outline-success btn-sm">
-              <i class="bi bi-journal-text"></i> Bitácora
-            </a>
-            <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn btn-outline-info btn-sm">
-              <i class="bi bi-plus-lg"></i> Nueva Actividad
-            </a>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
+    {% else %}
+    <div class="col-12 text-center py-5">
+      <i class="bi bi-tree text-muted" style="font-size:4rem"></i>
+      <h4 class="mt-3 text-muted fw-bold">No tienes huertos asignados</h4>
+      <p class="text-muted">Contacta con el administrador para que te asigne áreas de cultivo.</p>
     </div>
-  {% else %}
-    <div class="alert alert-info text-center mb-0">
-      <i class="bi bi-info-circle"></i> No tienes huertos asignados.
-    </div>
-  {% endif %}
+    {% endfor %}
+  </div>
+
 </div>
 {% endblock %}

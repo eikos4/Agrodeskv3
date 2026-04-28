@@ -308,6 +308,7 @@
               </div>
             </div>
             <div class="h-footer">
+              <a href="{{ url_for('tecnico.editar_huerto', huerto_id=h.id) }}" class="btn-action warning"><i class="bi bi-pencil-square"></i>Editar Huerto</a>
               <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=h.id) }}" class="btn-action primary"><i class="bi bi-journal-check"></i>Bitácora</a>
               <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=h.id) }}" class="btn-action"><i class="bi bi-plus-lg"></i>Nueva Activ.</a>
               <a href="{{ url_for('geo.mapa') }}?focus=huerto:{{ h.id }}" class="btn-action"><i class="bi bi-geo-alt"></i>Mapa</a>

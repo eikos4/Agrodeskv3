@@ -14,7 +14,7 @@ from app.models import (
 )
 from app.forms import (
     QuimicoForm, ResponderFormularioForm, ChecklistItemForm, RegistrarActividadForm,
-    BodegaForm
+    BodegaForm, CrearHuertoForm
 )
 
 tecnico_bp = Blueprint("tecnico", __name__, url_prefix="/tecnico")
@@ -210,6 +210,81 @@ def mis_huertos():
     # Si tienes otra relación de asignación explícita, agrégala aquí.
     huertos = list({*q1.all()})
     return render_template("tecnico/mis_huertos.html", huertos=huertos)
+
+@tecnico_bp.route("/huerto/<int:huerto_id>/editar", methods=["GET", "POST"])
+@login_required
+@tecnico_required
+def editar_huerto(huerto_id):
+    huerto = _get_huerto_or_404(huerto_id)
+    if not tecnico_puede_acceder_a_huerto(huerto):
+        flash("No tienes acceso a este huerto.", "danger")
+        return redirect(url_for("tecnico.mis_huertos"))
+        
+    form = CrearHuertoForm()
+    # Ocultar o proteger el responsable: lo forzamos al mismo usuario
+    # para que un técnico no pueda transferir el huerto a otro técnico.
+    form.responsable_id.choices = [(current_user.id, current_user.name)]
+    
+    if request.method == "GET":
+        form.nombre.data = huerto.nombre
+        form.ubicacion.data = huerto.ubicacion
+        form.superficie_ha.data = huerto.superficie_ha
+        form.tipo_cultivo.data = huerto.tipo_cultivo
+        form.fecha_siembra.data = huerto.fecha_siembra
+        form.responsable_id.data = current_user.id
+        
+        # IDENTIFICACION GENERAL DEL PREDIO
+        form.propietario.data = huerto.propietario
+        form.rut.data = huerto.rut
+        form.codigo_productor.data = huerto.codigo_productor
+        form.localidad.data = huerto.localidad
+        form.comuna.data = huerto.comuna
+        form.provincia.data = huerto.provincia
+        form.region.data = huerto.region
+        form.distrito_agroclimatico.data = huerto.distrito_agroclimatico
+        form.telefono.data = huerto.telefono
+        form.administrador.data = huerto.administrador
+        form.encargado_huerto.data = huerto.encargado_huerto
+        form.direccion.data = huerto.direccion
+        form.empresas.data = huerto.empresas
+        form.exportadoras.data = huerto.exportadoras
+
+    if form.validate_on_submit():
+        try:
+            huerto.nombre = form.nombre.data
+            huerto.ubicacion = form.ubicacion.data
+            huerto.superficie_ha = form.superficie_ha.data
+            huerto.tipo_cultivo = form.tipo_cultivo.data
+            huerto.fecha_siembra = form.fecha_siembra.data
+            # Mantenemos al usuario actual como responsable siempre
+            huerto.responsable_id = current_user.id
+            
+            # IDENTIFICACION GENERAL DEL PREDIO
+            huerto.propietario = form.propietario.data
+            huerto.rut = form.rut.data
+            huerto.codigo_productor = form.codigo_productor.data
+            huerto.localidad = form.localidad.data
+            huerto.comuna = form.comuna.data
+            huerto.provincia = form.provincia.data
+            huerto.region = form.region.data
+            huerto.distrito_agroclimatico = form.distrito_agroclimatico.data
+            huerto.telefono = form.telefono.data
+            huerto.administrador = form.administrador.data
+            huerto.encargado_huerto = form.encargado_huerto.data
+            huerto.direccion = form.direccion.data
+            huerto.empresas = form.empresas.data
+            huerto.exportadoras = form.exportadoras.data
+            
+            db.session.commit()
+            flash("✅ Información del huerto actualizada exitosamente.", "success")
+            return redirect(url_for("tecnico.mis_huertos"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error actualizando huerto: {e}", "danger")
+    elif request.method == "POST":
+        flash("❌ Formulario inválido", "danger")
+
+    return render_template("admin/editar_huerto.html", form=form, huerto=huerto)
 
 
 # ================== Bitácora de huerto ==================
