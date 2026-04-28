@@ -1,373 +1,354 @@
 {% extends "base.html" %}
-{% block title %}Bitácora del Huerto{% endblock %}
+{% block title %}Bitácora de Huerto | AgroDESK Pro{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <!-- Header -->
-  <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-    <div>
-      <h2 class="mb-1 text-success"><i class="bi bi-tree"></i> Bitácora de {{ huerto.nombre }}</h2>
-      <div class="text-muted small">
-        <span class="me-3"><strong>Ubicación:</strong> {{ huerto.ubicacion or "—" }}</span>
-        <span><strong>Técnico:</strong> {{ huerto.responsable.name if huerto.responsable else "Sin asignar" }}</span>
+<style>
+  /* ===== RESET & BASE ===== */
+  body{background:#f4f7f5 !important}
+  .dash{font-family:'Inter',system-ui,sans-serif}
+
+  /* ===== HEADER BANNER ===== */
+  .page-banner{
+    background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%);
+    border-radius:18px;padding:2rem 2.2rem;color:#fff;
+    position:relative;overflow:hidden;margin-bottom:2rem;
+    box-shadow: 0 10px 30px rgba(6,78,59,0.15);
+  }
+  .page-banner::before{
+    content:'';position:absolute;top:-60px;right:-40px;
+    width:280px;height:280px;border-radius:50%;
+    background:radial-gradient(circle,rgba(52,211,153,.15),transparent 70%);
+    pointer-events:none;
+  }
+  .page-banner h2{font-weight:800;font-size:1.8rem;margin-bottom:.5rem;position:relative;z-index:2}
+  .page-banner p{color:#a7f3d0;font-size:.95rem;font-weight:500;margin-bottom:0;position:relative;z-index:2}
+  
+  .badge-banner {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+  }
+
+  /* ===== TABS PRO ===== */
+  .nav-tabs-pro {
+    border: none;
+    background: #fff;
+    border-radius: 12px;
+    padding: 0.5rem;
+    gap: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+  }
+  .nav-tabs-pro .nav-link {
+    border: none;
+    border-radius: 8px;
+    color: #6b7280;
+    font-weight: 600;
+    padding: 0.8rem 1.5rem;
+    transition: all 0.2s;
+  }
+  .nav-tabs-pro .nav-link:hover { background: #f3f4f6; color: #111827; }
+  .nav-tabs-pro .nav-link.active {
+    background: #10b981;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+  }
+
+  /* ===== FILTERS PRO ===== */
+  .filter-card {
+    background: #fff; border-radius: 16px; border: 1px solid #e8ede9;
+    padding: 1.5rem; margin-bottom: 2rem;
+  }
+
+  /* ===== TIMELINE PRO ===== */
+  .timeline-container { position: relative; padding-left: 3rem; }
+  .timeline-container::before {
+    content: ''; position: absolute; left: 1.25rem; top: 0; bottom: 0;
+    width: 2px; background: #e5e7eb;
+  }
+  .timeline-item { position: relative; margin-bottom: 2.5rem; }
+  .timeline-marker {
+    position: absolute; left: -2.4rem; top: 0.5rem;
+    width: 2.2rem; height: 2.2rem; border-radius: 50%;
+    background: #fff; border: 4px solid #10b981;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2; box-shadow: 0 0 0 4px #fff;
+    font-size: 0.9rem;
+  }
+  .timeline-item .t-card {
+    background: #fff; border-radius: 16px; border: 1px solid #e8ede9;
+    overflow: hidden; transition: all 0.2s;
+  }
+  .timeline-item .t-card:hover { transform: translateX(5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+  .timeline-item .t-header {
+    background: #f9fafb; padding: 1rem 1.25rem; border-bottom: 1px solid #f3f4f6;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .timeline-item .t-body { padding: 1.25rem; }
+  
+  .tipo-badge {
+    padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase;
+  }
+  .bg-riego { background: #dbeafe; color: #1e40af; }
+  .bg-fertilizacion { background: #fef3c7; color: #92400e; }
+  .bg-control_plagas { background: #fee2e2; color: #991b1b; }
+  .bg-cosecha { background: #dcfce7; color: #166534; }
+  .bg-poda { background: #f3e8ff; color: #6b21a8; }
+  .bg-otra { background: #f1f5f9; color: #475569; }
+
+  /* ===== DOCS GRID ===== */
+  .doc-card {
+    background: #fff; border-radius: 12px; border: 1px solid #e8ede9;
+    padding: 1.25rem; display: flex; align-items: center; gap: 1rem;
+    transition: all 0.2s;
+  }
+  .doc-card:hover { border-color: #10b981; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+  .doc-icon {
+    width: 45px; height: 45px; border-radius: 10px; background: #ecfdf5;
+    color: #059669; display: grid; place-items: center; font-size: 1.2rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .timeline-container { padding-left: 2rem; }
+    .timeline-marker { width: 1.8rem; height: 1.8rem; left: -1.75rem; border-width: 3px; font-size: 0.8rem; }
+    .nav-tabs-pro { flex-direction: column; }
+  }
+
+  @media print {
+    .no-print { display: none !important; }
+    .page-banner, .nav-tabs-pro, .filter-card { display: none !important; }
+    body { background: #fff !important; }
+    .timeline-item .t-card { border: 1px solid #ddd !important; box-shadow: none !important; }
+  }
+</style>
+
+<div class="container py-4 dash">
+
+  <!-- BANNER -->
+  <div class="page-banner">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <h2><i class="bi bi-journal-text me-2"></i>Bitácora: {{ huerto.nombre }}</h2>
+        <p>Historial completo de actividades, controles y documentos técnicos.</p>
+      </div>
+      <div class="d-flex flex-column align-items-end gap-2">
+        <span class="badge-banner"><i class="bi bi-geo-alt-fill text-warning me-1"></i> {{ huerto.ubicacion or '—' }}</span>
+        <span class="badge-banner"><i class="bi bi-person-fill text-info me-1"></i> Técnico: {{ huerto.responsable.name if huerto.responsable else 'Sin asignar' }}</span>
       </div>
     </div>
-    <div class="ms-auto d-flex flex-wrap gap-2">
-      <a href="{{ url_for('admin.registrar_actividad_huerto', huerto_id=huerto.id) }}" class="btn btn-success">
-        <i class="bi bi-plus-circle"></i> Nueva Actividad
+    
+    <div class="mt-4 d-flex flex-wrap gap-2 no-print">
+      {% if current_user.role == 'admin' %}
+        <a href="{{ url_for('admin.registrar_actividad_huerto', huerto_id=huerto.id) }}" class="btn btn-light fw-bold shadow-sm" style="border-radius:10px">
+          <i class="bi bi-plus-circle me-1"></i>Nueva Actividad
+        </a>
+      {% else %}
+        <a href="{{ url_for('tecnico.registrar_actividad_huerto', huerto_id=huerto.id) }}" class="btn btn-light fw-bold shadow-sm" style="border-radius:10px">
+          <i class="bi bi-plus-circle me-1"></i>Nueva Actividad
+        </a>
+      {% endif %}
+      
+      <a href="{{ url_for('docs.admin_panel', huerto_id=huerto.id, next=request.full_path) }}" class="btn btn-success fw-bold border-white border-opacity-25" style="border-radius:10px">
+        <i class="bi bi-upload me-1"></i>Subir Documento
       </a>
-
-      <a
-        href="{{ url_for('docs.admin_panel', huerto_id=huerto.id, next=request.full_path) }}"
-        class="btn btn-outline-primary"
-        title="Subir documento asociado a este huerto"
-      >
-        <i class="bi bi-upload"></i> Subir documento al huerto
-      </a>
-
-      <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">Volver</a>
-
-      <button onclick="window.print()" class="btn btn-outline-primary">
-        <i class="bi bi-printer"></i> Imprimir
+      
+      <button onclick="window.print()" class="btn btn-outline-light fw-bold" style="border-radius:10px">
+        <i class="bi bi-printer me-1"></i>Imprimir
       </button>
+      
+      <a href="{{ url_for('admin.admin_dashboard' if current_user.role=='admin' else 'tecnico.tecnico_dashboard') }}" class="btn btn-outline-light fw-bold opacity-75" style="border-radius:10px">
+        Volver
+      </a>
     </div>
   </div>
 
-  <!-- Chips resumen -->
-  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <span class="badge rounded-pill bg-success-subtle text-success-emphasis px-3 py-2">
-      <i class="bi bi-activity me-1"></i> {{ actividades|length }} actividades
-    </span>
-    {% if lista_anios %}
-      <span class="badge rounded-pill bg-light text-dark px-3 py-2">
-        <i class="bi bi-calendar-range me-1"></i> Años: {{ lista_anios|join(', ') }}
-      </span>
-    {% endif %}
-    <!-- conteo por tipo (si tienes esa utilidad, si no puedes quitar este bloque) -->
-    {% set tipos = {
-      'control_plagas':'bi-bug', 'poda':'bi-scissors',
-      'riego':'bi-droplet', 'fertilizacion':'bi-bezier',
-      'cosecha':'bi-basket3', 'otra':'bi-plus-lg'
-    } %}
-    {% for t, icon in tipos.items() %}
-      {% set n = actividades | selectattr('tipo', 'equalto', t) | list | length %}
-      {% if n > 0 %}
-      <span class="badge bg-light text-dark px-3 py-2">
-        <i class="bi {{ icon }} me-1"></i>{{ t|replace('_',' ') }}: {{ n }}
-      </span>
-      {% endif %}
-    {% endfor %}
-  </div>
-
-  <!-- Tabs -->
-  <ul class="nav nav-tabs no-print" id="bitacoraTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="tab-acts" data-bs-toggle="tab" data-bs-target="#pane-acts" type="button" role="tab">
-        Actividades
+  <!-- TABS -->
+  <ul class="nav nav-tabs nav-tabs-pro no-print" id="bitacoraTabs" role="tablist">
+    <li class="nav-item flex-fill" role="presentation">
+      <button class="nav-link w-100 active" id="tab-acts" data-bs-toggle="tab" data-bs-target="#pane-acts" type="button" role="tab">
+        <i class="bi bi-activity me-2"></i>Actividades ({{ actividades|length }})
       </button>
     </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="tab-docs" data-bs-toggle="tab" data-bs-target="#pane-docs" type="button" role="tab">
-        Documentos
+    <li class="nav-item flex-fill" role="presentation">
+      <button class="nav-link w-100" id="tab-docs" data-bs-toggle="tab" data-bs-target="#pane-docs" type="button" role="tab">
+        <i class="bi bi-file-earmark-pdf me-2"></i>Documentos Técnicos
       </button>
     </li>
   </ul>
 
   <div class="tab-content">
-    <!-- ===== Pestaña ACTIVIDADES ===== -->
-    <div class="tab-pane fade show active" id="pane-acts" role="tabpanel" aria-labelledby="tab-acts">
-      <!-- Filtros plegables -->
-      <div class="card my-3 no-print">
-        <div class="card-header py-2 d-flex justify-content-between align-items-center">
-          <strong>Filtros</strong>
-          <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
-            <i class="bi bi-funnel me-1"></i> Mostrar / Ocultar
-          </button>
-        </div>
-        <div class="collapse show" id="filtersCollapse">
-          <div class="card-body">
-            <form method="get" class="row g-2">
-              <div class="col-md-3">
-                <label class="form-label small mb-1">Año</label>
-                <select name="anio" class="form-select">
-                  <option value="">Todos</option>
-                  {% for anio in lista_anios %}
-                    <option value="{{ anio }}" {% if anio_seleccionado==anio %}selected{% endif %}>{{ anio }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label small mb-1">Tipo</label>
-                <select name="tipo" class="form-select">
-                  <option value="">Todos</option>
-                  <option value="control_plagas" {% if tipo_seleccionado=='control_plagas' %}selected{% endif %}>Control Plagas</option>
-                  <option value="poda" {% if tipo_seleccionado=='poda' %}selected{% endif %}>Poda</option>
-                  <option value="riego" {% if tipo_seleccionado=='riego' %}selected{% endif %}>Riego</option>
-                  <option value="fertilizacion" {% if tipo_seleccionado=='fertilizacion' %}selected{% endif %}>Fertilización</option>
-                  <option value="cosecha" {% if tipo_seleccionado=='cosecha' %}selected{% endif %}>Cosecha</option>
-                  <option value="otra" {% if tipo_seleccionado=='otra' %}selected{% endif %}>Otra</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label small mb-1">Buscar</label>
-                <input class="form-control" type="text" name="q" value="{{ request.args.get('q','') }}" placeholder="Descripción, responsable, producto…">
-              </div>
-              <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-success w-100" type="submit"><i class="bi bi-filter"></i> Aplicar</button>
-              </div>
-            </form>
+    
+    <!-- ACTIVIDADES -->
+    <div class="tab-pane fade show active" id="pane-acts" role="tabpanel">
+      
+      <!-- FILTROS -->
+      <div class="filter-card no-print">
+        <form method="get" class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">Año</label>
+            <select name="anio" class="form-select">
+              <option value="">Todos los años</option>
+              {% for anio in lista_anios %}
+                <option value="{{ anio }}" {% if anio_seleccionado==anio %}selected{% endif %}>{{ anio }}</option>
+              {% endfor %}
+            </select>
           </div>
-        </div>
+          <div class="col-md-3">
+            <label class="form-label">Tipo de Labor</label>
+            <select name="tipo" class="form-select">
+              <option value="">Todas las labores</option>
+              <option value="control_plagas" {% if tipo_seleccionado=='control_plagas' %}selected{% endif %}>Control Plagas</option>
+              <option value="poda" {% if tipo_seleccionado=='poda' %}selected{% endif %}>Poda</option>
+              <option value="riego" {% if tipo_seleccionado=='riego' %}selected{% endif %}>Riego</option>
+              <option value="fertilizacion" {% if tipo_seleccionado=='fertilizacion' %}selected{% endif %}>Fertilización</option>
+              <option value="cosecha" {% if tipo_seleccionado=='cosecha' %}selected{% endif %}>Cosecha</option>
+              <option value="otra" {% if tipo_seleccionado=='otra' %}selected{% endif %}>Otras</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Buscador rápido</label>
+            <input class="form-control" type="text" name="q" value="{{ request.args.get('q','') }}" placeholder="Ej: Responsable, producto, plaga…">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-success w-100 fw-bold py-2" type="submit" style="border-radius:10px">
+              Filtrar
+            </button>
+          </div>
+        </form>
       </div>
 
-      <!-- Timeline Actividades -->
-      <div class="timeline-pro position-relative">
+      <!-- TIMELINE -->
+      <div class="timeline-container">
         {% for act in actividades %}
-        <div class="timeline-item mb-4">
-          <div class="timeline-dot {{ tipo_color(act.tipo) }}">
+        <div class="timeline-item">
+          <div class="timeline-marker shadow-sm">
             <i class="bi {{ tipo_icono(act.tipo) }}"></i>
           </div>
-          <div class="timeline-content card shadow-sm border-0">
-            <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
-              <span class="fw-bold text-capitalize">{{ act.tipo|replace("_", " ") }}</span>
-              <span class="text-muted"><i class="bi bi-calendar-event"></i> {{ act.fecha.strftime('%d-%m-%Y') }}</span>
+          <div class="t-card">
+            <div class="t-header">
+              <span class="tipo-badge bg-{{ act.tipo }}">{{ act.tipo|replace("_", " ") }}</span>
+              <span class="small text-muted fw-bold"><i class="bi bi-calendar3 me-1"></i>{{ act.fecha.strftime('%d-%m-%Y') }}</span>
             </div>
-            <div class="card-body py-2 px-3">
-              <p class="mb-2">{{ act.descripcion }}</p>
-              <small class="text-muted d-block mb-1">
-                Responsable: {{ act.responsable }}
-              </small>
-              <div class="d-flex flex-wrap gap-2">
-                {% if act.producto %}<span class="badge bg-light text-dark">{{ act.producto }}</span>{% endif %}
-                {% if act.plaga %}<span class="badge bg-light text-dark">{{ act.plaga }}</span>{% endif %}
-                {% if act.resultado %}<span class="badge bg-info">{{ act.resultado }}</span>{% endif %}
+            <div class="t-body">
+              <h6 class="fw-bold mb-2">{{ act.descripcion }}</h6>
+              <div class="row g-2">
+                <div class="col-sm-6">
+                  <div class="small text-muted">Responsable</div>
+                  <div class="fw-bold text-dark">{{ act.responsable }}</div>
+                </div>
+                {% if act.producto %}
+                <div class="col-sm-6">
+                  <div class="small text-muted">Producto Utilizado</div>
+                  <div class="fw-bold text-dark">{{ act.producto }} ({{ act.dosis or '—' }})</div>
+                </div>
+                {% endif %}
               </div>
+              {% if act.resultado or act.observaciones %}
+              <div class="alert alert-secondary mt-3 mb-0 py-2 border-0 small" style="background:#f9fafb">
+                <strong>Observaciones:</strong> {{ act.resultado or act.observaciones }}
+              </div>
+              {% endif %}
             </div>
           </div>
         </div>
         {% else %}
-          <div class="alert alert-info text-center">No hay actividades para este filtro.</div>
+          <div class="text-center py-5">
+            <i class="bi bi-journal-x text-muted" style="font-size:4rem"></i>
+            <h5 class="mt-3 text-muted fw-bold">Sin actividades registradas</h5>
+            <p class="text-muted">No se encontraron registros para los filtros seleccionados.</p>
+          </div>
         {% endfor %}
-        <div class="timeline-line"></div>
       </div>
     </div>
 
-    <!-- ===== Pestaña DOCUMENTOS ===== -->
-    <div class="tab-pane fade" id="pane-docs" role="tabpanel" aria-labelledby="tab-docs">
-      <div class="card my-3">
-        <div class="card-header py-2 d-flex flex-wrap gap-2 align-items-center">
-          <strong>Documentos disponibles</strong>
-          <div class="ms-auto d-flex gap-2 no-print">
-            <input id="docSearch" type="search" class="form-control form-control-sm" placeholder="Buscar título o categoría">
-            <button id="btnDocsReload" class="btn btn-sm btn-outline-secondary">
-              <i class="bi bi-arrow-clockwise"></i> Refrescar
-            </button>
+    <!-- DOCUMENTOS -->
+    <div class="tab-pane fade" id="pane-docs" role="tabpanel">
+      <div class="filter-card no-print">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-8">
+            <h6 class="fw-bold mb-0">Gestión de Archivos</h6>
+            <p class="small text-muted mb-0">Visualiza planos, facturas, análisis de laboratorio y otros documentos.</p>
           </div>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-sm mb-0 align-middle" id="docsTable">
-              <thead>
-                <tr>
-                  <th style="min-width: 260px">Título</th>
-                  <th>Categoría</th>
-                  <th>Fecha</th>
-                  <th class="text-end">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="docsBody">
-                <tr><td colspan="4" class="text-muted p-3">Cargando…</td></tr>
-              </tbody>
-            </table>
+          <div class="col-md-4">
+            <input id="docSearch" type="search" class="form-control" placeholder="Buscar por título o categoría…">
           </div>
         </div>
       </div>
 
-      <!-- Línea de tiempo documentos (opcional, bonito para admin) -->
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>Línea de tiempo de documentos</strong>
-          <small class="text-muted">Más recientes primero</small>
-        </div>
-        <div class="card-body">
-          <ul class="doc-timeline list-unstyled m-0" id="docsTimeline"></ul>
-        </div>
+      <div class="row g-3" id="docsBody">
+        <!-- JS cargará aquí -->
+        <div class="col-12 text-center py-5 text-muted">Cargando archivos…</div>
       </div>
     </div>
+
   </div>
 </div>
 
-<!-- Scripts -->
 <script>
 (function(){
   const HUERTO_ID = {{ huerto.id if huerto else 'null' }};
   const $body = document.getElementById('docsBody');
-  const $table = document.getElementById('docsTable');
   const $search = document.getElementById('docSearch');
-  const $reload = document.getElementById('btnDocsReload');
-  const $timeline = document.getElementById('docsTimeline');
 
-  function rowHTML(d){
+  function docItemHTML(d){
     return `
-      <tr data-title="${(d.titulo||'').toLowerCase()}" data-cat="${(d.categoria||'').toLowerCase()}">
-        <td>${d.titulo}</td>
-        <td>${d.categoria || '—'}</td>
-        <td>${d.fecha}</td>
-        <td class="text-end">
-          <a class="btn btn-sm btn-outline-primary" href="/docs/view/${d.id}" target="_blank">Ver</a>
-          <a class="btn btn-sm btn-outline-secondary" href="/docs/download/${d.id}">Descargar</a>
-          <button class="btn btn-sm btn-outline-dark" onclick="printDoc(${d.id})">Imprimir</button>
-        </td>
-      </tr>`;
-  }
-
-  function timelineItemHTML(d){
-    return `
-      <li class="doc-tl-item d-flex">
-        <div class="doc-tl-dot"><i class="bi bi-file-earmark-text"></i></div>
-        <div class="doc-tl-content card flex-fill shadow-sm border-0">
-          <div class="card-body py-2 px-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="me-3">
-                <div class="fw-semibold">${d.titulo}</div>
-                <div class="small text-muted">${d.categoria || 'General'}</div>
-              </div>
-              <div class="text-nowrap small text-muted">
-                <i class="bi bi-clock"></i> ${d.fecha}
-              </div>
-            </div>
+      <div class="col-12 col-md-6 col-xl-4 doc-item-container" data-title="${(d.titulo||'').toLowerCase()}" data-cat="${(d.categoria||'').toLowerCase()}">
+        <div class="doc-card h-100">
+          <div class="doc-icon shadow-sm"><i class="bi bi-file-earmark-pdf"></i></div>
+          <div class="flex-grow-1 min-w-0">
+            <div class="fw-bold text-dark text-truncate" title="${d.titulo}">${d.titulo}</div>
+            <div class="small text-muted">${d.categoria || 'Sin categoría'} • ${d.fecha}</div>
             <div class="mt-2 d-flex gap-2">
-              <a class="btn btn-sm btn-outline-primary" href="/docs/view/${d.id}" target="_blank">Ver</a>
-              <a class="btn btn-sm btn-outline-secondary" href="/docs/download/${d.id}">Descargar</a>
-              <button class="btn btn-sm btn-outline-dark" onclick="printDoc(${d.id})">Imprimir</button>
+              <a class="btn btn-sm btn-outline-success" href="/docs/view/${d.id}" target="_blank"><i class="bi bi-eye"></i></a>
+              <a class="btn btn-sm btn-outline-primary" href="/docs/download/${d.id}"><i class="bi bi-download"></i></a>
             </div>
           </div>
         </div>
-      </li>`;
-  }
-
-  function emptyRow(){
-    return `<tr><td colspan="4" class="text-muted p-3">No hay documentos.</td></tr>`;
+      </div>`;
   }
 
   function loadDocs(){
-  const url = `/docs/list${HUERTO_ID ? ('?huerto_id=' + HUERTO_ID) : ''}`;
-  $body.innerHTML = `<tr><td colspan="4" class="text-muted p-3">Cargando…</td></tr>`;
-  fetch(url)
-    .then(async (r) => {
-      const ct = r.headers.get('content-type') || '';
-      if (!r.ok) {
-        const text = await r.text();
-        throw new Error(`HTTP ${r.status} — ${text.slice(0,200)}`);
-      }
-      if (!ct.includes('application/json')) {
-        const text = await r.text();
-        throw new Error(`Respuesta no JSON — ${text.slice(0,200)}`);
-      }
-      return r.json();
-    })
-    .then(data => {
-      const items = (data && data.items) ? data.items : [];
-      if (!items.length){
-        $body.innerHTML = `<tr><td colspan="4" class="text-muted p-3">No hay documentos.</td></tr>`;
-        $timeline.innerHTML = '';
-        return;
-      }
-      $body.innerHTML = items.map(rowHTML).join('');
-      $timeline.innerHTML = items.map(timelineItemHTML).join('');
-      applySearch();
-    })
-    .catch(err => {
-      console.error('Docs load error:', err);
-      $body.innerHTML = `<tr><td colspan="4" class="text-danger p-3">Error cargando documentos: ${err.message}</td></tr>`;
-    });
-}
-
-
-  function applySearch(){
-    const q = ($search?.value || '').trim().toLowerCase();
-    if (!$table) return;
-    const rows = $table.querySelectorAll('tbody tr');
-    let shown = 0;
-    rows.forEach(tr => {
-      const tt = tr.getAttribute('data-title') || '';
-      const cc = tr.getAttribute('data-cat') || '';
-      const ok = !q || tt.includes(q) || cc.includes(q);
-      tr.style.display = ok ? '' : 'none';
-      if (ok) shown++;
-    });
-    if (shown === 0) {
-      $body.innerHTML = emptyRow();
-    }
+    const url = `/docs/list${HUERTO_ID ? ('?huerto_id=' + HUERTO_ID) : ''}`;
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        const items = data.items || [];
+        if (!items.length){
+          $body.innerHTML = '<div class="col-12 text-center py-5 text-muted">No se encontraron documentos.</div>';
+          return;
+        }
+        $body.innerHTML = items.map(docItemHTML).join('');
+      });
   }
 
-  window.printDoc = function(id) {
-    const w = window.open(`/docs/view/${id}`, '_blank');
-    const tryPrint = () => {
-      if (w && w.document && w.document.readyState === 'complete') {
-        w.focus(); w.print();
-      } else { setTimeout(tryPrint, 500); }
-    };
-    tryPrint();
-  }
+  $search?.addEventListener('input', () => {
+    const q = $search.value.toLowerCase();
+    document.querySelectorAll('.doc-item-container').forEach(el => {
+      const match = el.dataset.title.includes(q) || el.dataset.cat.includes(q);
+      el.style.display = match ? '' : 'none';
+    });
+  });
 
-  $search?.addEventListener('input', applySearch);
-  $reload?.addEventListener('click', loadDocs);
-
-  // Carga cuando se abre la pestaña Documentos (y también inicial por si ya está activa)
   const docsTab = document.getElementById('tab-docs');
   docsTab?.addEventListener('shown.bs.tab', loadDocs);
   if (document.querySelector('#pane-docs.show')) loadDocs();
 })();
 </script>
 
-<!-- Styles -->
-<style>
-/* Custom Tabs for Bitacora */
-#bitacoraTabs .nav-link {
-  color: #212529 !important; /* Texto negro/oscuro para pestañas inactivas */
-  font-weight: 500;
-  border: 1px solid transparent;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s ease-in-out;
-}
-#bitacoraTabs .nav-link:hover {
-  background-color: rgba(25, 135, 84, 0.1);
-  border-color: transparent transparent #198754 transparent;
-}
-#bitacoraTabs .nav-link.active {
-  background-color: #198754;
-  color: #ffffff;
-  border-color: #198754;
-}
-
-/* timeline actividades */
-.timeline-pro { position: relative; padding-left: 2.5rem; }
-.timeline-line { position: absolute; top: 0; left: 18px; width: 4px; height: 100%; background: #43a047; z-index: 0; border-radius: 2px; }
-.timeline-item { position: relative; z-index: 1; margin-bottom: 1.5rem; display: flex; align-items: flex-start; }
-.timeline-dot { width: 36px; height: 36px; background: #fff; border: 4px solid #43a047; border-radius: 50%; position: relative; left: -36px; z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
-.timeline-dot.bg-fertilizacion { border-color: #ffb300; color: #ffb300;}
-.timeline-dot.bg-riego        { border-color: #29b6f6; color: #29b6f6;}
-.timeline-dot.bg-poda         { border-color: #6d4c41; color: #6d4c41;}
-.timeline-dot.bg-cosecha      { border-color: #d84315; color: #d84315;}
-.timeline-dot.bg-control_plagas { border-color: #e53935; color: #e53935;}
-.timeline-dot.bg-otra         { border-color: #789262; color: #789262;}
-.timeline-content { margin-left: 12px; width: 100%; }
-
-/* timeline docs */
-.doc-timeline { position: relative; padding-left: 1.75rem; }
-.doc-timeline::before { content: ""; position: absolute; top: 0; bottom: 0; left: 12px; width: 2px; background: rgba(76, 175, 80, .35); border-radius: 1px; }
-.doc-tl-item { position: relative; margin-bottom: 1rem; }
-.doc-tl-dot { position: absolute; left: -2px; top: 6px; width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 3px solid #43a047; display: flex; align-items: center; justify-content: center; color: #43a047; z-index: 1; }
-.doc-tl-content { margin-left: 1rem; }
-
-/* print */
-@media print {
-  .no-print, .btn, .alert, nav, header, footer, .nav-tabs, .tab-pane:not(.active) { display: none !important; }
-  body { background: white !important; }
-  .card { box-shadow: none !important; border: 1px solid #ccc; page-break-inside: avoid; }
-  .timeline-pro { padding-left: 0; }
-  .timeline-line, .timeline-dot, .doc-timeline::before, .doc-tl-dot { display: none; }
-}
-</style>
 {% endblock %}
+
+{# Helper functions for icons #}
+{% macro tipo_icono(tipo) -%}
+  {% if tipo == 'riego' %}bi-droplet-fill
+  {% elif tipo == 'fertilizacion' %}bi-bezier
+  {% elif tipo == 'control_plagas' %}bi-bug-fill
+  {% elif tipo == 'cosecha' %}bi-basket3-fill
+  {% elif tipo == 'poda' %}bi-scissors
+  {% else %}bi-list-check{% endif %}
+{%- endmacro %}
+
