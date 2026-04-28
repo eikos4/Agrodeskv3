@@ -1,167 +1,240 @@
 {% extends "base.html" %}
-{% block title %}Registrar Actividad de Huerto{% endblock %}
+{% block title %}Registrar Actividad | AgroDESK{% endblock %}
 
 {% block content %}
-<div class="container my-5">
+<style>
+  /* ===== RESET & BASE ===== */
+  body{background:#f4f7f5 !important}
+  .dash{font-family:'Inter',system-ui,sans-serif}
+
+  /* ===== HEADER BANNER ===== */
+  .page-banner{
+    background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%);
+    border-radius:18px;padding:2rem 2.2rem;color:#fff;
+    position:relative;overflow:hidden;margin-bottom:2rem;
+    box-shadow: 0 10px 30px rgba(6,78,59,0.15);
+  }
+  .page-banner::before{
+    content:'';position:absolute;top:-60px;right:-40px;
+    width:280px;height:280px;border-radius:50%;
+    background:radial-gradient(circle,rgba(52,211,153,.15),transparent 70%);
+    pointer-events:none;
+  }
+  .page-banner h2{font-weight:800;font-size:1.8rem;margin-bottom:.5rem;position:relative;z-index:2}
+  .page-banner p{color:#a7f3d0;font-size:.95rem;font-weight:500;margin-bottom:0;position:relative;z-index:2}
+  
+  .badge-banner {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+  }
+
+  /* ===== FORM CARD ===== */
+  .form-card{
+    background:#fff;border-radius:16px;border:1px solid #e8ede9;
+    padding:2rem;box-shadow:0 12px 24px rgba(0,0,0,0.04);
+  }
+  
+  .form-label { font-weight: 600; color: #374151; font-size: 0.9rem; }
+  .form-control, .form-select {
+    border-radius: 10px; border: 1px solid #d1d5db;
+    padding: 0.6rem 1rem; font-size: 0.95rem; transition: all 0.2s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.1);
+  }
+  
+  /* ===== AGROBOT BANNER ===== */
+  .agrobot-banner{
+    background:#ecfdf5;border-radius:16px;padding:1.5rem;
+    border:1px solid #a7f3d0;margin-bottom:2rem;
+    display:flex;gap:1.2rem;position:relative;
+  }
+  .agrobot-banner .bot-av{
+    width:50px;height:50px;border-radius:12px;background:#fff;
+    display:grid;place-items:center;font-size:1.8rem;flex-shrink:0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+  .agrobot-banner h5{font-weight:800;color:#065f46;margin-bottom:.5rem;font-size:1.1rem}
+  .agrobot-banner p{font-size:.85rem;color:#065f46;opacity:.9;margin-bottom:.5rem}
+  .agrobot-banner .btn-close-bot{
+    position:absolute;top:1rem;right:1rem;background:none;border:none;color:#059669;opacity:.5;
+    transition: all 0.2s;
+  }
+  .agrobot-banner .btn-close-bot:hover{opacity:1; transform: scale(1.1);}
+  .agrobot-banner ul { margin-bottom: 0; padding-left: 1.2rem; color: #065f46; opacity: 0.9; font-size: 0.85rem;}
+
+  .plagas-section {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 1.5rem; position: relative; overflow: hidden;
+  }
+  .plagas-section::before {
+    content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:#ef4444;
+  }
+</style>
+
+<div class="container py-4 dash">
+
+  <!-- AGROBOT -->
+  <div id="agrobot-banner" class="agrobot-banner">
+    <button id="agrobot-hide" class="btn-close-bot"><i class="bi bi-x-lg"></i></button>
+    <div class="bot-av">🤖</div>
+    <div class="row w-100">
+      <div class="col-md-7">
+        <h5>AgroBot — Registro de Actividades</h5>
+        <p>Mantén la trazabilidad de todo lo que ocurre en el huerto:</p>
+        <ul>
+          <li><b>Trazabilidad diaria:</b> deja registro de fecha, tipo de labor y responsable.</li>
+          <li><b>Control de plagas:</b> habilita campos extra al seleccionar esta opción.</li>
+          <li><b>Evidencia:</b> sube fotos o añade observaciones para futuras auditorías.</li>
+        </ul>
+      </div>
+      <div class="col-md-5 mt-3 mt-md-0">
+        <div class="bg-white rounded p-3 h-100 shadow-sm border border-success border-opacity-25">
+          <div class="fw-bold text-success mb-2"><i class="bi bi-lightbulb-fill me-1"></i> Tips rápidos</div>
+          <ul class="mb-0 small text-muted" style="list-style-type:circle;">
+            <li>Describe <b>qué</b> se hizo y <b>dónde</b>.</li>
+            <li>Si aplicaste producto, anota la dosis y el resultado.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BANNER -->
+  <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h2><i class="bi bi-journal-plus me-2"></i>Registrar Actividad</h2>
+      <p>Añade una nueva labor a la bitácora del huerto.</p>
+    </div>
+    <div class="d-flex flex-column align-items-end gap-2">
+      <span class="badge-banner"><i class="bi bi-tree-fill text-success me-1"></i> Huerto: {{ huerto.nombre }}</span>
+    </div>
+  </div>
+
   <div class="row justify-content-center">
-    <div class="col-lg-10 col-xl-8">
+    <div class="col-lg-10">
+      <div class="form-card">
+        
+        <div class="d-flex justify-content-end mb-3">
+          <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=huerto.id) }}" class="btn btn-sm btn-outline-secondary fw-bold" style="border-radius:8px">
+            <i class="bi bi-arrow-left"></i> Volver a Bitácora
+          </a>
+        </div>
 
-      {# 🤖 AgroBot — explicación para el TÉCNICO (ocultable) #}
-      <div id="agrobotBox" class="card shadow-sm border-0 mb-4" role="region" aria-label="AgroBot - Ayuda de Actividades">
-        <div class="card-body d-flex flex-wrap align-items-start gap-3">
-          <i class="bi bi-robot fs-1 text-success" aria-hidden="true"></i>
-          <div class="flex-grow-1">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-              <div>
-                <h5 class="mb-1">AgroBot — ¿Para qué sirve este módulo?</h5>
-                <p class="mb-2 text-muted small">Este módulo es para que el <b>técnico</b> registre las <b>actividades</b> realizadas en el huerto <b>{{ huerto.nombre }}</b>.</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
               </div>
-              <button id="hideAgrobotBtn" type="button" class="btn btn-outline-secondary btn-sm"
-                      aria-controls="agrobotBox" aria-expanded="true">
-                <i class="bi bi-eye-slash"></i> Ocultar
-              </button>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" enctype="multipart/form-data" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-4">
+            <!-- Fila 1 -->
+            <div class="col-md-4">
+              <label class="form-label"><i class="bi bi-calendar-event me-1 text-success"></i>{{ form.fecha.label.text }}</label>
+              {{ form.fecha(class="form-control") }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label"><i class="bi bi-list-task me-1 text-success"></i>{{ form.tipo.label.text }}</label>
+              {{ form.tipo(class="form-select", id="tipo-actividad") }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label"><i class="bi bi-person-badge me-1 text-success"></i>{{ form.responsable.label.text }}</label>
+              {{ form.responsable(class="form-control") }}
             </div>
 
-            <div class="row g-3 small">
-              <div class="col-12 col-md-7">
-                <ul class="mb-0">
-                  <li><b>Trazabilidad diaria:</b> deja registro de fecha, tipo de labor y responsable.</li>
-                  <li><b>Control de plagas:</b> habilita campos de plaga, nivel, producto y dosis.</li>
-                  <li><b>Evidencia:</b> puedes adjuntar <b>fotos</b> y <b>observaciones</b> para auditorías.</li>
-                  <li><b>Seguimiento:</b> lo que registres alimenta la <b>bitácora</b> del huerto.</li>
-                </ul>
-              </div>
-              <div class="col-12 col-md-5">
-                <div class="bg-success-subtle rounded p-3 h-100">
-                  <div class="fw-semibold mb-2">Tips rápidos</div>
-                  <ul class="mb-0">
-                    <li>Describe <b>qué</b> se hizo y <b>dónde</b>.</li>
-                    <li>Si aplicaste producto, anota <b>dosis</b> y <b>resultado</b>.</li>
-                    <li>Sube foto(s) claras del trabajo/comprobante.</li>
-                  </ul>
+            <!-- Fila 2 -->
+            <div class="col-12">
+              <label class="form-label"><i class="bi bi-card-text me-1 text-success"></i>{{ form.descripcion.label.text }}</label>
+              {{ form.descripcion(class="form-control", rows=2, placeholder="Describe en detalle la actividad realizada...") }}
+            </div>
+
+            <!-- Sección Control Plagas -->
+            <div class="col-12" id="plagas-campos" style="display: none;">
+              <div class="plagas-section">
+                <h6 class="fw-bold mb-3 text-danger"><i class="bi bi-bug-fill me-2"></i>Detalles de Control de Plagas</h6>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">{{ form.plaga.label.text }}</label>
+                    {{ form.plaga(class="form-control", placeholder="Ej. Arañita Roja") }}
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">{{ form.nivel_infestacion.label.text }}</label>
+                    {{ form.nivel_infestacion(class="form-select") }}
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">{{ form.producto.label.text }}</label>
+                    {{ form.producto(class="form-control", placeholder="Ej. Abamectina") }}
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">{{ form.quimico_id.label.text }}</label>
+                    {{ form.quimico_id(class="form-select") }}
+                    <small class="text-muted d-block mt-1" style="font-size:0.75rem">Opcional. Si seleccionas uno, se descontará del inventario.</small>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">{{ form.cantidad_aplicada.label.text }}</label>
+                    <div class="input-group">
+                      {{ form.cantidad_aplicada(class="form-control", placeholder="Ej. 1.5", step="0.01", min="0") }}
+                      <span class="input-group-text">L / Kg</span>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">{{ form.dosis.label.text }}</label>
+                    {{ form.dosis(class="form-control", placeholder="Ej. 1 L/ha") }}
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">{{ form.resultado.label.text }}</label>
+                    {{ form.resultado(class="form-control", placeholder="Ej. Disminución del 80%") }}
+                  </div>
                 </div>
               </div>
             </div>
 
+            <!-- Fila 3 -->
+            <div class="col-md-6">
+              <label class="form-label"><i class="bi bi-image me-1 text-success"></i>{{ form.fotos.label.text }} <span class="text-muted small fw-normal">(opcional)</span></label>
+              {{ form.fotos(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label"><i class="bi bi-info-circle me-1 text-success"></i>{{ form.observaciones.label.text }} <span class="text-muted small fw-normal">(opcional)</span></label>
+              {{ form.observaciones(class="form-control", rows=2, placeholder="Observaciones generales o notas extra...") }}
+            </div>
           </div>
-        </div>
+
+          <!-- Botonera -->
+          <div class="d-flex flex-wrap justify-content-end align-items-center mt-5 pt-3 border-top gap-3">
+            <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=huerto.id) }}" class="btn btn-light fw-bold px-4" style="border-radius:10px">
+              Cancelar
+            </a>
+            {{ form.submit(class="btn btn-success fw-bold px-5", style="border-radius:10px") }}
+          </div>
+        </form>
+
       </div>
-
-      {# Botón flotante para reabrir AgroBot (aparece cuando lo ocultas) #}
-      <button id="showAgrobotBtn" type="button"
-              class="btn btn-success agrobot-fab d-none"
-              aria-controls="agrobotBox" aria-expanded="false" aria-label="Mostrar AgroBot">
-        <i class="bi bi-robot"></i> AgroBot
-      </button>
-
-      <div class="card shadow-lg border-success">
-        <div class="card-header bg-success text-white d-flex align-items-center">
-          <i class="bi bi-plus-circle-fill me-2 fs-3"></i>
-          <h3 class="mb-0">Registrar Actividad en: {{ huerto.nombre }}</h3>
-        </div>
-        <div class="card-body">
-          <form method="POST" enctype="multipart/form-data" novalidate>
-            {{ form.hidden_tag() }}
-
-            <div class="row mb-3">
-              <div class="col-md-4 mb-3 mb-md-0">
-                <label class="form-label fw-bold">
-                  <i class="bi bi-calendar-event me-1"></i> {{ form.fecha.label.text }}
-                </label>
-                {{ form.fecha(class_="form-control") }}
-              </div>
-              <div class="col-md-4 mb-3 mb-md-0">
-                <label class="form-label fw-bold">
-                  <i class="bi bi-list-task me-1"></i> {{ form.tipo.label.text }}
-                </label>
-                {{ form.tipo(class_="form-select", id="tipo-actividad") }}
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">
-                  <i class="bi bi-person-fill me-1"></i> {{ form.responsable.label.text }}
-                </label>
-                {{ form.responsable(class_="form-control") }}
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-bold">
-                <i class="bi bi-card-text me-1"></i> {{ form.descripcion.label.text }}
-              </label>
-              {{ form.descripcion(class_="form-control", rows=2, placeholder="Describe la actividad realizada...") }}
-            </div>
-
-            <!-- Campos para Control de Plagas (colapsable) -->
-            <div id="plagas-campos" class="border rounded p-3 mb-3" style="display: none; background: #f6fafd;">
-              <div class="row">
-                <div class="col-md-4 mb-3">
-                  <label class="form-label fw-bold">
-                    <i class="bi bi-bug-fill me-1"></i> {{ form.plaga.label.text }}
-                  </label>
-                  {{ form.plaga(class_="form-control") }}
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label fw-bold">
-                    <i class="bi bi-bar-chart-line me-1"></i> {{ form.nivel_infestacion.label.text }}
-                  </label>
-                  {{ form.nivel_infestacion(class_="form-control") }}
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label fw-bold">
-                    <i class="bi bi-flask me-1"></i> {{ form.producto.label.text }}
-                  </label>
-                  {{ form.producto(class_="form-control") }}
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label fw-bold">
-                    <i class="bi bi-cup-straw me-1"></i> {{ form.dosis.label.text }}
-                  </label>
-                  {{ form.dosis(class_="form-control") }}
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label fw-bold">
-                    <i class="bi bi-clipboard-check me-1"></i> {{ form.resultado.label.text }}
-                  </label>
-                  {{ form.resultado(class_="form-control") }}
-                </div>
-              </div>
-            </div>
-
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-bold">
-                  <i class="bi bi-image-fill me-1"></i> {{ form.fotos.label.text }}
-                  <span class="text-muted small" title="Opcional">(opcional)</span>
-                </label>
-                {{ form.fotos(class_="form-control") }}
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold">
-                  <i class="bi bi-info-circle me-1"></i> {{ form.observaciones.label.text }}
-                  <span class="text-muted small" title="Opcional">(opcional)</span>
-                </label>
-                {{ form.observaciones(class_="form-control", rows=2, placeholder="Observaciones generales...") }}
-              </div>
-            </div>
-
-            <div class="d-flex gap-3 mt-4 justify-content-end">
-              <a href="{{ url_for('tecnico.bitacora_huerto', huerto_id=huerto.id) }}"
-                 class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Cancelar
-              </a>
-              {{ form.submit(class_="btn btn-success btn-lg px-4") }}
-            </div>
-          </form>
-        </div>
-      </div>
-
     </div>
   </div>
 </div>
 
-{# Animaciones opcionales #}
+<!-- FAB para reabrir AgroBot -->
+<button id="agrobot-reopen"
+        class="btn btn-success shadow-lg position-fixed bottom-0 end-0 m-4 d-none"
+        style="border-radius:12px; font-weight:800; padding:0.6rem 1rem; z-index:1050"
+        title="Mostrar guía de AgroBot">
+  <i class="bi bi-robot me-1"></i> AgroBot
+</button>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 {% endblock %}
 
@@ -183,23 +256,21 @@
   document.getElementById("tipo-actividad").addEventListener("change", togglePlagasCampos);
   window.addEventListener('load', togglePlagasCampos);
 
-  // Persistencia de AgroBot (mostrar/ocultar)
+  // AgroBot persistencia
   (function(){
     const STORAGE_KEY = 'agrobotHidden:tecnico_reg_actividad';
-    const banner = document.getElementById('agrobotBox');
-    const hideBtn = document.getElementById('hideAgrobotBtn');
-    const showBtn = document.getElementById('showAgrobotBtn');
+    const banner = document.getElementById('agrobot-banner');
+    const hideBtn = document.getElementById('agrobot-hide');
+    const reopenBtn = document.getElementById('agrobot-reopen');
 
     function setHidden(hidden){
-      if (!banner || !showBtn) return;
+      if (!banner || !reopenBtn) return;
       if (hidden){
         banner.classList.add('d-none');
-        showBtn.classList.remove('d-none');
-        showBtn.setAttribute('aria-expanded','true');
+        reopenBtn.classList.remove('d-none');
       } else {
         banner.classList.remove('d-none');
-        showBtn.classList.add('d-none');
-        showBtn.setAttribute('aria-expanded','false');
+        reopenBtn.classList.add('d-none');
       }
     }
 
@@ -213,27 +284,13 @@
       setHidden(true);
     });
 
-    showBtn?.addEventListener('click', ()=>{
+    reopenBtn?.addEventListener('click', ()=>{
       localStorage.setItem(STORAGE_KEY, 'false');
       setHidden(false);
-      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){}
+      try { banner.scrollIntoView({ behavior: 'smooth' }); } catch(e){}
     });
 
     applyInitial();
   })();
 </script>
-
-<style>
-/* Botón flotante AgroBot: aparece cuando el banner está oculto */
-.agrobot-fab{
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1050;
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
-}
-</style>
 {% endblock %}
