@@ -323,6 +323,24 @@
 
 <!-- Styles -->
 <style>
+/* Custom Tabs for Bitacora */
+#bitacoraTabs .nav-link {
+  color: #198754;
+  font-weight: 500;
+  border: 1px solid transparent;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease-in-out;
+}
+#bitacoraTabs .nav-link:hover {
+  background-color: rgba(25, 135, 84, 0.1);
+  border-color: transparent transparent #198754 transparent;
+}
+#bitacoraTabs .nav-link.active {
+  background-color: #198754;
+  color: #ffffff;
+  border-color: #198754;
+}
+
 /* timeline actividades */
 .timeline-pro { position: relative; padding-left: 2.5rem; }
 .timeline-line { position: absolute; top: 0; left: 18px; width: 4px; height: 100%; background: #43a047; z-index: 0; border-radius: 2px; }
