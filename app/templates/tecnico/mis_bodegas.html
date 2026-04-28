@@ -5,9 +5,14 @@
 <div class="container py-4">
 
   <!-- Título de página -->
-  <h2 class="mb-3 text-success">
-    <i class="bi bi-box-seam"></i> Bodegas a mi cargo
-  </h2>
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <h2 class="mb-0 text-success">
+      <i class="bi bi-box-seam"></i> Bodegas a mi cargo
+    </h2>
+    <a href="{{ url_for('tecnico.crear_bodega') }}" class="btn btn-success fw-bold px-4" style="border-radius:10px">
+      <i class="bi bi-plus-circle me-1"></i>Crear Bodega
+    </a>
+  </div>
 
   <!-- Intro explicativa con "robot" -->
   <div class="card border-0 shadow-sm mb-4">
